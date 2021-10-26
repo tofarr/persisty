@@ -1,12 +1,11 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, ForwardRef, List
 
 from persisty import PersistyContext
 from persisty.mem.mem_repo import mem_repo
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.belongs_to import BelongsTo
 from persisty.obj_graph.resolver.has_many import HasMany
-from persisty.obj_graph.resolver.resolver_descriptor import ResolverDescriptor
 
 
 @dataclass
@@ -37,17 +36,19 @@ persisty_context = PersistyContext()
 persisty_context.register_repo(mem_repo(Band, BandFilter))
 persisty_context.register_repo(mem_repo(Member, MemberFilter))
 
+BAND_ENTITY_CLASS = ForwardRef(f'{__name__}.BandEntity')
+MEMBER_ENTITY_CLASS = ForwardRef(f'{__name__}.MemberEntity')
+
 
 class MemberEntity(EntityABC, Member):
     __persisty_context__ = persisty_context
-    band: 'BandEntity' = ResolverDescriptor(BelongsTo(f'{__name__}.BandEntity', 'band_id'))
+    band: BAND_ENTITY_CLASS = BelongsTo(key_attr='band_id')
 
 
 class BandEntity(EntityABC, Band):
     __persisty_context__ = persisty_context
-    members: MemberEntity = ResolverDescriptor(HasMany(f'{__name__}.MemberEntity',
-                                               search_filter_factory=lambda b: MemberFilter(band_id__eq=b.id),
-                                               inverse_attr='_band'))
+    members: List[MEMBER_ENTITY_CLASS] = HasMany(foreign_key_attr='band_id', search_filter_type=MemberFilter,
+                                                 inverse_attr='_band')
 
 
 if __name__ == '__main__':

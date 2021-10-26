@@ -78,6 +78,7 @@ def composite_filter(filters: List[ItemFilter]) -> Optional[ItemFilter]:
         return None
     elif len(filters) == 1:
         return filters[0]
+
     def filter_fn(item: ExternalItemType) -> Optional[ExternalItemType]:
         for f in filters:
             item = f(item)

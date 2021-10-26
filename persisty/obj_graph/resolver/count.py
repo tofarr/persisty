@@ -1,26 +1,56 @@
+import importlib
 from dataclasses import dataclass
-from typing import Optional, Callable, TypeVar
+from typing import Optional, Callable, TypeVar, Union, Type
 
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
-from persisty.obj_graph.resolver.entity_resolver_abc import EntityResolverABC, T
+from persisty.obj_graph.entity_abc import EntityABC
+from persisty.obj_graph.resolver.before_destroy import OnDestroy
+from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A
 from persisty.obj_graph.selection_set import SelectionSet
 
 F = TypeVar('F')
+B = TypeVar('B')
 
 
-@dataclass(frozen=True)
-class Count(EntityResolverABC[T]):
-    search_filter_factory: Callable[[T], F]
+class Count(ResolverABC[A, int]):
 
-    def resolve(self,
-                owner: T,
-                attr_name: str,
-                sub_selections: Optional[SelectionSet],
-                deferred_resolutions: DeferredResolutionSet):
-        search_filter = self.search_filter_factory(owner)
-        if search_filter is None:
-            setattr(owner, attr_name, None)
+    def __init__(self,
+                 foreign_key_attr: str,
+                 search_filter_type: Type[F],
+                 entity_type: Union[str, EntityABC[B, F]],
+                 inverse_attr: Optional[str] = None,
+                 on_destroy: OnDestroy = OnDestroy.NO_ACTION,
+                 private_name_: Optional[str] = None,
+                 resolved_type: Optional[Type[B]] = None):
+        super().__init__(private_name_, resolved_type)
+        self.foreign_key_attr = foreign_key_attr
+        self.search_filter_type = search_filter_type
+        self.entity_type = entity_type
+        self.inverse_attr = inverse_attr
+        self.on_destroy = on_destroy
+
+    def resolve_value(self,
+                      owner_instance: A,
+                      callback: Callable[[int], None],
+                      sub_selections: Optional[SelectionSet],
+                      deferred_resolutions: Optional[DeferredResolutionSet] = None):
+        key = owner_instance.get_key()
+        if key is None:
+            callback(0)
             return
-        entity_type = self.get_entity_type()
-        count = entity_type.count(search_filter)
-        setattr(owner, attr_name, count)
+        search_filter = self.search_filter_type(**{self.foreign_key_attr: owner_instance.get_key()})
+        count = self._entity_type().count(search_filter)
+        callback(count)
+
+    def _entity_type(self):
+        if isinstance(self.entity_type, str):
+            self.entity_type = type_from_name(self.entity_type)
+        return self.entity_type
+
+
+def type_from_name(entity_type: str):
+    import_path = entity_type.split('.')
+    import_module = '.'.join(import_path[:-1])
+    imported_module = importlib.import_module(import_module)
+    entity_type = getattr(imported_module, import_path[-1])
+    return entity_type

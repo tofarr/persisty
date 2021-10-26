@@ -8,9 +8,6 @@ from persisty.page import Page
 from persisty.repo_abc import RepoABC, F, T
 
 
-T = TypeVar('T')
-
-
 @dataclass(frozen=True)
 class WrapperRepoABC(RepoABC[T], ABC):
     """ Abstract Wrapper for wrapping a repository to alter functionality """
