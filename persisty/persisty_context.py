@@ -1,29 +1,26 @@
-import importlib
-import os
 from typing import Union, Type, TypeVar, Iterator
 
 from persisty.errors import PersistyError
-from persisty.repo_abc import RepoABC
+from persisty.store.store_abc import StoreABC
 
 T = TypeVar('T')
-F = TypeVar('F')
 
 
 class PersistyContext:
 
     def __init__(self):
-        self._repos_by_name = {}
+        self._stores_by_name = {}
 
-    def register_repo(self, repo: RepoABC[T, F]):
-        self._repos_by_name[repo.name] = repo
+    def register_store(self, store: StoreABC[T]):
+        self._stores_by_name[store.name] = store
 
-    def get_repo(self, key: Union[str, Type[T]]) -> RepoABC[T, F]:
+    def get_store(self, key: Union[str, Type[T]]) -> StoreABC[T]:
         if not isinstance(key, str):
             key = key.__name__
-        repo = self._repos_by_name.get(key)
-        if repo is None:
-            raise PersistyError(f'missing_repo:{key}')
-        return repo
+        store = self._stores_by_name.get(key)
+        if store is None:
+            raise PersistyError(f'missing_store:{key}')
+        return store
 
-    def get_repos(self) -> Iterator[RepoABC]:
-        return iter(self._repos_by_name.values())
+    def get_stores(self) -> Iterator[StoreABC]:
+        return iter(self._stores_by_name.values())

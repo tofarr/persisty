@@ -9,7 +9,7 @@ T = TypeVar('T')
 
 
 @dataclass(frozen=True)
-class MemSearchFilter(Generic[T]):
+class InMemSearchFilter(Generic[T]):
     marshaller: MarshallerABC[T]
 
     def create_item_filter(self, search_filter: T) -> Optional[ItemFilter]:
@@ -26,10 +26,10 @@ class MemSearchFilter(Generic[T]):
     def filter_results(self, search_filter: T, items: Iterator[ExternalItemType]) -> Iterator[ExternalItemType]:
         item_filter = self.create_item_filter(search_filter)
         if item_filter:
-            items = (item for item in items if item_filter(item))
+            items = [item for item in items if item_filter(item)]
         order = getattr(search_filter, 'sort', None)
         if order:
-            items = sorted(items, key=lambda item: getattr(item, order))
+            items = sorted(items, key=lambda item: item.get(order))
         return items
 
 

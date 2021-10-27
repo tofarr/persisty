@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TypeVar, Generic, Optional, Iterator, Type
+from typing import TypeVar, Generic, Optional, Iterator, Type, Any
 
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
@@ -9,20 +9,24 @@ from persisty.page import Page
 from persisty.errors import PersistyError
 
 T = TypeVar('T')
-F = TypeVar('F')
 
 
-@dataclass(frozen=True)
-class RepoABC(ABC, Generic[T, F]):
-    name: str
+class StoreABC(ABC, Generic[T]):
 
+    @property
     @abstractmethod
-    def get_item_type(self) -> Type[T]:
-        """ Get the type for this Repository """
+    def name(self) -> str:
+        """ Get the name for this store """
 
+    @property
     @abstractmethod
-    def get_capabilities(self) -> Capabilities:
-        """ Get the current user capabilities for this repo. """
+    def item_type(self) -> Type[T]:
+        """ Get the type for this Store """
+
+    @property
+    @abstractmethod
+    def capabilities(self) -> Capabilities:
+        """ Get the current user capabilities for this store. """
 
     @abstractmethod
     def get_key(self, item: T) -> str:
@@ -59,23 +63,19 @@ class RepoABC(ABC, Generic[T, F]):
         """
 
     @abstractmethod
-    def search(self, search_filter: Optional[F] = None) -> Iterator[T]:
-        """ Search this repo with the filter given. """
+    def search(self, search_filter: Any = None) -> Iterator[T]:
+        """ Search this store with the filter given. """
 
     @abstractmethod
-    def count(self, search_filter: Optional[F] = None) -> int:
-        """ Get a count of the items in this repo matching filter given. """
+    def count(self, search_filter: Any = None) -> int:
+        """ Get a count of the items in this store matching filter given. """
 
     @abstractmethod
-    def paginated_search(self,
-                         search_filter: Optional[F] = None,
-                         page_key: str = None,
-                         limit: int = 20
-                         ) -> Page[T]:
-        """ Get a page of results from this repo. """
+    def paged_search(self, search_filter: Any = None, page_key: str = None, limit: int = 20) -> Page[T]:
+        """ Get a page of results from this store. """
 
     def edit_all(self, edits: Iterator[Edit[T]]):
-        """ Perform a bulk edit for items in this repo. This action is not typically atomic. """
+        """ Perform a bulk edit for items in this store. This action is not typically atomic. """
         for edit in edits:
             if edit.edit_type == EditType.CREATE:
                 self.create(edit.value)

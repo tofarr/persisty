@@ -14,7 +14,7 @@ from lambsync.persistence.edit import Edit
 from lambsync.persistence.edit_type import EditType
 from lambsync.persistence.page import Page
 from lambsync.persistence.persistence_error import PersistenceError
-from lambsync.persistence.repo_abc import RepoABC
+from lambsync.persistence.store_abc import StoreABC
 from lambsync.persistence.util import secure_hash, from_base64, to_base64
 
 T = TypeVar('T')
@@ -22,7 +22,7 @@ F = TypeVar('F')
 
 
 @dataclass(frozen=True)
-class DynamoRepo(RepoABC[T, F]):
+class DynamoStore(StoreABC[T, F]):
     table: DynamoTable
     marshaller: MarshallerABC[T]
     dynamo_search_factory: DynamoSearchFactory[F] = DynamoSearchFactory[F]()
@@ -98,7 +98,7 @@ class DynamoRepo(RepoABC[T, F]):
         count = dynamo_search.count()
         return count
 
-    def paginated_search(self,
+    def paged_search(self,
                          search_filter: Optional[F] = None,
                          page_key: str = None,
                          limit: int = 20

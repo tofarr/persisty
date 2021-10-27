@@ -1,5 +1,4 @@
 import importlib
-from dataclasses import dataclass
 from typing import Optional, Callable, TypeVar, Union, Type
 
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet

@@ -17,3 +17,15 @@ class Edit(Generic[T]):
             raise ValueError('key_specified_for_upsert')
         if self.edit_type == EditType.DESTROY and self.value is not None:
             raise ValueError('value_specified_for_destroy')
+
+    @staticmethod
+    def create(value: T):
+        return Edit[T](EditType.CREATE, value=value)
+
+    @staticmethod
+    def update(value: T):
+        return Edit[T](EditType.UPDATE, value=value)
+
+    @staticmethod
+    def destroy(key: str):
+        return Edit[T](EditType.DESTROY, key)

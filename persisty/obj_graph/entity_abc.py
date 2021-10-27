@@ -1,14 +1,14 @@
 import dataclasses
 from abc import ABC
-from typing import Optional, TypeVar, Generic, Union, ForwardRef, List, Iterator
+from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator
 
-from persisty import get_default_persisty_context
+from persisty import get_persisty_context
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, NOT_INITIALIZED
 from persisty.obj_graph.selection_set import SelectionSet
 from persisty.page import Page
 from persisty.errors import PersistyError
-from persisty.repo_abc import RepoABC
+from persisty.store.store_abc import StoreABC
 
 T = TypeVar('T')
 F = TypeVar('F')
@@ -35,12 +35,12 @@ class EntityABC(Generic[T, F], ABC):
         return resolvers
 
     @classmethod
-    def get_repo(cls) -> RepoABC[T, F]:
-        repo_name = cls._get_wrapped_class().__name__
+    def get_store(cls) -> StoreABC[T]:
+        store_name = cls._get_wrapped_class().__name__
         if not hasattr(cls, '__persisty_context__'):
-            cls.__persisty_context__ = get_default_persisty_context()
-        repo = cls.__persisty_context__.get_repo(repo_name)
-        return repo
+            cls.__persisty_context__ = get_persisty_context()
+        store = cls.__persisty_context__.get_store(store_name)
+        return store
 
     @classmethod
     def _get_wrapped_class(cls):
@@ -77,8 +77,8 @@ class EntityABC(Generic[T, F], ABC):
              selections: Optional[SelectionSet] = None,
              deferred_resolutions: Optional[DeferredResolutionSet] = None
              ) -> Union[ForwardRef('EntityABC'), T]:
-        repo = cls.get_repo()
-        item = repo.read(key)
+        store = cls.get_store()
+        item = store.read(key)
         if item is None:
             return None
         entities = cls._wrap_entities((item,), selections, deferred_resolutions)
@@ -91,8 +91,8 @@ class EntityABC(Generic[T, F], ABC):
                  selections: Optional[SelectionSet] = None,
                  deferred_resolutions: Optional[DeferredResolutionSet] = None
                  ) -> Iterator[T]:
-        repo = cls.get_repo()
-        items = repo.read_all(keys, error_on_missing)
+        store = cls.get_store()
+        items = store.read_all(keys, error_on_missing)
         entities = cls._wrap_entities(items, selections, deferred_resolutions)
         return entities
 
@@ -101,26 +101,26 @@ class EntityABC(Generic[T, F], ABC):
                search_filter: Optional[F] = None,
                selections: Optional[SelectionSet] = None,
                deferred_resolutions: Optional[DeferredResolutionSet] = None):
-        repo = cls.get_repo()
-        items = repo.search(search_filter)
+        store = cls.get_store()
+        items = store.search(search_filter)
         entities = cls._wrap_entities(items, selections, deferred_resolutions)
         return entities
 
     @classmethod
     def count(cls, search_filter):
-        repo = cls.get_repo()
-        count = repo.count(search_filter)
+        store = cls.get_store()
+        count = store.count(search_filter)
         return count
 
     @classmethod
-    def paginated_search(cls,
-                         search_filter: Optional[F] = None,
-                         page_key: Optional[str] = None,
-                         limit: int = 20,
-                         selections: Optional[SelectionSet] = None,
-                         deferred_resolutions: Optional[DeferredResolutionSet] = None):
-        repo = cls.get_repo()
-        page = repo.paginated_search(search_filter, page_key, limit)
+    def paged_search(cls,
+                     search_filter: Optional[F] = None,
+                     page_key: Optional[str] = None,
+                     limit: int = 20,
+                     selections: Optional[SelectionSet] = None,
+                     deferred_resolutions: Optional[DeferredResolutionSet] = None):
+        store = cls.get_store()
+        page = store.paged_search(search_filter, page_key, limit)
         entities = cls._wrap_entities(iter(page.items), selections, deferred_resolutions)
         wrapped_page = Page(entities, page.next_page_key)
         return wrapped_page
@@ -130,25 +130,25 @@ class EntityABC(Generic[T, F], ABC):
         return self != self.__remote_values__
 
     def get_key(self):
-        key = self.get_repo().get_key(self)
+        key = self.get_store().get_key(self)
         return key
 
     @property
     def is_existing(self):
-        repo = self.get_repo()
-        key = repo.get_key(self)
+        store = self.get_store()
+        key = store.get_key(self)
         if key is None:
             return False
         if self.__remote_values__ is NOT_INITIALIZED:
-            self.__remote_values__ = repo.read(key)
+            self.__remote_values__ = store.read(key)
         return bool(self.__remote_values__)
 
     def load(self):
-        repo = self.get_repo()
-        key = repo.get_key(self.__remote_values__ or self)
+        store = self.get_store()
+        key = store.get_key(self.__remote_values__ or self)
         if key is None:
             raise PersistyError('missing_key')
-        self.__remote_values__ = repo.read(key)
+        self.__remote_values__ = store.read(key)
         if not self.__remote_values__:
             raise PersistyError(f'no_such_entity:{key}')
         for f in dataclasses.fields(self._get_wrapped_class()):
@@ -165,8 +165,8 @@ class EntityABC(Generic[T, F], ABC):
     def create(self):
         for resolver in self.get_resolvers():
             resolver.before_create(self)
-        repo = self.get_repo()
-        key = repo.create(self)
+        store = self.get_store()
+        key = store.create(self)
         setattr(self, self._get_key_attr(), key)
         self._build_remote_from_local()
         for resolver in self.get_resolvers():
@@ -176,16 +176,19 @@ class EntityABC(Generic[T, F], ABC):
         return self.__key_attr__ if hasattr(self, '__key_attr__') else 'id'
 
     def _build_remote_from_local(self):
-        # noinspection PyDataclass
+        self.__remote_values__ = self.to_item()
+
+    def to_item(self) -> T:
         init_fields = (f for f in dataclasses.fields(self._get_wrapped_class()) if f.init)
         kwargs = {f.name: getattr(self, f.name) for f in init_fields}
-        self.__remote_values__ = self._get_wrapped_class()(**kwargs)
+        item = self._get_wrapped_class()(**kwargs)
+        return item
 
     def update(self):
         for resolver in self.get_resolvers():
             resolver.before_update(self)
-        repo = self.get_repo()
-        repo.update(self)
+        store = self.get_store()
+        store.update(self)
         self._build_remote_from_local()
         for resolver in self.get_resolvers():
             resolver.after_update(self)
@@ -193,9 +196,9 @@ class EntityABC(Generic[T, F], ABC):
     def destroy(self):
         for resolver in self.get_resolvers():
             resolver.before_destroy(self)
-        repo = self.get_repo()
-        key = repo.get_key(self)
-        repo.destroy(key)
+        store = self.get_store()
+        key = store.get_key(self)
+        store.destroy(key)
         self.__remote_values__ = None
         for resolver in self.get_resolvers():
             resolver.after_destroy(self)
@@ -211,3 +214,10 @@ class EntityABC(Generic[T, F], ABC):
                 resolver.resolve(self, selections, local_deferred_resolutions)
         if deferred_resolutions is None:
             local_deferred_resolutions.resolve()
+
+    def __eq__(self, other):
+        for f in dataclasses.fields(self._get_wrapped_class()):
+            if getattr(self, f.name) != getattr(other, f.name, None):
+                return False
+        return True
+

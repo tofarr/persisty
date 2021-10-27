@@ -91,7 +91,7 @@ def _build_filter_expression(search_filter: ExternalItemType, query_attrs: Itera
                 if or_condition:
                     condition = condition & or_condition if condition else or_condition
         if not found:
-            raise RepoError(f'Unknown attribute in filter: {key}')
+            raise StoreError(f'Unknown attribute in filter: {key}')
     return condition
 
 
@@ -108,13 +108,13 @@ def _build_query_condition(value: Any,
     if not value:
         return None
     if not query_attrs:
-        raise RepoError('No query_attrs defined!')
+        raise StoreError('No query_attrs defined!')
     condition = None
     for query_attr in query_attrs:
         new_condition = Attr(query_attr).contains(value)
         condition = Or(condition, new_condition) if condition else new_condition
     if not condition:
-        raise RepoError(f'Query filter against no values!')
+        raise StoreError(f'Query filter against no values!')
     return condition
 
 

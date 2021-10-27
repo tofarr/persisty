@@ -7,7 +7,7 @@ from marshy.marshaller.marshaller_abc import MarshallerABC, T
 @dataclass(frozen=True)
 class Capabilities:
     """
-    Capabilities object that shows exactly what a repository is capable of
+    Capabilities object that shows exactly what a store is capable of
     """
     create: bool = False
     create_with_key: bool = False

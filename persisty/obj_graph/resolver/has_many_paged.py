@@ -1,9 +1,5 @@
 from typing import Optional, Callable, TypeVar, Union, Type
 
-import typing_inspect
-from marshy.utils import resolve_forward_refs
-
-from persisty.errors import PersistyError
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
@@ -62,7 +58,7 @@ class HasManyPaged(ResolverABC[A, B]):
         if key is None:
             return
         search_filter = self.search_filter_type(**{self.foreign_key_attr: owner_instance.get_key()})
-        entities = self._entity_type().paginated_search(search_filter, limit=self.limit)
+        entities = self._entity_type().paged_search(search_filter, limit=self.limit)
         return entities
 
     def before_destroy(self, owner_instance: A):

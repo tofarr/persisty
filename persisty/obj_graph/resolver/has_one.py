@@ -56,7 +56,7 @@ class HasManyPaged(ResolverABC[A, B]):
         if key is None:
             return
         search_filter = self.search_filter_type(**{self.foreign_key_attr: owner_instance.get_key()})
-        entities = self._entity_type().paginated_search(search_filter, limit=1)
+        entities = self._entity_type().paged_search(search_filter, limit=1)
         return entities[0]
 
     def before_destroy(self, owner_instance: A):

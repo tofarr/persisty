@@ -2,10 +2,10 @@ import base64
 import hashlib
 import json
 
-from marshy.types import ExternalItemType
+from marshy.types import ExternalType
 
 
-def to_base64(item: ExternalItemType) -> str:
+def to_base64(item: ExternalType) -> str:
     json_str = json.dumps(item)
     json_bytes = json_str.encode('utf-8')
     base64_bytes = base64.b64encode(json_bytes)
@@ -13,7 +13,7 @@ def to_base64(item: ExternalItemType) -> str:
     return base64_str
 
 
-def from_base64(base64_str: str) -> ExternalItemType:
+def from_base64(base64_str: str) -> ExternalType:
     base64_bytes = base64_str.encode('utf-8')
     json_bytes = base64.b64decode(base64_bytes)
     json_str = json_bytes.decode('utf-8')
