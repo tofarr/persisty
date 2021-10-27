@@ -21,11 +21,13 @@ class DeferredStore(WrapperStoreABC[T], ABC):
         store = self.persisty_context.get_store(self.name)
         return store
 
-    def get_item_type(self) -> Type[T]:
-        return self.store.get_item_type()
+    @property
+    def item_type(self) -> Type[T]:
+        return self.store.item_type
 
-    def get_capabilities(self) -> Capabilities:
-        return self.store.get_capabilities()
+    @property
+    def capabilities(self) -> Capabilities:
+        return self.store.capabilities
 
     def get_key(self, item: T) -> str:
         return self.store.get_key(item)

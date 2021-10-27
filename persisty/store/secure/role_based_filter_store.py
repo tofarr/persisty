@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from typing import Iterable, Callable, Any
 
-from persisty.capabilities import Capabilities, NO_CAPABILITIES
+from persisty.capabilities import NO_CAPABILITIES
 from persisty.store.capability_filter_store import CapabilityFilterStore
 from persisty.store.search_filter_store import SearchFilterStore
-from persisty.store.secure.current_user import get_current_user, U
+from persisty.store.secure.current_user import get_current_user
 from persisty.store.secure.role_check import RoleCheck
 from persisty.store.store_abc import StoreABC, T
 from persisty.store.wrapper_store_abc import WrapperStoreABC

@@ -43,6 +43,7 @@ class BelongsTo(ResolverABC[A, B]):
 
     def _get_entity_type(self) -> Type[B]:
         if self._entity_type:
+            # noinspection PyTypeChecker
             return self._entity_type
         resolved_type = resolve_forward_refs(self.resolved_type)
         entity_type = get_optional_type(resolved_type) or resolved_type

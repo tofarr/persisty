@@ -2,7 +2,7 @@ import base64
 import hashlib
 import json
 
-from marshy.types import ExternalType
+from marshy.types import ExternalType, ExternalItemType
 
 
 def to_base64(item: ExternalType) -> str:

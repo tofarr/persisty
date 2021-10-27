@@ -29,7 +29,8 @@ class DynamoStore(StoreABC[T, F]):
     projected_attributes: Union[Iterable[DynamoIndex], Sized, None] = None
     batch_size: int = 100
 
-    def get_capabilities(self) -> Capabilities:
+    @classmethod
+    def get_capabilities(cls) -> Capabilities:
         return ALL
 
     def get_key(self, item: T) -> str:
@@ -99,10 +100,10 @@ class DynamoStore(StoreABC[T, F]):
         return count
 
     def paged_search(self,
-                         search_filter: Optional[F] = None,
-                         page_key: str = None,
-                         limit: int = 20
-                         ) -> Page[T]:
+                     search_filter: Optional[F] = None,
+                     page_key: str = None,
+                     limit: int = 20
+                     ) -> Page[T]:
         exclusive_start_key = None
         search_filter_hash = None
         if page_key:

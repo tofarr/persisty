@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import TypeVar, Generic, Optional, Iterator, Type, Any
 
 from persisty.capabilities import Capabilities
