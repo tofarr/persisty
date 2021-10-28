@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Optional, Iterator, Type, Any
+from typing import TypeVar, Generic, Optional, Iterator, Type
 
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.page import Page
 from persisty.errors import PersistyError
+from persisty.search_filter import SearchFilter
 
 T = TypeVar('T')
 
@@ -62,23 +63,27 @@ class StoreABC(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def search(self, search_filter: Any = None) -> Iterator[T]:
+    def search(self, search_filter: Optional[SearchFilter[T]] = None) -> Iterator[T]:
         """ Search this store with the filter given. """
 
     @abstractmethod
-    def count(self, search_filter: Any = None) -> int:
+    def count(self, search_filter: Optional[SearchFilter[T]] = None) -> int:
         """ Get a count of the items in this store matching filter given. """
 
     @abstractmethod
-    def paged_search(self, search_filter: Any = None, page_key: str = None, limit: int = 20) -> Page[T]:
+    def paged_search(self,
+                     search_filter: Optional[SearchFilter[T]] = None,
+                     page_key: Optional[str] = None,
+                     limit: int = 20
+                     ) -> Page[T]:
         """ Get a page of results from this store. """
 
     def edit_all(self, edits: Iterator[Edit[T]]):
         """ Perform a bulk edit for items in this store. This action is not typically atomic. """
         for edit in edits:
             if edit.edit_type == EditType.CREATE:
-                self.create(edit.value)
+                self.create(edit.item)
             elif edit.edit_type == EditType.UPDATE:
-                self.update(edit.value)
+                self.update(edit.item)
             else:
                 self.destroy(edit.key)

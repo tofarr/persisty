@@ -16,7 +16,7 @@ class RoleCapabilities:
 
 
 @dataclass(frozen=True)
-class RoleBasedSecuredStore(WrapperStoreABC[T]):
+class RoleBasedCapabilityStore(WrapperStoreABC[T]):
     store: StoreABC[T]
     role_capabilities: Iterable[RoleCapabilities]
 

@@ -3,13 +3,14 @@ from typing import Optional, Callable, TypeVar, Union, Type
 from marshy.factory.optional_marshaller_factory import get_optional_type
 from marshy.utils import resolve_forward_refs
 
+from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A
 from persisty.obj_graph.selection_set import SelectionSet
+from persisty.search_filter import SearchFilter
 
-F = TypeVar('F')
 B = TypeVar('B')
 
 
@@ -17,15 +18,13 @@ class HasManyPaged(ResolverABC[A, B]):
 
     def __init__(self,
                  foreign_key_attr: str,
-                 search_filter_type: Type[F],
-                 entity_type: Union[str, EntityABC[B, F]],
+                 entity_type: Union[str, EntityABC[B]],
                  inverse_attr: Optional[str] = None,
                  on_destroy: OnDestroy = OnDestroy.NO_ACTION,
                  private_name_: Optional[str] = None,
                  resolved_type: Optional[Type[B]] = None):
         super().__init__(private_name_, resolved_type)
         self.foreign_key_attr = foreign_key_attr
-        self.search_filter_type = search_filter_type
         self.entity_type = entity_type
         self.inverse_attr = inverse_attr
         self.on_destroy = on_destroy
@@ -55,7 +54,7 @@ class HasManyPaged(ResolverABC[A, B]):
         key = owner_instance.get_key()
         if key is None:
             return
-        search_filter = self.search_filter_type(**{self.foreign_key_attr: owner_instance.get_key()})
+        search_filter = SearchFilter(AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key))
         entities = self._entity_type().paged_search(search_filter, limit=1)
         return entities[0]
 

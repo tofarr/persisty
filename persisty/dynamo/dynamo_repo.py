@@ -154,7 +154,7 @@ class DynamoStore(StoreABC[T, F]):
         with dynamo.dynamodb_table(table.name).batch_writer() as batch:
             for edit in edits:
                 if edit.edit_type in [EditType.CREATE, EditType.UPDATE]:
-                    dumped = self.marshaller.dump(edit.value)
+                    dumped = self.marshaller.dump(edit.item)
                     batch.put_item(Item=dumped)
                 elif edit.edit_type == EditType.DESTROY:
                     batch.delete_item(Key=edit.key)

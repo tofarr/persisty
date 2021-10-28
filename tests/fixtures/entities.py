@@ -14,5 +14,4 @@ class MemberEntity(EntityABC, Member):
 
 
 class BandEntity(EntityABC, Band):
-    members: List[MEMBER_ENTITY_CLASS] = HasMany(foreign_key_attr='band_id', search_filter_type=MemberFilter,
-                                                 inverse_attr='_band')
+    members: List[MEMBER_ENTITY_CLASS] = HasMany(foreign_key_attr='band_id', inverse_attr='_band')

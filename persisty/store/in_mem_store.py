@@ -1,6 +1,6 @@
 import itertools
 from dataclasses import dataclass, field
-from typing import Optional, Iterator, Type, Dict, Any
+from typing import Optional, Iterator, Type, Dict
 from uuid import uuid4
 
 from marshy.default_context import new_default_context
@@ -9,7 +9,7 @@ from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
 
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
-from persisty.store.in_mem.in_mem_search_filter import InMemSearchFilter
+from persisty.search_filter import SearchFilter
 from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.store.store_abc import StoreABC, T
@@ -19,7 +19,6 @@ from persisty.store.store_abc import StoreABC, T
 class InMemStore(StoreABC[T]):
     """ In memory store. Useful for caching and mocking """
     marshaller: MarshallerABC[T]
-    mem_search_filter: InMemSearchFilter
     key_attr: str = 'id'
     store: Dict[str, ExternalItemType] = field(default_factory=dict)
     name: str = None
@@ -47,9 +46,9 @@ class InMemStore(StoreABC[T]):
         if key is None:
             key = str(uuid4())
             setattr(item, self.key_attr, key)
-        dumped = self.marshaller.dump(item)
         if key in self.store:
             raise PersistyError(f'existing_value:{item}')
+        dumped = self.marshaller.dump(item)
         self.store[key] = dumped
         return key
 
@@ -74,17 +73,22 @@ class InMemStore(StoreABC[T]):
         del self.store[key]
         return True
 
-    def search(self, search_filter: Any = None) -> Iterator[T]:
-        filtered_results = self.mem_search_filter.filter_results(search_filter, iter(self.store.values()))
-        items = (self.marshaller.load(item) for item in filtered_results)
+    def search(self, search_filter: Optional[SearchFilter] = None) -> Iterator[T]:
+        items = (self.marshaller.load(item) for item in self.store.values())
+        if search_filter:
+            items = search_filter.filter_items(items)
         return items
 
-    def count(self, search_filter: Any = None) -> int:
+    def count(self, search_filter: Optional[SearchFilter] = None) -> int:
         items = self.search(search_filter)
         count = sum(1 for _ in items)
         return count
 
-    def paged_search(self, search_filter: Any = None, page_key: str = None, limit: int = 20) -> Page[T]:
+    def paged_search(self,
+                     search_filter: Optional[SearchFilter] = None,
+                     page_key: Optional[str] = None,
+                     limit: int = 20
+                     ) -> Page[T]:
         items = self.search(search_filter)
         if page_key is not None:
             while True:
@@ -97,12 +101,10 @@ class InMemStore(StoreABC[T]):
 
 
 def mem_store(item_type: Type[T],
-              filter_type: Any,
+              key_attr: Optional[str] = 'id',
               marshaller_context: Optional[MarshallerContext] = None
               ) -> InMemStore[T]:
     if marshaller_context is None:
         marshaller_context = new_default_context()
     marshaller = marshaller_context.get_marshaller(item_type)
-    filter_marshaller = marshaller_context.get_marshaller(filter_type)
-    mem_search_filter = InMemSearchFilter(filter_marshaller)
-    return InMemStore(marshaller, mem_search_filter, name=marshaller.marshalled_type.__name__)
+    return InMemStore(marshaller, key_attr=key_attr, name=marshaller.marshalled_type.__name__)

@@ -1,9 +1,10 @@
 from abc import abstractmethod
-from typing import Optional, Iterator, Type, Any
+from typing import Optional, Iterator, Type
 
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
 from persisty.page import Page
+from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import T, StoreABC
 
 
@@ -44,13 +45,17 @@ class WrapperStoreABC(StoreABC[T]):
     def destroy(self, key: str) -> bool:
         return self.store.destroy(key)
 
-    def search(self, search_filter: Any = None) -> Iterator[T]:
+    def search(self, search_filter: Optional[SearchFilter[T]] = None) -> Iterator[T]:
         return self.store.search(search_filter)
 
-    def count(self, search_filter: Any = None) -> int:
+    def count(self, search_filter: Optional[SearchFilter[T]] = None) -> int:
         return self.store.count(search_filter)
 
-    def paged_search(self, search_filter: Any = None, page_key: str = None, limit: int = 20) -> Page[T]:
+    def paged_search(self,
+                     search_filter: Optional[SearchFilter[T]] = None,
+                     page_key: str = None,
+                     limit: int = 20
+                     ) -> Page[T]:
         return self.store.paged_search(search_filter, page_key, limit)
 
     def edit_all(self, edits: Iterator[Edit[T]]):

@@ -2,7 +2,7 @@ import itertools
 from time import time
 
 from dataclasses import dataclass, field
-from typing import Optional, Iterator, Any, Dict
+from typing import Optional, Iterator, Dict
 
 from marshy import ExternalType, get_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
@@ -10,6 +10,7 @@ from marshy.marshaller.marshaller_abc import MarshallerABC
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.page import Page
+from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 
@@ -23,9 +24,11 @@ class TTLEntry:
 @dataclass(frozen=True)
 class TTLCacheStore(WrapperStoreABC[T]):
     """
-    Allows things to be a little bit stale in the name of performance.
+    A store with a local in memory cache, allowing for things to be a little bit stale in the name of performance.
+    Intended for cases where processing reads the same items repeatedly from the local store, allowing for simpler
+    but performant business logic as the client code does not have to save references to the items.
     """
-    store: StoreABC[T]
+    wrapped_store: StoreABC[T]
     timeout: int = 30
     batch_size: int = 100
     item_marshaller: MarshallerABC[T] = None
@@ -34,6 +37,14 @@ class TTLCacheStore(WrapperStoreABC[T]):
     def __post_init__(self):
         if self.item_marshaller is None:
             object.__setattr__(self, 'item_marshaller', get_default_context().get_marshaller(self.store.item_type))
+
+    def clear(self):
+        """ Clear the cache """
+        self._item_cache.clear()
+
+    @property
+    def store(self) -> StoreABC[T]:
+        return self.wrapped_store
 
     def _store_item_in_cache(self, key: str, item: T):
         self._item_cache[key] = TTLEntry(self.item_marshaller.dump(item), int(time()) + self.timeout)
@@ -57,15 +68,22 @@ class TTLCacheStore(WrapperStoreABC[T]):
         return item
 
     def read_all(self, keys: Iterator[str], error_on_missing: bool = True) -> Iterator[T]:
+        keys = iter(keys)
         while True:
             now = int(time())
             batch_keys = list(itertools.islice(keys, self.batch_size))
-            keys_not_in_cache = [k for k in keys if k not in self._item_cache or self._item_cache[k].expire_at <= now]
+            if not batch_keys:
+                return
+            keys_not_in_cache = [k for k in batch_keys
+                                 if k not in self._item_cache or self._item_cache[k].expire_at <= now]
             if keys_not_in_cache:
                 for item in self.store.read_all(keys_not_in_cache, error_on_missing):
-                    self._store_item_in_cache(self.get_key(item), item)
+                    if item is not None:
+                        self._store_item_in_cache(self.get_key(item), item)
             for key in batch_keys:
-                yield self.item_marshaller.load(self._item_cache[key].value)
+                cache_entry = self._item_cache.get(key)
+                item = None if cache_entry is None else self.item_marshaller.load(cache_entry.value)
+                yield item
 
     def update(self, item: T) -> T:
         item = self.store.update(item)
@@ -79,21 +97,26 @@ class TTLCacheStore(WrapperStoreABC[T]):
             del self._item_cache[key]
         return destroyed
 
-    def search(self, search_filter: Any = None) -> Iterator[T]:
+    def search(self, search_filter: Optional[SearchFilter[T]] = None) -> Iterator[T]:
         for item in self.store.search(search_filter):
             self._store_item_in_cache(self.get_key(item), item)
             yield item
 
-    def paged_search(self, search_filter: Any = None, page_key: str = None, limit: int = 20) -> Page[T]:
+    def paged_search(self,
+                     search_filter: Optional[SearchFilter[T]] = None,
+                     page_key: str = None,
+                     limit: int = 20
+                     ) -> Page[T]:
         return self.store.paged_search(search_filter, page_key, limit)
 
     def edit_all(self, edits: Iterator[Edit[T]]):
+        edits = self._edit_iterator(edits)
         return self.store.edit_all(edits)
 
     def _edit_iterator(self, edits: Iterator[Edit[T]]):
         for edit in edits:
             if edit.edit_type == EditType.UPDATE:
-                key = self.get_key(edit.edit_type)
+                key = self.get_key(edit.item)
                 if key in self._item_cache:
                     del self._item_cache[key]
             elif edit.edit_type == EditType.DESTROY:

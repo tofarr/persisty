@@ -17,10 +17,14 @@ def timestamp_str():
 @dataclass(frozen=True)
 class TimestampStore(WrapperStoreABC[T]):
     """ Store which updates timestamps on items prior to storage. """
-    store: StoreABC[T]
+    wrapped_store: StoreABC[T]
     created_at_attr: str = 'created_at'
     updated_at_attr: str = 'updated_at'
     timestamp: Callable = timestamp_str
+
+    @property
+    def store(self):
+        return self.wrapped_store
 
     @property
     def name(self) -> str:
@@ -43,9 +47,9 @@ class TimestampStore(WrapperStoreABC[T]):
     def _process_edit(self, edit):
         if edit.edit_type == EditType.CREATE:
             now = self.timestamp()
-            setattr(edit.value, self.created_at_attr, now)
-            setattr(edit.value, self.updated_at_attr, now)
+            setattr(edit.item, self.created_at_attr, now)
+            setattr(edit.item, self.updated_at_attr, now)
         elif edit.edit_type == EditType.UPDATE:
             now = self.timestamp()
-            setattr(edit.value, self.updated_at_attr, now)
+            setattr(edit.item, self.updated_at_attr, now)
         return edit

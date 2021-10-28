@@ -120,7 +120,7 @@ def _build_query_condition(value: Any,
 
 def _sanitize(value: Any):
     if isinstance(value, Enum):
-        return value.value
+        return value.item
     else:
         return value
 

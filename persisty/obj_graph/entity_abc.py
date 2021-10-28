@@ -8,10 +8,10 @@ from persisty.obj_graph.resolver.resolver_abc import ResolverABC, NOT_INITIALIZE
 from persisty.obj_graph.selection_set import SelectionSet
 from persisty.page import Page
 from persisty.errors import PersistyError
+from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
 
 T = TypeVar('T')
-F = TypeVar('F')
 
 REMOTE_VALUES_ATTR = '__remote_values__'
 ITEMS_ATTR = 'items'
@@ -19,7 +19,7 @@ KEY_ATTR = '__key_attr__'
 ID = 'id'
 
 
-class EntityABC(Generic[T, F], ABC):
+class EntityABC(Generic[T], ABC):
 
     __wrapped_class__: T = None
     __batch_size__: 100
@@ -98,7 +98,7 @@ class EntityABC(Generic[T, F], ABC):
 
     @classmethod
     def search(cls,
-               search_filter: Optional[F] = None,
+               search_filter: Optional[SearchFilter[T]] = None,
                selections: Optional[SelectionSet] = None,
                deferred_resolutions: Optional[DeferredResolutionSet] = None):
         store = cls.get_store()
@@ -107,14 +107,14 @@ class EntityABC(Generic[T, F], ABC):
         return entities
 
     @classmethod
-    def count(cls, search_filter):
+    def count(cls, search_filter: Optional[SearchFilter[T]] = None):
         store = cls.get_store()
         count = store.count(search_filter)
         return count
 
     @classmethod
     def paged_search(cls,
-                     search_filter: Optional[F] = None,
+                     search_filter: Optional[SearchFilter[T]] = None,
                      page_key: Optional[str] = None,
                      limit: int = 20,
                      selections: Optional[SelectionSet] = None,
@@ -220,4 +220,3 @@ class EntityABC(Generic[T, F], ABC):
             if getattr(self, f.name) != getattr(other, f.name, None):
                 return False
         return True
-

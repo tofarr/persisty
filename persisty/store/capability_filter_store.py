@@ -12,11 +12,15 @@ from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 
 @dataclass(frozen=True)
 class CapabilityFilterStore(WrapperStoreABC[T]):
-    store: StoreABC[T]
+    wrapped_store: StoreABC[T]
     capabilities: Capabilities = ALL_CAPABILITIES
 
     def __post_init__(self):
-        object.__setattr__(self, 'capabilities', self.capabilities and self.store.capabilities)
+        object.__setattr__(self, 'capabilities', self.capabilities & self.store.capabilities)
+
+    @property
+    def store(self):
+        return self.wrapped_store
 
     def create(self, item: T) -> str:
         if not self.capabilities.create:
