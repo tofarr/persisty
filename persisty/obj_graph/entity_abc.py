@@ -126,6 +126,9 @@ class EntityABC(Generic[T], ABC):
 
     @property
     def is_save_required(self):
+        for resolver in self.get_resolvers():
+            if resolver.is_overridden(self):
+                return True
         return self != self.__remote_values__
 
     def get_key(self):
@@ -216,7 +219,7 @@ class EntityABC(Generic[T], ABC):
 
     def unresolve_all(self):
         for resolver in self.get_resolvers():
-            resolver.reset(self)
+            resolver.unresolve(self)
 
     def __eq__(self, other):
         for f in dataclasses.fields(self._get_wrapped_class()):

@@ -1,15 +1,17 @@
-from typing import List, Set
+from typing import Iterable
 from unittest import TestCase
 
 from persisty import get_persisty_context
 from persisty.errors import PersistyError
+from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.has_many import HasMany
 from persisty.page import Page
+from persisty.search_filter import SearchFilter
 from persisty.store.in_mem_store import in_mem_store
 from tests.fixtures.data import setup_bands, setup_members
-from tests.fixtures.entities import BandEntity, MEMBER_ENTITY_CLASS
+from tests.fixtures.entities import BandEntity, MEMBER_ENTITY_CLASS, MemberEntity
 from tests.fixtures.items import Band, Member
 
 BEATLES_MEMBER_IDS = {'john', 'paul', 'george', 'ringo'}
@@ -32,11 +34,11 @@ class TestHasMany(TestCase):
 
     def test_destroy_cascade(self):
         class CascadingBandEntity(EntityABC, Band):
-            members: List[MEMBER_ENTITY_CLASS] = HasMany(foreign_key_attr='band_id',
-                                                         inverse_attr='_band',
-                                                         on_destroy=OnDestroy.CASCADE)
+            members: Iterable[MEMBER_ENTITY_CLASS] = \
+                HasMany(foreign_key_attr='band_id', inverse_attr='_band', on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingBandEntity)
-        members = list(get_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS), error_on_missing=False))
+        store = get_persisty_context().get_store(Member)
+        members = list(store.read_all(iter(BEATLES_MEMBER_IDS), error_on_missing=False))
         assert members == [None, None, None, None]
 
     @staticmethod
@@ -47,9 +49,8 @@ class TestHasMany(TestCase):
 
     def test_destroy_nullify(self):
         class NullifyingBandEntity(EntityABC, Band):
-            members: List[MEMBER_ENTITY_CLASS] = HasMany(foreign_key_attr='band_id',
-                                                         inverse_attr='_band',
-                                                         on_destroy=OnDestroy.NULLIFY)
+            members: Iterable[MEMBER_ENTITY_CLASS] = \
+                HasMany(foreign_key_attr='band_id', inverse_attr='_band', on_destroy=OnDestroy.NULLIFY)
         self._do_destroy(NullifyingBandEntity)
         for m in get_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS)):
             assert m.band_id is None
@@ -62,3 +63,33 @@ class TestHasMany(TestCase):
                                                              on_destroy=OnDestroy.NULLIFY)
 
             self._do_destroy(NullifyingBandEntity)
+
+    def test_update_with_set(self):
+        band = BandEntity.read('beatles')
+        band.members = [*list(band.members)[:3], MemberEntity('pete', 'Pete Best', None, '1941-11-24')]
+        band.save()
+        assert BandEntity.read('beatles') == band
+        members = list(MemberEntity.search(SearchFilter(AttrFilter('band_id', AttrFilterOp.eq, 'beatles'))))
+        assert len(members) == 4
+        assert band.members == members
+        band.save()
+        assert len(members) == 4
+        assert band.members == members
+
+    def test_create_with_set(self):
+        band = BandEntity('white_stripes', 'The White Stripes', 1997)
+        band.members = [
+            MemberEntity('jack', 'Jack White', None, '1975-07-09'),
+            MemberEntity('meg', 'Meg White', None, '1974-12-10')
+        ]
+        band.save()
+        assert BandEntity.read('white_stripes') == band
+        members = list(MemberEntity.search(SearchFilter(AttrFilter('band_id', AttrFilterOp.eq, 'white_stripes'))))
+        assert len(members) == 2
+        assert band.members == members
+
+    def test_unresolve_all(self):
+        band = BandEntity.read('beatles')
+        band.members = [*list(band.members)[:3], MemberEntity('pete', 'Pete Best', None, '1941-11-24')]
+        band.unresolve_all()
+        assert {m.id for m in band.members} == {'john', 'paul', 'george', 'ringo'}

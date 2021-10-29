@@ -37,4 +37,18 @@ class TestBelongsTo(TestCase):
         john = MemberEntity.read('john')
         john.band = BandEntity('bon_jovi', 'Bon Jovi')
         assert john.band_id == 'bon_jovi'
+        assert john.is_save_required
 
+    def test_set_none(self):
+        john = MemberEntity.read('john')
+        john.band = None
+        assert john.band_id is None
+        assert john.is_save_required
+
+    def test_create_connected(self):
+        grace = MemberEntity('grace', 'Grace Slick', None, '1939-10-30')
+        grace.band = BandEntity('jefferson', 'Jefferson Airplane')
+        grace.save()
+        assert not grace.is_save_required
+        assert not grace.band.is_save_required
+        assert grace.band == BandEntity.read('jefferson')

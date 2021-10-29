@@ -4,6 +4,7 @@ from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.has_many_paged import HasManyPaged
 from persisty.page import Page
+from tests.fixtures.data import BANDS
 from tests.fixtures.entities import MEMBER_ENTITY_CLASS
 from tests.fixtures.items import Band, Member
 from tests.obj_graph.test_has_many import TestHasMany
@@ -51,4 +52,7 @@ class TestHasManyPaged(TestHasMany):
             class NullifyingBandEntity(EntityABC, Band):
                 members = HasManyPaged(foreign_key_attr='band_id', inverse_attr='_band', on_destroy=OnDestroy.NULLIFY)
 
-            self._do_destroy(NullifyingBandEntity)
+    def test_set(self):
+        beatles = BandEntityPaged.read('beatles')
+        with self.assertRaises(PersistyError):
+            beatles.members = Page(BANDS)

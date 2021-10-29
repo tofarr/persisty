@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from persisty import get_persisty_context
+from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
@@ -16,8 +17,7 @@ BEATLES_MEMBER_IDS = {'john', 'paul', 'george', 'ringo'}
 
 class CountBandula(EntityABC, Band):
     num_members: int = Count(foreign_key_attr='band_id',
-                             entity_type=MemberEntity,
-                             on_destroy=OnDestroy.NO_ACTION)
+                             entity_type=MemberEntity)
 
 
 class TestCount(TestCase):
@@ -68,3 +68,8 @@ class TestCount(TestCase):
         beatles = entity.read('beatles')
         assert beatles.num_members == 4
         beatles.destroy()
+
+    def test_set(self):
+        beatles = CountBandula.read('beatles')
+        with self.assertRaises(PersistyError):
+            beatles.num_members = 5

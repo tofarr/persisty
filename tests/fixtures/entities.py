@@ -1,9 +1,9 @@
-from typing import ForwardRef, List
+from typing import ForwardRef, Iterable
 
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.belongs_to import BelongsTo
 from persisty.obj_graph.resolver.has_many import HasMany
-from tests.fixtures.items import Member, Band, MemberFilter
+from tests.fixtures.items import Member, Band
 
 BAND_ENTITY_CLASS = ForwardRef(f'{__name__}.BandEntity')
 MEMBER_ENTITY_CLASS = ForwardRef(f'{__name__}.MemberEntity')
@@ -14,4 +14,4 @@ class MemberEntity(EntityABC, Member):
 
 
 class BandEntity(EntityABC, Band):
-    members: List[MEMBER_ENTITY_CLASS] = HasMany(foreign_key_attr='band_id', inverse_attr='_band')
+    members: Iterable[MEMBER_ENTITY_CLASS] = HasMany(foreign_key_attr='band_id', inverse_attr='_band')

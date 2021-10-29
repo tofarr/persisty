@@ -1,9 +1,9 @@
-import importlib
-from typing import Optional, Callable, Union, Type
+from typing import Optional, Callable, Type
 
 from marshy.factory.optional_marshaller_factory import get_optional_type
 from marshy.utils import resolve_forward_refs
 
+from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilterOp, AttrFilter
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.entity_abc import EntityABC
@@ -40,6 +40,9 @@ class Count(ResolverABC[A, int]):
         search_filter = SearchFilter(AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key))
         count = self._entity_type.count(search_filter)
         callback(count)
+
+    def __set__(self, instance, value):
+        raise PersistyError(f'set_not_supported:{self.name}')
 
     def before_destroy(self, owner_instance: A):
         if self.on_destroy == OnDestroy.NO_ACTION or owner_instance.get_key() is None:

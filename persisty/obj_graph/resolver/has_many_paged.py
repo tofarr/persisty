@@ -1,5 +1,6 @@
 from typing import Optional, Callable, TypeVar, Type
 
+from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
@@ -50,7 +51,7 @@ class HasManyPaged(ResolverABC[A, B]):
         entity_type = self._entity_type
         if entity_type:
             return entity_type
-        self._entity_type = get_entity_type(self.resolved_type, Page)
+        self._entity_type = get_entity_type(self.resolved_type, (Page,))
         return self._entity_type
 
     def _search_filter(self, owner_instance: A):
@@ -64,6 +65,9 @@ class HasManyPaged(ResolverABC[A, B]):
         search_filter = self._search_filter(owner_instance)
         entities = self._get_entity_type().search(search_filter)
         return entities
+
+    def __set__(self, instance, value):
+        raise PersistyError(f'set_not_supported:{self.name}')
 
     def before_destroy(self, owner_instance: A):
         if self.on_destroy == OnDestroy.CASCADE:

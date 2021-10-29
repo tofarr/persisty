@@ -61,5 +61,16 @@ class BelongsTo(ResolverABC[A, B]):
 
     def __set__(self, owner_instance: A, value: B):
         super().__set__(owner_instance, value)
-        key = value.get_key()
+        key = None if value is None else value.get_key()
         setattr(owner_instance, self.key_attr, key)
+
+    def before_create(self, owner_instance: A):
+        if self.is_resolved(owner_instance):
+            value = getattr(owner_instance, self.private_name)
+            if value.is_save_required:
+                value.save()
+                key = None if value is None else value.get_key()
+                setattr(owner_instance, self.key_attr, key)
+
+    def before_update(self, owner_instance: A):
+        self.before_create(owner_instance)

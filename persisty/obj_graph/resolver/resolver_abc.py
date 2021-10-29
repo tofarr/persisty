@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Optional, Type, Callable
 
-from persisty.errors import PersistyError
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.selection_set import SelectionSet, from_list
 
@@ -41,13 +40,16 @@ class ResolverABC(ABC, Generic[A, B]):
     def __set__(self, owner_instance: A, value: B):
         setattr(owner_instance, self.private_name, value)
 
-    def reset(self, owner_instance: A):
+    def unresolve(self, owner_instance: A):
         setattr(owner_instance, self.private_name, NOT_INITIALIZED)
 
     def is_resolved(self, owner_instance: A) -> bool:
         value = getattr(owner_instance, self.private_name, NOT_INITIALIZED)
         is_resolved = value is not NOT_INITIALIZED
         return is_resolved
+
+    def is_overridden(self, owner_instance: A) -> bool:
+        return False
 
     def is_selected(self, selections: SelectionSet):
         return bool(selections.get_selections(self.name))
