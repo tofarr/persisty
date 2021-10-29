@@ -25,11 +25,6 @@ MEMBERS = [
 ]
 
 
-def setup_test_data(persisty_context: PersistyContext):
-    setup_bands(persisty_context.get_store(Band))
-    setup_members(persisty_context.get_store(Member))
-
-
 def setup_bands(store: StoreABC[Band]):
     for band in BANDS:
         store.create(band)

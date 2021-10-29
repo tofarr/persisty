@@ -1,5 +1,5 @@
 from persisty import get_persisty_context
-from persisty.store.in_mem_store import mem_store
+from persisty.store.in_mem_store import in_mem_store
 from persisty.store.ttl_cache_store import TTLCacheStore
 from tests.fixtures.data import setup_bands
 from tests.fixtures.items import Band, BandFilter
@@ -10,7 +10,7 @@ class TestTTLCacheStore(TestInMemStore):
 
     def setUp(self):
         persisty_context = get_persisty_context()
-        store = TTLCacheStore(mem_store(Band))
+        store = TTLCacheStore(in_mem_store(Band))
         setup_bands(store)
         persisty_context.register_store(store)
 

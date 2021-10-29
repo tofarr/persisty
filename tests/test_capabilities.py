@@ -46,6 +46,10 @@ class TestEdit(TestCase):
         for f in dataclasses.fields(Capabilities):
             assert Capabilities(**{f.name: True}) != NO_CAPABILITIES
 
+    def test_lt(self):
+        assert NO_CAPABILITIES < ALL_CAPABILITIES
+        assert ALL_CAPABILITIES > NO_CAPABILITIES
+
     def test_marshaller(self):
         marshaller = CapabilitiesMarshaller()
         assert marshaller.load([]) == NO_CAPABILITIES

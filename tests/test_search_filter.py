@@ -71,3 +71,10 @@ class TestEdit(TestCase):
         assert filter_.match(BANDS[0])
         assert filter_.match(BANDS[1])
         assert not filter_.match(BANDS[2])
+
+    def test_attr_filter_none(self):
+        filter_ = AttrFilter('year_formed', AttrFilterOp.gt, 1900)
+        assert not filter_.match(Band('imaginary', 'Air Guitarists'))
+        filter_ = AttrFilter('year_formed', AttrFilterOp.gt, None)
+        assert not filter_.match(Band('imaginary', 'Air Guitarists', 2021))
+

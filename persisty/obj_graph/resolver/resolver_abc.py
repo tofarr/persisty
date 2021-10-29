@@ -29,7 +29,7 @@ class ResolverABC(ABC, Generic[A, B]):
         if self.resolved_type is None:
             self.resolved_type = owner.__annotations__.get(self.name)
             if not self.resolved_type:
-                raise PersistyError(f'missing_annotation:{owner}:{self.name}')
+                raise ValueError(f'missing_annotation:{owner}:{self.name}')
 
     def __get__(self, owner_instance: A, owner_type: Type[A]) -> B:
         if not self.is_resolved(owner_instance):
@@ -40,6 +40,9 @@ class ResolverABC(ABC, Generic[A, B]):
 
     def __set__(self, owner_instance: A, value: B):
         setattr(owner_instance, self.private_name, value)
+
+    def reset(self, owner_instance: A):
+        setattr(owner_instance, self.private_name, NOT_INITIALIZED)
 
     def is_resolved(self, owner_instance: A) -> bool:
         value = getattr(owner_instance, self.private_name, NOT_INITIALIZED)
@@ -54,7 +57,7 @@ class ResolverABC(ABC, Generic[A, B]):
                 selections: Optional[SelectionSet] = None,
                 deferred_resolutions: Optional[DeferredResolutionSet] = None):
         """ Resolve this resolver for the owner given """
-        local_deferred_resolutions = deferred_resolutions or DeferredResolutionSet()
+        local_deferred_resolutions = DeferredResolutionSet() if deferred_resolutions is None else deferred_resolutions
         sub_selections = selections.get_selections(self.name) if selections else None
 
         def callback(value: Optional[B]):

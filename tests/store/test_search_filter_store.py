@@ -3,7 +3,7 @@ from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
-from persisty.store.in_mem_store import mem_store
+from persisty.store.in_mem_store import in_mem_store
 from persisty.store.search_filter_store import SearchFilterStore
 from tests.fixtures.data import setup_bands
 from tests.fixtures.items import Band
@@ -14,7 +14,7 @@ class TestSearchFilterStore(TestInMemStore):
 
     def setUp(self):
         persisty_context = get_persisty_context()
-        wrapped_store = mem_store(Band)
+        wrapped_store = in_mem_store(Band)
         wrapped_store.create(Band('mozart', 'Mozart', 1756))  # mostly filtered out
         store = SearchFilterStore(wrapped_store, AttrFilter('year_formed', AttrFilterOp.gte, 1900))
         setup_bands(store)

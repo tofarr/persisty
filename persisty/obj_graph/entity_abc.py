@@ -1,5 +1,6 @@
 import dataclasses
 from abc import ABC
+import inspect
 from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator
 
 from persisty import get_persisty_context
@@ -30,9 +31,7 @@ class EntityABC(Generic[T], ABC):
 
     @classmethod
     def get_resolvers(cls) -> Iterator[ResolverABC]:
-        cls_annotations = cls.__dict__.get('__annotations__', {})
-        resolvers = (a for a in cls_annotations.values() if isinstance(a, ResolverABC))
-        return resolvers
+        return (e[1] for e in inspect.getmembers(cls) if isinstance(e[1], ResolverABC))
 
     @classmethod
     def get_store(cls) -> StoreABC[T]:
@@ -214,6 +213,10 @@ class EntityABC(Generic[T], ABC):
                 resolver.resolve(self, selections, local_deferred_resolutions)
         if deferred_resolutions is None:
             local_deferred_resolutions.resolve()
+
+    def unresolve_all(self):
+        for resolver in self.get_resolvers():
+            resolver.reset(self)
 
     def __eq__(self, other):
         for f in dataclasses.fields(self._get_wrapped_class()):

@@ -6,7 +6,7 @@ from persisty.edit_type import EditType
 from persisty.errors import PersistyError
 from persisty.search_filter import search_filter_from_dataclass
 from persisty.store.capability_filter_store import CapabilityFilterStore
-from persisty.store.in_mem_store import mem_store
+from persisty.store.in_mem_store import in_mem_store
 from tests.fixtures.data import setup_bands, BANDS
 from tests.fixtures.items import Band, BandFilter
 
@@ -14,7 +14,7 @@ from tests.fixtures.items import Band, BandFilter
 class TestInMemStore(TestCase):
 
     def get_band_store(self, capabilities: Capabilities) -> CapabilityFilterStore[Band]:
-        store = mem_store(Band)
+        store = in_mem_store(Band)
         setup_bands(store)
         store = CapabilityFilterStore(store, capabilities)
         return store

@@ -58,3 +58,8 @@ class BelongsTo(ResolverABC[A, B]):
             callbacks = []
             deferred_lookup.to_resolve[key] = callbacks
         callbacks.append(callback)
+
+    def __set__(self, owner_instance: A, value: B):
+        super().__set__(owner_instance, value)
+        key = value.get_key()
+        setattr(owner_instance, self.key_attr, key)

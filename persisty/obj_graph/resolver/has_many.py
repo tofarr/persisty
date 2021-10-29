@@ -1,4 +1,4 @@
-from typing import Optional, Callable, TypeVar, Type
+from typing import Optional, Callable, TypeVar, Type, List
 
 import typing_inspect
 from marshy.utils import resolve_forward_refs
@@ -30,10 +30,14 @@ class HasMany(ResolverABC[A, B]):
 
     def resolve_value(self,
                       owner_instance: A,
-                      callback: Callable[[B], None],
+                      callback: Callable[[Optional[List[B]]], None],
                       sub_selections: Optional[SelectionSet],
                       deferred_resolutions: Optional[DeferredResolutionSet] = None):
-        entities = list(self._search(owner_instance))
+        entities = self._search(owner_instance)
+        if entities is None:
+            callback(None)
+            return
+        entities = list(entities)
         if sub_selections:
             for entity in entities:
                 entity.resolve_all(sub_selections, deferred_resolutions)

@@ -58,5 +58,8 @@ class AttrFilter(ItemFilterABC[A], Generic[A, B]):
 
     def match(self, item: A) -> bool:
         value = getattr(item, self.attr)
-        result = self.op.value(value, self.value)
-        return result
+        try:
+            result = self.op.value(value, self.value)
+            return result
+        except TypeError:
+            return False  # Comparison failed

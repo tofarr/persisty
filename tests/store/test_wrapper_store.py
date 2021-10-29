@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from persisty import get_persisty_context
-from persisty.store.in_mem_store import mem_store
+from persisty.store.in_mem_store import in_mem_store
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 from tests.fixtures.data import setup_bands
@@ -23,7 +23,7 @@ class TestTTLCacheStore(TestInMemStore):
 
     def setUp(self):
         persisty_context = get_persisty_context()
-        store = WrapperStore[T](mem_store(Band))
+        store = WrapperStore[T](in_mem_store(Band))
         setup_bands(store)
         persisty_context.register_store(store)
 

@@ -4,7 +4,7 @@ from unittest import TestCase
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.search_filter import search_filter_from_dataclass
-from persisty.store.in_mem_store import mem_store
+from persisty.store.in_mem_store import in_mem_store
 from persisty.store.timestamp_store import TimestampStore
 from tests.fixtures.items import Issue, IssueFilter
 
@@ -12,7 +12,7 @@ from tests.fixtures.items import Issue, IssueFilter
 class TestTimestampStore(TestCase):
 
     def setUp(self):
-        self.store: TimestampStore = TimestampStore[Issue](mem_store(Issue))
+        self.store: TimestampStore = TimestampStore[Issue](in_mem_store(Issue))
 
     def test_name(self):
         assert self.store.name == self.store.wrapped_store.name

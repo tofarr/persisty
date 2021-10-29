@@ -8,7 +8,7 @@ from persisty.capabilities import Capabilities
 from persisty.edit import Edit
 from persisty.errors import PersistyError
 from persisty.search_filter import search_filter_from_dataclass
-from persisty.store.in_mem_store import mem_store, InMemStore
+from persisty.store.in_mem_store import in_mem_store, InMemStore
 from persisty.store.store_abc import StoreABC
 from tests.fixtures.data import setup_bands, BANDS
 from tests.fixtures.items import Band, BandFilter
@@ -18,7 +18,7 @@ class TestInMemStore(TestCase):
 
     def setUp(self):
         persisty_context = get_persisty_context()
-        store = mem_store(Band)
+        store = in_mem_store(Band)
         setup_bands(store)
         persisty_context.register_store(store)
 

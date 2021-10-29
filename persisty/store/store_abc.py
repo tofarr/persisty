@@ -80,6 +80,7 @@ class StoreABC(ABC, Generic[T]):
 
     def edit_all(self, edits: Iterator[Edit[T]]):
         """ Perform a bulk edit for items in this store. This action is not typically atomic. """
+        edits = iter(edits)
         for edit in edits:
             if edit.edit_type == EditType.CREATE:
                 self.create(edit.item)

@@ -74,10 +74,10 @@ class InMemStore(StoreABC[T]):
         return True
 
     def search(self, search_filter: Optional[SearchFilter] = None) -> Iterator[T]:
-        items = (self.marshaller.load(item) for item in self.store.values())
+        items = [self.marshaller.load(item) for item in self.store.values()]
         if search_filter:
             items = search_filter.filter_items(items)
-        return items
+        return iter(items)
 
     def count(self, search_filter: Optional[SearchFilter] = None) -> int:
         items = self.search(search_filter)
@@ -100,10 +100,10 @@ class InMemStore(StoreABC[T]):
         return Page(page_items, next_page_key)
 
 
-def mem_store(item_type: Type[T],
-              key_attr: Optional[str] = 'id',
-              marshaller_context: Optional[MarshallerContext] = None
-              ) -> InMemStore[T]:
+def in_mem_store(item_type: Type[T],
+                 key_attr: Optional[str] = 'id',
+                 marshaller_context: Optional[MarshallerContext] = None
+                 ) -> InMemStore[T]:
     if marshaller_context is None:
         marshaller_context = new_default_context()
     marshaller = marshaller_context.get_marshaller(item_type)

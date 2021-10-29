@@ -1,5 +1,5 @@
 from dataclasses import dataclass, fields
-from typing import List
+from typing import List, ForwardRef
 
 from marshy.marshaller.marshaller_abc import MarshallerABC, T
 
@@ -43,6 +43,18 @@ class Capabilities:
             return NO_CAPABILITIES
         kwargs = {f.name: getattr(self, f.name) and not getattr(other, f.name) for f in fields(Capabilities)}
         return Capabilities(**kwargs)
+
+    def __lt__(self, other):
+        eq = True
+        for f in fields(Capabilities):
+            v = getattr(self, f.name)
+            other_v = getattr(other, f.name)
+            if v != other_v:
+                if v:
+                    return False
+                else:
+                    eq = False
+        return not eq
 
 
 ALL_CAPABILITIES = Capabilities(**{f.name: True for f in fields(Capabilities)})

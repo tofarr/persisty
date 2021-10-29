@@ -1,7 +1,9 @@
 from unittest import TestCase
 
 from persisty import get_persisty_context
-from persisty.store.in_mem_store import mem_store
+from persisty.obj_graph.entity_abc import EntityABC
+from persisty.obj_graph.resolver.has_many import HasMany
+from persisty.store.in_mem_store import in_mem_store
 from tests.fixtures.data import setup_bands, setup_members, BANDS
 from tests.fixtures.entities import BandEntity, MemberEntity
 from tests.fixtures.items import Band, BandFilter, Member, MemberFilter
@@ -11,12 +13,17 @@ class TestEntity(TestCase):
 
     def setUp(self):
         persisty_context = get_persisty_context()
-        band_store = mem_store(Band)
+        band_store = in_mem_store(Band)
         setup_bands(band_store)
         persisty_context.register_store(band_store)
-        member_store = mem_store(Member)
+        member_store = in_mem_store(Member)
         setup_members(member_store)
         persisty_context.register_store(member_store)
+
+    def test_invalid_entity(self):
+        with self.assertRaises(RuntimeError):
+            class InvalidBandEntity(EntityABC, Band):
+                members = HasMany(foreign_key_attr='band_id', inverse_attr='_band')
 
     def test_read(self):
         band = BandEntity.read('beatles')
