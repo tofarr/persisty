@@ -27,8 +27,8 @@ class HasMany(ResolverABC[A, B]):
                  inverse_attr: Optional[str] = None,
                  on_destroy: OnDestroy = OnDestroy.NO_ACTION,
                  private_name_: Optional[str] = None,
-                 resolved_type: Optional[Type[B]] = None,
-                 _is_overridden_name: Optional[str] = None):
+                 _is_overridden_name: Optional[str] = None,
+                 resolved_type: Optional[Type[B]] = None):
         super().__init__(private_name_, resolved_type)
         self.foreign_key_attr = foreign_key_attr
         self.inverse_attr = inverse_attr
@@ -42,7 +42,7 @@ class HasMany(ResolverABC[A, B]):
             self.is_overridden_name = f'is_{name}_overridden'
 
     def __set__(self, owner_instance: A, value: B):
-        setattr(owner_instance, self.private_name, value)
+        super().__set__(owner_instance, value)
         setattr(owner_instance, self.is_overridden_name, True)
 
     def resolve_value(self,
@@ -88,6 +88,7 @@ class HasMany(ResolverABC[A, B]):
         return getattr(owner_instance, self.is_overridden_name, False)
 
     def before_destroy(self, owner_instance: A):
+        setattr(owner_instance, self.is_overridden_name, False)
         if self.on_destroy == OnDestroy.CASCADE:
             for entity in self._search(owner_instance):
                 entity.destroy()
@@ -97,18 +98,20 @@ class HasMany(ResolverABC[A, B]):
                 entity.update()
 
     def after_create(self, owner_instance: A):
-        if getattr(owner_instance, self.is_overridden_name, False):
+        if self.is_overridden(owner_instance):
+            setattr(owner_instance, self.is_overridden_name, False)
             key = owner_instance.get_key()
             for entity in getattr(owner_instance, self.private_name):
                 setattr(entity, self.foreign_key_attr, key)
                 entity.save()
 
     def after_update(self, owner_instance: A):
-        if getattr(owner_instance, self.is_overridden_name, False):
+        if self.is_overridden(owner_instance):
             setattr(owner_instance, self.is_overridden_name, False)
             existing_by_key = {e.get_key(): e for e in self._search(owner_instance)}
             key = owner_instance.get_key()
-            for e in getattr(owner_instance, self.private_name):
+            entities = getattr(owner_instance, self.private_name) or []
+            for e in entities:
                 setattr(e, self.foreign_key_attr, key)
                 e.save()
                 foreign_key = e.get_key()

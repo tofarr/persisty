@@ -1,6 +1,5 @@
 import dataclasses
 from abc import ABC
-import inspect
 from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator
 
 from persisty import get_persisty_context
@@ -31,7 +30,7 @@ class EntityABC(Generic[T], ABC):
 
     @classmethod
     def get_resolvers(cls) -> Iterator[ResolverABC]:
-        return (e[1] for e in inspect.getmembers(cls) if isinstance(e[1], ResolverABC))
+        return (e for e in cls.__dict__.values() if isinstance(e, ResolverABC))
 
     @classmethod
     def get_store(cls) -> StoreABC[T]:
@@ -68,7 +67,7 @@ class EntityABC(Generic[T], ABC):
             entity.resolve_all(selections, local_deferred_resolutions)
         if not deferred_resolutions:
             local_deferred_resolutions.resolve()
-        return entities
+        return iter(entities)
 
     @classmethod
     def read(cls,
@@ -81,7 +80,7 @@ class EntityABC(Generic[T], ABC):
         if item is None:
             return None
         entities = cls._wrap_entities((item,), selections, deferred_resolutions)
-        return entities[0]
+        return next(entities)
 
     @classmethod
     def read_all(cls,
@@ -121,7 +120,7 @@ class EntityABC(Generic[T], ABC):
         store = cls.get_store()
         page = store.paged_search(search_filter, page_key, limit)
         entities = cls._wrap_entities(iter(page.items), selections, deferred_resolutions)
-        wrapped_page = Page(entities, page.next_page_key)
+        wrapped_page = Page(list(entities), page.next_page_key)
         return wrapped_page
 
     @property
