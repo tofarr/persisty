@@ -3,12 +3,12 @@ from typing import Any, Union, List
 
 
 @dataclass(frozen=True)
-class ValidationError(Exception):
+class SchemaError(Exception):
     path: str
     code: str
     value: Any
 
-    def __init__(self, path: Union[str, List[str]], code: str, value: Any):
+    def __init__(self, path: Union[str, List[str]], code: str, value: Any = None):
         if not isinstance(path, str):
             path = "/".join(path or [])
         super().__init__(f':{code}:{path}:{value}')

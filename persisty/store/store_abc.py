@@ -7,7 +7,7 @@ from persisty.edit_type import EditType
 from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.search_filter import SearchFilter
-from persisty.validate.validator_abc import ValidatorABC
+from persisty.schema.schema_abc import SchemaABC
 
 T = TypeVar('T')
 
@@ -31,7 +31,7 @@ class StoreABC(ABC, Generic[T]):
 
     @property
     @abstractmethod
-    def validator(self) -> Optional[ValidatorABC[T]]:
+    def schema(self) -> Optional[SchemaABC[T]]:
         """ Get the schema for items stored in this store. """
 
     @abstractmethod
