@@ -13,7 +13,8 @@ from tests.fixtures.items import Band, BandFilter
 
 class TestInMemStore(TestCase):
 
-    def get_band_store(self, capabilities: Capabilities) -> CapabilityFilterStore[Band]:
+    @staticmethod
+    def get_band_store(capabilities: Capabilities) -> CapabilityFilterStore[Band]:
         store = in_mem_store(Band)
         setup_bands(store)
         store = CapabilityFilterStore(store, capabilities)

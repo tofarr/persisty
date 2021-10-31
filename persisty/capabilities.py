@@ -1,5 +1,5 @@
 from dataclasses import dataclass, fields
-from typing import List, ForwardRef
+from typing import List
 
 from marshy.marshaller.marshaller_abc import MarshallerABC, T
 

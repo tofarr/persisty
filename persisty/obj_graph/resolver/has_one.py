@@ -8,7 +8,7 @@ from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResoluti
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 
-from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A, B, NOT_INITIALIZED
+from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A, B
 from persisty.obj_graph.selection_set import SelectionSet
 from persisty.search_filter import SearchFilter
 

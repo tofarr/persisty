@@ -6,6 +6,7 @@ from persisty.edit import Edit
 from persisty.page import Page
 from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import T, StoreABC
+from persisty.validate.validator_abc import ValidatorABC
 
 
 class WrapperStoreABC(StoreABC[T]):
@@ -26,6 +27,10 @@ class WrapperStoreABC(StoreABC[T]):
     @property
     def capabilities(self) -> Capabilities:
         return self.store.capabilities
+
+    @property
+    def validator(self) -> Optional[ValidatorABC[T]]:
+        return self.store.validator
 
     def get_key(self, item: T) -> str:
         return self.store.get_key(item)

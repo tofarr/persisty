@@ -12,7 +12,10 @@ from persisty.obj_graph.selection_set import SelectionSet
 
 class BelongsTo(ResolverABC[A, B]):
 
-    def __init__(self, key_attr: Optional[str] = None, private_name_: Optional[str] = None, resolved_type: Optional[Type[B]] = None):
+    def __init__(self,
+                 key_attr: Optional[str] = None,
+                 private_name_: Optional[str] = None,
+                 resolved_type: Optional[Type[B]] = None):
         super().__init__(private_name_, resolved_type)
         self.key_attr = key_attr
         self._entity_type: Type[B] = None
@@ -22,7 +25,10 @@ class BelongsTo(ResolverABC[A, B]):
         if self.key_attr is None:
             self.key_attr = f'{name}_id'
 
-    def resolve_value(self, owner_instance: A, callback: Callable[[B], None], sub_selections: Optional[SelectionSet],
+    def resolve_value(self,
+                      owner_instance: A,
+                      callback: Callable[[B], None],
+                      sub_selections: Optional[SelectionSet],
                       deferred_resolutions: Optional[DeferredResolutionSet] = None):
 
         key = getattr(owner_instance, self.key_attr)

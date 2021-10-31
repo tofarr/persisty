@@ -13,6 +13,7 @@ from persisty.search_filter import SearchFilter
 from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.store.store_abc import StoreABC, T
+from persisty.validate.validator_abc import ValidatorABC
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,10 @@ class InMemStore(StoreABC[T]):
     @property
     def capabilities(self) -> Capabilities:
         return ALL_CAPABILITIES
+
+    @property
+    def validator(self) -> Optional[ValidatorABC[T]]:
+        return None
 
     def get_key(self, item: T) -> str:
         key = getattr(item, self.key_attr)

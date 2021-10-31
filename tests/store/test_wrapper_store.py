@@ -5,7 +5,7 @@ from persisty.store.in_mem_store import in_mem_store
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 from tests.fixtures.data import setup_bands
-from tests.fixtures.items import Band, BandFilter
+from tests.fixtures.items import Band
 from tests.store.test_in_mem_store import TestInMemStore
 
 

@@ -1,8 +1,6 @@
 from unittest import TestCase
 
 from persisty.capabilities import READ_ONLY, ALL_CAPABILITIES
-from persisty.edit import Edit
-from persisty.edit_type import EditType
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.secure.current_user import set_current_user
@@ -13,7 +11,6 @@ from persisty.store.in_mem_store import in_mem_store
 from tests.fixtures.data import setup_bands
 from tests.fixtures.items import Band
 from tests.secure.test_current_user import User
-from tests.secure.test_current_user_filter_store import Comment, COMMENTS
 
 ADMIN = User('admin', ('admin',))
 USER = User('user', ('user',))

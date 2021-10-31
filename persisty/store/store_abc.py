@@ -7,6 +7,7 @@ from persisty.edit_type import EditType
 from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.search_filter import SearchFilter
+from persisty.validate.validator_abc import ValidatorABC
 
 T = TypeVar('T')
 
@@ -27,6 +28,11 @@ class StoreABC(ABC, Generic[T]):
     @abstractmethod
     def capabilities(self) -> Capabilities:
         """ Get the current user capabilities for this store. """
+
+    @property
+    @abstractmethod
+    def validator(self) -> Optional[ValidatorABC[T]]:
+        """ Get the schema for items stored in this store. """
 
     @abstractmethod
     def get_key(self, item: T) -> str:

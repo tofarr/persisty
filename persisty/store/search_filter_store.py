@@ -4,7 +4,7 @@ from typing import Optional, Iterator, List
 
 from persisty.edit import Edit
 from persisty.edit_type import EditType
-from persisty.errors import PersistyError, ValidationError
+from persisty.errors import PersistyError
 from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
 from persisty.search_filter import SearchFilter, append_item_filter
@@ -28,7 +28,7 @@ class SearchFilterStore(WrapperStoreABC[T]):
 
     def create(self, item: T) -> str:
         if not self.item_filter.match(item):
-            raise ValidationError(f'invalid_item:{item}')
+            raise PersistyError(f'invalid_item:{item}')
         return self.store.create(item)
 
     def read(self, key: str) -> Optional[T]:
@@ -48,7 +48,7 @@ class SearchFilterStore(WrapperStoreABC[T]):
 
     def update(self, item: T) -> T:
         if not self.item_filter.match(item):
-            raise ValidationError(f'invalid_item:{item}')
+            raise PersistyError(f'invalid_item:{item}')
         existing = self.store.read(self.store.get_key(item))
         if not existing or not self.item_filter.match(existing):
             raise PersistyError(f'missing_value:{item}')
@@ -101,9 +101,8 @@ class SearchFilterStore(WrapperStoreABC[T]):
             if edit.edit_type in (EditType.CREATE, EditType.UPDATE):
                 if not self.item_filter.match(edit.item):
                     del edits[index:]
-                    return ValidationError(f'invalid_key:{read_keys}')
+                    return PersistyError(f'invalid_key:{read_keys}')
             elif not self.item_filter.match(item):
                 if edit.edit_type == EditType.DESTROY:
                     del existing_items[index]
                     del edits[index]
-

@@ -2,7 +2,7 @@ from persisty import get_persisty_context
 from persisty.store.in_mem_store import in_mem_store
 from persisty.store.ttl_cache_store import TTLCacheStore
 from tests.fixtures.data import setup_bands
-from tests.fixtures.items import Band, BandFilter
+from tests.fixtures.items import Band
 from tests.store.test_in_mem_store import TestInMemStore
 
 

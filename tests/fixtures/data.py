@@ -1,4 +1,3 @@
-from persisty import PersistyContext
 from persisty.store.store_abc import StoreABC
 from tests.fixtures.items import Band, Member
 

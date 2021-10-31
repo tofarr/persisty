@@ -6,7 +6,7 @@ from persisty.obj_graph.resolver.has_many import HasMany
 from persisty.store.in_mem_store import in_mem_store
 from tests.fixtures.data import setup_bands, setup_members, BANDS
 from tests.fixtures.entities import BandEntity, MemberEntity
-from tests.fixtures.items import Band, BandFilter, Member, MemberFilter
+from tests.fixtures.items import Band, Member
 
 
 class TestEntity(TestCase):

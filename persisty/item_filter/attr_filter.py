@@ -33,6 +33,7 @@ def _endswith(a, b):
 def _oneof(a, b):
     return a in b
 
+
 class AttrFilterOp(Enum):
     """
     Operations which attr filter supports. Provides a definitive set of limited attributes that store implementations
