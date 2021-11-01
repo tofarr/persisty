@@ -20,10 +20,12 @@ class NumberSchemaMarshaller(MarshallerABC[NumberSchema]):
         )
 
     def dump(self, item: NumberSchema) -> ExternalType:
+        exclusive_minimum = item.exclusive_minimum
+        exclusive_maximum = item.exclusive_maximum
         return filter_none(dict(
             type='integer' if item.item_type is int else 'number',
             minimum=item.minimum,
-            exclusiveMinimum=item.exclusive_minimum,
+            exclusiveMinimum=exclusive_minimum if exclusive_minimum != NumberSchema.exclusive_minimum else None,
             maximum=item.maximum,
-            exclusiveMaximum=item.exclusive_maximum
+            exclusiveMaximum=exclusive_maximum if exclusive_maximum != NumberSchema.exclusive_maximum else None
         ))

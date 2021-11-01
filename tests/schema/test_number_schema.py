@@ -2,14 +2,13 @@ from unittest import TestCase
 
 from marshy.default_context import new_default_context
 
-from persisty.schema.boolean_schema import BooleanSchema
 from persisty.schema.json_schema_abc import JsonSchemaABC
 from persisty.schema.marshaller.json_schema_marshaller_factory import JsonSchemaMarshallerFactory
 from persisty.schema.number_schema import NumberSchema
 from persisty.schema.schema_error import SchemaError
 
 
-class TestObjectSchema(TestCase):
+class TestNumberSchema(TestCase):
 
     def test_schema_int(self):
         schema = NumberSchema(item_type=int)
