@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Optional, Type, Callable
 
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
-from persisty.obj_graph.selection_set import SelectionSet, from_list
+from persisty.obj_graph.selection_set import SelectionSet, from_selection_set_list
 
 
 class _NotInitializedType:
@@ -32,7 +32,7 @@ class ResolverABC(ABC, Generic[A, B]):
 
     def __get__(self, owner_instance: A, owner_type: Type[A]) -> B:
         if not self.is_resolved(owner_instance):
-            selections = from_list([self.name])
+            selections = from_selection_set_list([self.name])
             self.resolve(owner_instance, selections)
         value = getattr(owner_instance, self.private_name)
         return value

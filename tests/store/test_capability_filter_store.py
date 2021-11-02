@@ -1,14 +1,21 @@
 from unittest import TestCase
 
-from persisty.capabilities import Capabilities, NO_CAPABILITIES, ALL_CAPABILITIES
+from persisty.capabilities import Capabilities, NO_CAPABILITIES, ALL_CAPABILITIES, READ_ONLY
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
+from persisty.schema.number_schema import NumberSchema
+from persisty.schema.object_schema import ObjectSchema
+from persisty.schema.optional_schema import OptionalSchema
+from persisty.schema.property_schema import PropertySchema
+from persisty.schema.string_schema import StringSchema
 from persisty.search_filter import search_filter_from_dataclass
 from persisty.store.capability_filter_store import CapabilityFilterStore
 from persisty.store.in_mem_store import in_mem_store
+from persisty.store.schema_store import schema_store
+from persisty.store_schemas import StoreSchemas
 from tests.fixtures.data import setup_bands, BANDS
-from tests.fixtures.items import Band, BandFilter
+from tests.fixtures.items import Band, BandFilter, Issue
 
 
 class TestInMemStore(TestCase):
@@ -151,3 +158,17 @@ class TestInMemStore(TestCase):
             assert state == {beatles, jefferson, updated_stones, led_zeppelin}
         else:
             assert state == {beatles, jefferson, updated_stones}
+
+    def test_schema(self):
+        store = (CapabilityFilterStore(schema_store(in_mem_store(Band)), READ_ONLY))
+        assert store.name == 'Band'
+        read_schema = ObjectSchema[Issue](tuple((
+            PropertySchema('id', StringSchema(min_length=1)),
+            PropertySchema('band_name', OptionalSchema(StringSchema())),
+            PropertySchema('year_formed', OptionalSchema(NumberSchema(int))),
+        )))
+        expected = StoreSchemas(None, None, read_schema)
+        assert store.schemas == expected
+        with self.assertRaises(PersistyError):
+            store.create(Issue('Issue 4', 'issue_4'))
+

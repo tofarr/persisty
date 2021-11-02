@@ -1,12 +1,15 @@
 from unittest import TestCase
 
+from persisty.capabilities import READ_ONLY
 from persisty.edit import Edit
 from persisty.edit_type import EditType
+from persisty.errors import PersistyError
 from persisty.schema.object_schema import ObjectSchema
 from persisty.schema.optional_schema import OptionalSchema
 from persisty.schema.property_schema import PropertySchema
 from persisty.schema.schema_error import SchemaError
 from persisty.schema.string_schema import StringSchema
+from persisty.store.capability_filter_store import CapabilityFilterStore
 from persisty.store.in_mem_store import in_mem_store
 from persisty.store.schema_store import schema_store
 from persisty.store_schemas import StoreSchemas
@@ -86,3 +89,17 @@ class TestSchemaStore(TestCase):
         ]
         with self.assertRaises(SchemaError):
             self.store.edit_all(edits)
+
+    def test_read_only(self):
+        store = schema_store(CapabilityFilterStore(in_mem_store(Issue), READ_ONLY))
+        assert store.name == 'Issue'
+        read_schema = ObjectSchema[Issue](tuple((
+            PropertySchema('id', StringSchema(min_length=1)),
+            PropertySchema('title', StringSchema()),
+            PropertySchema('created_at', OptionalSchema(StringSchema())),
+            PropertySchema('updated_at', OptionalSchema(StringSchema()))
+        )))
+        expected = StoreSchemas(None, None, read_schema)
+        assert store.schemas == expected
+        with self.assertRaises(PersistyError):
+            store.create(Issue('Issue 4', 'issue_4'))

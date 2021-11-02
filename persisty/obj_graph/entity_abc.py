@@ -61,8 +61,8 @@ class EntityABC(Generic[T], ABC):
         for item in items:
             entity = cls(**{f.name: getattr(item, f.name) for f in init_funcs})
             for f in non_init_funcs:
-                setattr(entity, f.name, getattr(item, f.name))
-            setattr(entity, REMOTE_VALUES_ATTR, item)
+                object.__setattr__(entity, f.name, getattr(item, f.name))
+            object.__setattr__(entity, REMOTE_VALUES_ATTR, item)
             entities.append(entity)
             entity.resolve_all(selections, local_deferred_resolutions)
         if not deferred_resolutions:
@@ -146,14 +146,14 @@ class EntityABC(Generic[T], ABC):
 
     def load(self):
         store = self.get_store()
-        key = store.get_key(self.__remote_values__ or self)
+        key = store.get_key(self if self.__remote_values__ is NOT_INITIALIZED else self.__remote_values__)
         if key is None:
             raise PersistyError('missing_key')
         self.__remote_values__ = store.read(key)
         if not self.__remote_values__:
             raise PersistyError(f'no_such_entity:{key}')
         for f in dataclasses.fields(self._get_wrapped_class()):
-            setattr(self, f.name, getattr(self.__remote_values__, f.name))
+            object.__setattr__(self, f.name, getattr(self.__remote_values__, f.name))
 
     def save(self):
         if not self.is_save_required:
@@ -168,7 +168,7 @@ class EntityABC(Generic[T], ABC):
             resolver.before_create(self)
         store = self.get_store()
         key = store.create(self)
-        setattr(self, self._get_key_attr(), key)
+        object.__setattr__(self, self._get_key_attr(), key)
         self._build_remote_from_local()
         for resolver in self.get_resolvers():
             resolver.after_create(self)
@@ -209,7 +209,7 @@ class EntityABC(Generic[T], ABC):
                     deferred_resolutions: Optional[DeferredResolutionSet] = None):
         if selections is None:
             return
-        local_deferred_resolutions = [] if deferred_resolutions is None else deferred_resolutions
+        local_deferred_resolutions = DeferredResolutionSet() if deferred_resolutions is None else deferred_resolutions
         for resolver in self.get_resolvers():
             if resolver.is_selected(selections):
                 resolver.resolve(self, selections, local_deferred_resolutions)

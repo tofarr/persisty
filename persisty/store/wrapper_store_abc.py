@@ -33,10 +33,6 @@ class WrapperStoreABC(StoreABC[T]):
     def schemas(self) -> StoreSchemas[T]:
         return self.store.schemas
 
-    @property
-    def schema_for_update(self) -> Optional[SchemaABC[T]]:
-        return self.store.schema_for_update
-
     def get_key(self, item: T) -> str:
         return self.store.get_key(item)
 

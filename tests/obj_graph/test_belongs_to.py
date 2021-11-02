@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from persisty import get_persisty_context
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
-from persisty.obj_graph.selection_set import from_list
+from persisty.obj_graph.selection_set import from_selection_set_list
 from persisty.store.in_mem_store import in_mem_store
 from tests.fixtures.data import setup_bands, setup_members
 from tests.fixtures.entities import BandEntity, MemberEntity
@@ -27,10 +27,10 @@ class TestBelongsTo(TestCase):
 
     def test_read_multi(self):
         deferred_resolutions = DeferredResolutionSet()
-        band = BandEntity.read('beatles', from_list(['members/band']), deferred_resolutions)
+        band = BandEntity.read('beatles', from_selection_set_list(['members/band']), deferred_resolutions)
         deferred_resolutions.resolve()
         get_persisty_context().get_store(Band).destroy('beatles')
-        member = MemberEntity.read('john', from_list(['band']), deferred_resolutions)
+        member = MemberEntity.read('john', from_selection_set_list(['band']), deferred_resolutions)
         assert member.band == band
 
     def test_set(self):
