@@ -7,6 +7,7 @@ from persisty.page import Page
 from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import T, StoreABC
 from persisty.schema.schema_abc import SchemaABC
+from persisty.store_schemas import StoreSchemas
 
 
 class WrapperStoreABC(StoreABC[T]):
@@ -29,8 +30,12 @@ class WrapperStoreABC(StoreABC[T]):
         return self.store.capabilities
 
     @property
-    def schema(self) -> Optional[SchemaABC[T]]:
-        return self.store.schema
+    def schemas(self) -> StoreSchemas[T]:
+        return self.store.schemas
+
+    @property
+    def schema_for_update(self) -> Optional[SchemaABC[T]]:
+        return self.store.schema_for_update
 
     def get_key(self, item: T) -> str:
         return self.store.get_key(item)

@@ -3,19 +3,48 @@ from unittest import TestCase
 
 from persisty.edit import Edit
 from persisty.edit_type import EditType
+from persisty.schema.object_schema import ObjectSchema
+from persisty.schema.optional_schema import OptionalSchema
+from persisty.schema.property_schema import PropertySchema
+from persisty.schema.string_format import StringFormat
+from persisty.schema.string_schema import StringSchema
 from persisty.search_filter import search_filter_from_dataclass
 from persisty.store.in_mem_store import in_mem_store
-from persisty.store.timestamp_store import TimestampStore
+from persisty.store.schema_store import schema_store
+from persisty.store.timestamp_store import TimestampStore, timestamp_store
+from persisty.store_schemas import StoreSchemas, NO_SCHEMAS
 from tests.fixtures.items import Issue, IssueFilter
 
 
 class TestTimestampStore(TestCase):
 
     def setUp(self):
-        self.store: TimestampStore = TimestampStore[Issue](in_mem_store(Issue))
+        self.store: TimestampStore = timestamp_store(in_mem_store(Issue))
 
     def test_name(self):
         assert self.store.name == self.store.wrapped_store.name
+
+    def test_schemas_none(self):
+        assert self.store.schemas == NO_SCHEMAS
+
+    def test_schemas_present(self):
+        store = timestamp_store(schema_store(self.store))
+        read_schema = ObjectSchema[Issue](tuple((
+            PropertySchema('id', StringSchema(min_length=1)),
+            PropertySchema('title', StringSchema()),
+            PropertySchema('created_at', StringSchema(format=StringFormat.DATE_TIME)),
+            PropertySchema('updated_at', StringSchema(format=StringFormat.DATE_TIME))
+        )))
+        create_schema = ObjectSchema[Issue](tuple((
+            PropertySchema('id', OptionalSchema(StringSchema(min_length=1))),
+            PropertySchema('title', StringSchema()),
+        )))
+        update_schema = ObjectSchema[Issue](tuple((
+            PropertySchema('id', StringSchema(min_length=1)),
+            PropertySchema('title', StringSchema()),
+        )))
+        expected = StoreSchemas[Issue](create_schema, update_schema, read_schema)
+        assert store.schemas == expected
 
     def test_create(self):
         issue = Issue('Something is wrong')

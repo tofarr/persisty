@@ -3,10 +3,10 @@ from typing import Iterator
 
 from persisty.edit import Edit
 from persisty.edit_type import EditType
-from persisty.schema.object_schema import schema_for_type
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 from persisty.schema.schema_abc import SchemaABC
+from persisty.store_schemas import StoreSchemas, schemas_for_type
 
 
 @dataclass(frozen=True)
@@ -16,22 +16,26 @@ class SchemaStore(WrapperStoreABC[T]):
     fail outright. Effectively creates a partial view of another store (Useful for enforcing security constraints)
     """
     wrapped_store: StoreABC[T]
-    schema: SchemaABC[T]
+    op_schemas: StoreSchemas[T]
 
     @property
     def store(self) -> StoreABC[T]:
         return self.wrapped_store
 
     @property
-    def schema(self) -> SchemaABC[T]:
-        return self.schema
+    def schemas(self) -> StoreSchemas[T]:
+        return self.op_schemas
+
+    @property
+    def name(self) -> str:
+        return self.store.name
 
     def create(self, item: T) -> str:
-        self._validate_item(item)
+        self._validate_item(item, self.schemas.create)
         return self.store.create(item)
 
     def update(self, item: T) -> T:
-        self._validate_item(item)
+        self._validate_item(item, self.schemas.update)
         return self.store.update(item)
 
     def edit_all(self, edits: Iterator[Edit[T]]):
@@ -41,16 +45,21 @@ class SchemaStore(WrapperStoreABC[T]):
 
     def _validate_edits(self, edits: Iterator[Edit[T]]) -> Iterator[Edit[T]]:
         for edit in edits:
-            if edit.edit_type in [EditType.CREATE, EditType.UPDATE]:
-                self._validate_item(edit.item)
-                yield edit
+            if edit.edit_type == EditType.CREATE:
+                self._validate_item(edit.item, self.schemas.create)
+            if edit.edit_type == EditType.UPDATE:
+                self._validate_item(edit.item, self.schemas.update)
+            yield edit
 
-    def _validate_item(self, item: T):
-        error = next(self.schema.get_schema_errors(item), None)
+    @staticmethod
+    def _validate_item(item: T, schema: SchemaABC[T]):
+        if schema is None:
+            return
+        error = next(schema.get_schema_errors(item), None)
         if error:
             raise error
 
 
-def schema_store(store: StoreABC[T]) -> SchemaStore[T]:
-    schema = schema_for_type(store.item_type)
-    return SchemaStore(store, schema)
+def schema_store(store: StoreABC[T], key_attr: str = 'id') -> SchemaStore[T]:
+    schemas = schemas_for_type(store.item_type, key_attr, store.capabilities)
+    return SchemaStore(store, schemas)

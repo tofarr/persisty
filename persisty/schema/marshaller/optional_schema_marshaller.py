@@ -15,7 +15,7 @@ class OptionalSchemaMarshaller(MarshallerABC[OptionalSchema]):
     def load(self, item: ExternalItemType) -> OptionalSchema:
         item_type = next(t for t in item.get('type') if t is not None)
         item = {**item, 'type': item_type}
-        schema = self.marshaller.load(item_type)
+        schema = self.marshaller.load(item)
         return OptionalSchema(schema)
 
     def dump(self, item: OptionalSchema) -> ExternalItemType:

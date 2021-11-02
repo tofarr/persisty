@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 from unittest import TestCase
 
 from marshy import get_default_context
@@ -9,7 +10,9 @@ from persisty.edit import Edit
 from persisty.errors import PersistyError
 from persisty.search_filter import search_filter_from_dataclass
 from persisty.store.in_mem_store import in_mem_store, InMemStore
+from persisty.store.logging_store import LoggingStore
 from persisty.store.store_abc import StoreABC
+from persisty.store_schemas import NO_SCHEMAS
 from tests.fixtures.data import setup_bands, BANDS
 from tests.fixtures.items import Band, BandFilter
 
@@ -17,8 +20,9 @@ from tests.fixtures.items import Band, BandFilter
 class TestInMemStore(TestCase):
 
     def setUp(self):
+        logging.basicConfig(level='INFO', format='%(message)s')
         persisty_context = get_persisty_context()
-        store = in_mem_store(Band)
+        store = LoggingStore(in_mem_store(Band))
         setup_bands(store)
         persisty_context.register_store(store)
 
@@ -41,6 +45,10 @@ class TestInMemStore(TestCase):
         capabilities = store.capabilities
         assert isinstance(capabilities, Capabilities)
         assert capabilities.read
+
+    def test_get_schemas(self):
+        store = self.get_band_store()
+        assert store.schemas is NO_SCHEMAS
 
     def test_create_with_key(self):
         store = self.get_band_store()

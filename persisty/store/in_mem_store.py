@@ -13,7 +13,7 @@ from persisty.search_filter import SearchFilter
 from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.store.store_abc import StoreABC, T
-from persisty.schema.schema_abc import SchemaABC
+from persisty.store_schemas import StoreSchemas, schemas_for_type, NO_SCHEMAS
 
 
 @dataclass(frozen=True)
@@ -37,8 +37,8 @@ class InMemStore(StoreABC[T]):
         return ALL_CAPABILITIES
 
     @property
-    def schema(self) -> Optional[SchemaABC[T]]:
-        return None
+    def schemas(self) -> StoreSchemas[T]:
+        return NO_SCHEMAS
 
     def get_key(self, item: T) -> str:
         key = getattr(item, self.key_attr)

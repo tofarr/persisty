@@ -28,14 +28,19 @@ class StringSchema(JsonSchemaABC[str]):
             yield SchemaError(current_path, 'min_length', item)
         if self.max_length is not None and len(item) > self.max_length:
             yield SchemaError(current_path, 'max_length', item)
-        if self._compiled_pattern is not None and not self._compiled_pattern.match(item):
+        if self._compiled_pattern is not None and not self._compiled_pattern.search(item):
             yield SchemaError(current_path, 'pattern', item)
         if self.format == StringFormat.DATE:
-            if datetime.fromisoformat(item).isoformat()[:10] != item:
-                yield SchemaError(current_path, 'format:email', item)
+            try:
+                if datetime.fromisoformat(item).isoformat()[:10] != item:
+                    yield SchemaError(current_path, 'format:date', item)
+            except ValueError:
+                yield SchemaError(current_path, 'format:date', item)
         elif self.format == StringFormat.DATE_TIME:
-            if datetime.fromisoformat(item).isoformat() != item:
-                yield SchemaError(current_path, 'format:email', item)
+            try:
+                datetime.fromisoformat(item).isoformat()
+            except ValueError:
+                yield SchemaError(current_path, 'format:date-time', item)
         elif self.format == StringFormat.EMAIL:
             if validators.email(item) is not True:
                 yield SchemaError(current_path, 'format:email', item)
@@ -49,7 +54,9 @@ class StringSchema(JsonSchemaABC[str]):
             if validators.ipv6(item) is not True:
                 yield SchemaError(current_path, 'format:ipv6', item)
         elif self.format == StringFormat.TIME:
-            if time.fromisoformat(item).isoformat() != item:
+            try:
+                time.fromisoformat(item).isoformat()
+            except ValueError:
                 yield SchemaError(current_path, 'format:time', item)
         elif self.format == StringFormat.URI:
             if validators.url(item) is not True:

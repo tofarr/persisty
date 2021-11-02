@@ -44,7 +44,7 @@ class JsonSchemaMarshaller(MarshallerABC[JsonSchemaABC]):
         elif item_type == 'string':
             return StringSchemaMarshaller(StringSchema)
         else:
-            raise ValueError('unsupported_type:{item_type}')
+            raise ValueError(f'unsupported_type:{item_type}')
 
     def dump(self, schema: JsonSchemaABC) -> ExternalItemType:
         marshaller = self.get_marshaller_by_schema(schema)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Optional, Iterator, Type
+from typing import TypeVar, Generic, Optional, Iterator, Type, ForwardRef
 
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
@@ -7,7 +7,6 @@ from persisty.edit_type import EditType
 from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.search_filter import SearchFilter
-from persisty.schema.schema_abc import SchemaABC
 
 T = TypeVar('T')
 
@@ -31,7 +30,7 @@ class StoreABC(ABC, Generic[T]):
 
     @property
     @abstractmethod
-    def schema(self) -> Optional[SchemaABC[T]]:
+    def schemas(self) -> ForwardRef('StoreSchemas[T]'):
         """ Get the schema for items stored in this store. """
 
     @abstractmethod

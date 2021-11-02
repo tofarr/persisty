@@ -8,6 +8,7 @@ from persisty.errors import PersistyError
 from persisty.page import Page
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
+from persisty.store_schemas import StoreSchemas
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,16 @@ class CapabilityFilterStore(WrapperStoreABC[T]):
     @property
     def store(self):
         return self.wrapped_store
+
+    @property
+    def schemas(self) -> StoreSchemas[T]:
+        schemas = self.store.schemas
+        capabilities = self.capabilities
+        return StoreSchemas(
+            create=schemas.create if capabilities.create else None,
+            update=schemas.update if capabilities.update else None,
+            read=schemas.read if capabilities.read or capabilities.search else None
+        )
 
     def create(self, item: T) -> str:
         if not self.capabilities.create:

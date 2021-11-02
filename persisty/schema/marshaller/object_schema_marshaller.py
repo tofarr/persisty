@@ -13,8 +13,10 @@ class ObjectSchemaMarshaller(MarshallerABC[ObjectSchema]):
     property_schema_marshaller: MarshallerABC[JsonSchemaABC]
 
     def load(self, item: ExternalItemType) -> ObjectSchema:
-        return ObjectSchema(tuple(PropertySchema(k, self.property_schema_marshaller.load(v)) for k, v in item.items()))
+        properties = item.get('properties') or {}
+        properties = (PropertySchema(k, self.property_schema_marshaller.load(v)) for k, v in properties.items())
+        return ObjectSchema(tuple(properties))
 
     def dump(self, schema: ObjectSchema) -> ExternalItemType:
-        item = {s.name: self.property_schema_marshaller.dump(s.schema) for s in schema.property_schemas}
-        return item
+        properties = {s.name: self.property_schema_marshaller.dump(s.schema) for s in schema.property_schemas}
+        return dict(type='object', properties=properties)
