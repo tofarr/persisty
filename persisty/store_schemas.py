@@ -1,6 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import TypeVar, Generic, Type, ForwardRef
+from typing import TypeVar, Generic, Type, ForwardRef, Optional
 
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
 from persisty.schema import schema_for_type
@@ -22,7 +22,7 @@ class StoreSchemas(Generic[T]):
 NO_SCHEMAS = StoreSchemas()
 
 
-def schemas_for_type(type_: Type[T], key_attr: str = 'id', capabilities: Capabilities = ALL_CAPABILITIES):
+def schemas_for_type(type_: Type[T], key_attr: Optional[str] = 'id', capabilities: Capabilities = ALL_CAPABILITIES):
     schema = schema_for_type(type_)
     if not isinstance(schema, ObjectSchema):
         return StoreSchemas[T](schema, schema, schema)

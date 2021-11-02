@@ -1,9 +1,11 @@
+from typing import Optional, List, Iterator
 from unittest import TestCase
 
 from persisty.capabilities import READ_ONLY
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
+from persisty.schema import SchemaABC, T, schema_for_type
 from persisty.schema.object_schema import ObjectSchema
 from persisty.schema.optional_schema import OptionalSchema
 from persisty.schema.property_schema import PropertySchema
@@ -12,8 +14,8 @@ from persisty.schema.string_schema import StringSchema
 from persisty.store.capability_filter_store import CapabilityFilterStore
 from persisty.store.in_mem_store import in_mem_store
 from persisty.store.schema_store import schema_store
-from persisty.store_schemas import StoreSchemas
-from tests.fixtures.items import Issue
+from persisty.store_schemas import StoreSchemas, schemas_for_type
+from tests.fixtures.items import Issue, Band
 
 
 class TestSchemaStore(TestCase):
@@ -103,3 +105,22 @@ class TestSchemaStore(TestCase):
         assert store.schemas == expected
         with self.assertRaises(PersistyError):
             store.create(Issue('Issue 4', 'issue_4'))
+
+    def test_schema_for_type(self):
+
+        class CustomSchema(SchemaABC):
+
+            def get_schema_errors(self, item: T, current_path: Optional[List[str]] = None) -> Iterator[SchemaError]:
+                pass
+
+        class NotADataclass:
+            __schema__ = CustomSchema()
+
+        schema = schema_for_type(NotADataclass)
+        assert isinstance(schema, CustomSchema)
+        assert schemas_for_type(NotADataclass) == StoreSchemas(schema, schema, schema)
+
+    def test_schemas_for_type_no_key(self):
+        schema = schema_for_type(Band)
+        schemas = schemas_for_type(Band, None)
+        assert schemas == StoreSchemas(schema, schema, schema)

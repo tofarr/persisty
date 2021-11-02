@@ -2,14 +2,14 @@ from dataclasses import dataclass, FrozenInstanceError, field
 from typing import Optional
 from unittest import TestCase
 
-from marshy import ExternalType
 from marshy.default_context import new_default_context
-from marshy.marshaller.marshaller_abc import MarshallerABC, T
+from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 
 from persisty import get_persisty_context, PersistyContext
 from persisty.errors import PersistyError
 from persisty.obj_graph.entity_abc import EntityABC
+from persisty.obj_graph.entity_marshaller_factory import EntityMarshallerFactory
 from persisty.obj_graph.resolver.has_many import HasMany
 from persisty.obj_graph.selection_set import from_selection_set_list
 from persisty.store.in_mem_store import in_mem_store
@@ -33,6 +33,8 @@ class TestEntity(TestCase):
         with self.assertRaises(RuntimeError):
             class InvalidBandEntity(EntityABC, Band):
                 members = HasMany(foreign_key_attr='band_id', inverse_attr='_band')
+
+            InvalidBandEntity()
 
     def test_read(self):
         band = BandEntity.read('beatles')
@@ -119,6 +121,7 @@ class TestEntity(TestCase):
 
     def test_non_init_fields(self):
         """ Test a weird situation where we have a field that is not part of init """
+
         @dataclass
         class Cube:
             id: Optional[str]
@@ -130,15 +133,16 @@ class TestEntity(TestCase):
                 super().__init__(Cube)
 
             def load(self, item: ExternalItemType) -> Cube:
-                cube = Cube(item['id'])
-                cube.length = item.get('length') or 0
-                return cube
+                cube_ = Cube(item['id'])
+                cube_.length = item.get('length') or 0
+                return cube_
 
             def dump(self, item: Cube) -> ExternalItemType:
                 return {**item.__dict__}
 
         marshaller_context = new_default_context()
         marshaller_context.register_marshaller(CubeMarshaller())
+        marshaller_context.register_factory(EntityMarshallerFactory(200))
 
         persisty_context = PersistyContext()
         persisty_context.register_store(in_mem_store(Cube, marshaller_context=marshaller_context))
@@ -151,3 +155,6 @@ class TestEntity(TestCase):
         cube.length = 3
         cube.save()
         assert CubeEntity.read('from_tray').length == 3
+
+        assert marshaller_context.dump(cube) == dict(id='from_tray', length=3)
+        assert marshaller_context.load(CubeEntity, dict(id='from_tray', length=3)) == cube
