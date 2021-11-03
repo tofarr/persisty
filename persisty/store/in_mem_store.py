@@ -9,11 +9,12 @@ from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
 
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
+from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.search_filter import SearchFilter
 from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.store.store_abc import StoreABC, T
-from persisty.store_schemas import StoreSchemas, schemas_for_type, NO_SCHEMAS
+from persisty.store_schemas import StoreSchemas, NO_SCHEMAS
 
 
 @dataclass(frozen=True)
@@ -84,8 +85,8 @@ class InMemStore(StoreABC[T]):
             items = search_filter.filter_items(items)
         return iter(items)
 
-    def count(self, search_filter: Optional[SearchFilter] = None) -> int:
-        items = self.search(search_filter)
+    def count(self, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
+        items = self.search(SearchFilter(item_filter))
         count = sum(1 for _ in items)
         return count
 

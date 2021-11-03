@@ -57,7 +57,7 @@ def search_filter_from_dataclass(obj, filter_type: Type[T]) -> SearchFilter:
     return SearchFilter(item_filter, item_comparator)
 
 
-def append_item_filter(search_filter: Optional[SearchFilter], item_filter: ItemFilterABC):
+def append_to_search_filter(search_filter: Optional[SearchFilter], item_filter: ItemFilterABC):
     if search_filter is None:
         return SearchFilter(item_filter)
     item_filter = search_filter.item_filter & item_filter if search_filter.item_filter else item_filter

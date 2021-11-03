@@ -52,6 +52,8 @@ class TestHasManyPaged(TestHasMany):
             class NullifyingBandEntity(EntityABC, Band):
                 members = HasManyPaged(foreign_key_attr='band_id', inverse_attr='_band', on_destroy=OnDestroy.NULLIFY)
 
+            NullifyingBandEntity()
+
     def test_set(self):
         beatles = BandEntityPaged.read('beatles')
         with self.assertRaises(PersistyError):

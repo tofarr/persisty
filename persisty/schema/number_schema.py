@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional, List, Iterator, Union, Type
+from typing import Optional, List, Iterator, Union, Type, TypeVar
 
 from persisty.schema.json_schema_abc import JsonSchemaABC
 from persisty.schema.schema_error import SchemaError
 
-T = Union[int, float]
+T = TypeVar('T', bound=Union[int, float])
 
 
 @dataclass(frozen=True)

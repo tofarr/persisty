@@ -6,7 +6,6 @@ from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.count import Count
-from persisty.search_filter import SearchFilter
 from persisty.store.in_mem_store import in_mem_store
 from tests.fixtures.data import setup_bands, setup_members
 from tests.fixtures.entities import MemberEntity
@@ -41,7 +40,7 @@ class TestCount(TestCase):
 
     def test_destroy_no_action(self):
         self._do_destroy(CountBandula)
-        assert MemberEntity.count(SearchFilter(AttrFilter('band_id', AttrFilterOp.eq, 'beatles'))) == 4
+        assert MemberEntity.count(AttrFilter('band_id', AttrFilterOp.eq, 'beatles')) == 4
 
     def test_destroy_cascade(self):
         class CascadingCountBandula(EntityABC, Band):

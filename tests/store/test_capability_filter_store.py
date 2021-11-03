@@ -18,7 +18,7 @@ from tests.fixtures.data import setup_bands, BANDS
 from tests.fixtures.items import Band, BandFilter, Issue
 
 
-class TestInMemStore(TestCase):
+class TestCapabilityFilterStore(TestCase):
 
     @staticmethod
     def get_band_store(capabilities: Capabilities) -> CapabilityFilterStore[Band]:

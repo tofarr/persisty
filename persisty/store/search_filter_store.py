@@ -7,7 +7,7 @@ from persisty.edit_type import EditType
 from persisty.errors import PersistyError
 from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
-from persisty.search_filter import SearchFilter, append_item_filter
+from persisty.search_filter import SearchFilter, append_to_search_filter
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 
@@ -61,13 +61,13 @@ class SearchFilterStore(WrapperStoreABC[T]):
         return self.store.destroy(key)
 
     def search(self, search_filter: Optional[SearchFilter[T]] = None) -> Iterator[T]:
-        search_filter = append_item_filter(search_filter, self.item_filter)
+        search_filter = append_to_search_filter(search_filter, self.item_filter)
         items = self.store.search(search_filter)
         return items
 
-    def count(self, search_filter: Optional[SearchFilter[T]] = None) -> int:
-        search_filter = append_item_filter(search_filter, self.item_filter)
-        count = self.store.count(search_filter)
+    def count(self, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
+        item_filter = (self.item_filter & item_filter) if item_filter else self.item_filter
+        count = self.store.count(item_filter)
         return count
 
     def paged_search(self,
@@ -75,7 +75,7 @@ class SearchFilterStore(WrapperStoreABC[T]):
                      page_key: Optional[str] = None,
                      limit: int = 20
                      ) -> Page[T]:
-        search_filter = append_item_filter(search_filter, self.item_filter)
+        search_filter = append_to_search_filter(search_filter, self.item_filter)
         return self.store.paged_search(search_filter, page_key, limit)
 
     def edit_all(self, edits: Iterator[Edit[T]]):

@@ -29,4 +29,4 @@ class TestTTLCacheStore(TestInMemStore):
 
     def test_name(self):
         store = get_persisty_context().get_store(Band)
-        assert store.name == store.wrapped_store.name
+        assert store.name == getattr(store, 'wrapped_store').name

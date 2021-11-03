@@ -5,6 +5,7 @@ from persisty.capabilities import Capabilities, ALL_CAPABILITIES
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
+from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
@@ -63,10 +64,10 @@ class CapabilityFilterStore(WrapperStoreABC[T]):
             raise PersistyError(f'not_possible:{self.name}:read')
         return self.store.search(search_filter)
 
-    def count(self, search_filter: Any = None) -> int:
+    def count(self, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
         if not self.capabilities.search:
             raise PersistyError(f'not_possible:{self.name}:read')
-        return self.store.count(search_filter)
+        return self.store.count(item_filter)
 
     def paged_search(self, search_filter: Any = None, page_key: str = None, limit: int = 20) -> Page[T]:
         if not self.capabilities.search:

@@ -16,7 +16,7 @@ class TestTTLCacheStore(TestInMemStore):
 
     def test_name(self):
         store = get_persisty_context().get_store(Band)
-        assert store.name == store.wrapped_store.name
+        assert store.name == getattr(store, 'wrapped_store').name
 
     def test_cache_is_disconnected_from_object_graph(self):
         """ Caching live objects without calls to 'update' could result in all sorts of chaos """

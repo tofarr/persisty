@@ -3,6 +3,7 @@ from dataclasses import field, dataclass
 from typing import Optional, Iterator
 
 from persisty.edit import Edit
+from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
 from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
@@ -53,9 +54,9 @@ class LoggingStore(WrapperStoreABC[T]):
             self.logger.info(f'{self.name}:search_result:{item}')
             yield item
 
-    def count(self, search_filter: Optional[SearchFilter[T]] = None) -> int:
-        count = self.store.count(search_filter)
-        self.logger.info(f'{self.name}:count:{search_filter}:{count}')
+    def count(self, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
+        count = self.store.count(item_filter)
+        self.logger.info(f'{self.name}:count:{item_filter}:{count}')
         return count
 
     def paged_search(self,

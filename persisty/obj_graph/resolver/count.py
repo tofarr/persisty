@@ -37,8 +37,8 @@ class Count(ResolverABC[A, int]):
         if key is None:
             callback(None)
             return
-        search_filter = SearchFilter(AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key))
-        count = self._entity_type.count(search_filter)
+        item_filter = AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key)
+        count = self._entity_type.count(item_filter)
         callback(count)
 
     def __set__(self, instance, value):

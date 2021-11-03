@@ -15,7 +15,7 @@ class TestNumberSchema(TestCase):
         assert list(schema.get_schema_errors(10)) == []
         assert list(schema.get_schema_errors(10.2)) == [SchemaError('', 'type', 10.2)]
         assert list(schema.get_schema_errors(10.2, [])) == [SchemaError('', 'type', 10.2)]
-        assert list(schema.get_schema_errors(10.2, ['foo','bar'])) == [SchemaError('foo/bar', 'type', 10.2)]
+        assert list(schema.get_schema_errors(10.2, ['foo', 'bar'])) == [SchemaError('foo/bar', 'type', 10.2)]
 
     def test_schema_float(self):
         schema = NumberSchema(item_type=float)
@@ -24,6 +24,7 @@ class TestNumberSchema(TestCase):
         assert list(schema.get_schema_errors(10.2, [])) == []
         assert list(schema.get_schema_errors(10.2, [])) == []
         assert list(schema.get_schema_errors(10, [])) == []
+        # noinspection PyTypeChecker
         assert list(schema.get_schema_errors('10', ['foo', 'bar'])) == [SchemaError('foo/bar', 'type', '10')]
 
     def test_schema_minimum(self):

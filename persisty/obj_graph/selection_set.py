@@ -1,4 +1,4 @@
-from typing import Iterator, List, Optional, Dict, ForwardRef
+from typing import Iterator, List
 
 
 class SelectionSet:

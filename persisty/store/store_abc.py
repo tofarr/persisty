@@ -4,6 +4,7 @@ from typing import TypeVar, Generic, Optional, Iterator, Type, ForwardRef
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
 from persisty.edit_type import EditType
+from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.search_filter import SearchFilter
@@ -72,7 +73,7 @@ class StoreABC(ABC, Generic[T]):
         """ Search this store with the filter given. """
 
     @abstractmethod
-    def count(self, search_filter: Optional[SearchFilter[T]] = None) -> int:
+    def count(self, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
         """ Get a count of the items in this store matching filter given. """
 
     @abstractmethod

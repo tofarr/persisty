@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 
-from persisty.schema.boolean_schema import BooleanSchema
 from persisty.schema.json_schema_abc import JsonSchemaABC
 from persisty.schema.optional_schema import OptionalSchema
 

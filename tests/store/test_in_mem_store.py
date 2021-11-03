@@ -60,7 +60,7 @@ class TestInMemStore(TestCase):
     def test_create_duplicate(self):
         store = self.get_band_store()
         with self.assertRaises(PersistyError):
-            key = store.create(BANDS[0])
+            store.create(BANDS[0])
 
     def test_create_without_id(self):
         # Create may be missing an id
@@ -128,7 +128,7 @@ class TestInMemStore(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
         assert expected_bands == bands
-        assert store.count(filter_) == len(expected_bands)
+        assert store.count(filter_.item_filter) == len(expected_bands)
 
     def test_gte_filter(self):
         store = self.get_band_store()
@@ -137,7 +137,7 @@ class TestInMemStore(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
         assert expected_bands == bands
-        assert store.count(filter_) == len(expected_bands)
+        assert store.count(filter_.item_filter) == len(expected_bands)
 
     def test_lt_filter(self):
         store = self.get_band_store()
@@ -146,7 +146,7 @@ class TestInMemStore(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
         assert expected_bands == bands
-        assert store.count(filter_) == len(expected_bands)
+        assert store.count(filter_.item_filter) == len(expected_bands)
 
     def test_lte_filter(self):
         store = self.get_band_store()
@@ -155,7 +155,7 @@ class TestInMemStore(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
         assert expected_bands == bands
-        assert store.count(filter_) == len(expected_bands)
+        assert store.count(filter_.item_filter) == len(expected_bands)
 
     def test_eq_filter(self):
         store = self.get_band_store()
@@ -164,7 +164,7 @@ class TestInMemStore(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
         assert expected_bands == bands
-        assert store.count(filter_) == len(expected_bands)
+        assert store.count(filter_.item_filter) == len(expected_bands)
 
     def test_ne_filter(self):
         store = self.get_band_store()
@@ -173,7 +173,7 @@ class TestInMemStore(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
         assert expected_bands == bands
-        assert store.count(filter_) == len(expected_bands)
+        assert store.count(filter_.item_filter) == len(expected_bands)
 
     def test_startswith_filter(self):
         store = self.get_band_store()
@@ -182,7 +182,7 @@ class TestInMemStore(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.band_name))
         bands = list(store.search(filter_))
         assert expected_bands == bands
-        assert store.count(filter_) == len(expected_bands)
+        assert store.count(filter_.item_filter) == len(expected_bands)
 
     def test_contains_filter(self):
         store = self.get_band_store()
@@ -191,7 +191,7 @@ class TestInMemStore(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.band_name))
         bands = list(store.search(filter_))
         assert expected_bands == bands
-        assert store.count(filter_) == len(expected_bands)
+        assert store.count(filter_.item_filter) == len(expected_bands)
 
     def test_multi_filter(self):
         store = self.get_band_store()

@@ -73,7 +73,7 @@ class TestCurrentUserFilterStore(TestCase):
     def test_count(self):
         store = self.get_store()
         assert store.count() == 2
-        assert store.count(SearchFilter(AttrFilter('user_id', AttrFilterOp.eq, 'they'))) == 0
+        assert store.count(AttrFilter('user_id', AttrFilterOp.eq, 'they')) == 0
 
     def test_create(self):
         store = self.get_store()

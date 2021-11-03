@@ -3,10 +3,10 @@ from typing import Optional, Iterator, Type
 
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
+from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
 from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import T, StoreABC
-from persisty.schema.schema_abc import SchemaABC
 from persisty.store_schemas import StoreSchemas
 
 
@@ -54,8 +54,8 @@ class WrapperStoreABC(StoreABC[T]):
     def search(self, search_filter: Optional[SearchFilter[T]] = None) -> Iterator[T]:
         return self.store.search(search_filter)
 
-    def count(self, search_filter: Optional[SearchFilter[T]] = None) -> int:
-        return self.store.count(search_filter)
+    def count(self, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
+        return self.store.count(item_filter)
 
     def paged_search(self,
                      search_filter: Optional[SearchFilter[T]] = None,

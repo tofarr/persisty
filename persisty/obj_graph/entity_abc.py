@@ -3,6 +3,7 @@ from abc import ABC
 from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator
 
 from persisty import get_persisty_context
+from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, NOT_INITIALIZED
 from persisty.obj_graph.selection_set import SelectionSet
@@ -105,9 +106,9 @@ class EntityABC(Generic[T], ABC):
         return entities
 
     @classmethod
-    def count(cls, search_filter: Optional[SearchFilter[T]] = None):
+    def count(cls, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
         store = cls.get_store()
-        count = store.count(search_filter)
+        count = store.count(item_filter)
         return count
 
     @classmethod

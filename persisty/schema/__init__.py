@@ -37,7 +37,7 @@ def schema_for_type(type_: Type[T]) -> SchemaABC[T]:
     if type_ == str:
         return StringSchema()
     elif type_ in [int, float]:
-        return NumberSchema(type_)
+        return NumberSchema[type_](type_)
     elif type_ == bool:
         return BooleanSchema()
     elif is_dataclass(type_):

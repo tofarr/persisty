@@ -54,6 +54,7 @@ class TestSchemaStore(TestCase):
         assert read.id is not None
 
     def test_create_disallow(self):
+        # noinspection PyTypeChecker
         issue = Issue(None)
         with self.assertRaises(SchemaError):
             self.store.create(issue)
@@ -76,6 +77,7 @@ class TestSchemaStore(TestCase):
 
     def test_edit_all_create_disallow(self):
         self.create_issues()
+        # noinspection PyTypeChecker
         edits = [
             Edit(EditType.DESTROY, 'issue_2'),
             Edit(EditType.CREATE, None, Issue(None, f'issue_4')),
@@ -86,6 +88,7 @@ class TestSchemaStore(TestCase):
 
     def test_edit_all_update_disallow(self):
         self.create_issues()
+        # noinspection PyTypeChecker
         edits = [
             Edit(EditType.UPDATE, None, Issue(None, f'issue_3')),
         ]
@@ -111,7 +114,7 @@ class TestSchemaStore(TestCase):
         class CustomSchema(SchemaABC):
 
             def get_schema_errors(self, item: T, current_path: Optional[List[str]] = None) -> Iterator[SchemaError]:
-                pass
+                """ Never called"""
 
         class NotADataclass:
             __schema__ = CustomSchema()
