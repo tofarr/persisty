@@ -6,10 +6,10 @@ from typing import Iterator, TypeVar, Callable, Any
 from persisty.cache_header import CacheHeader
 from persisty.edit import Edit
 from persisty.edit_type import EditType
-from persisty.schema import SchemaABC
+from persisty.schema.any_of_schema import strip_optional
 from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.optional_schema import remove_optional
 from persisty.schema.property_schema import PropertySchema
+from persisty.schema.schema_abc import SchemaABC
 from persisty.schema.string_format import StringFormat
 from persisty.schema.string_schema import StringSchema
 from persisty.store.store_abc import StoreABC
@@ -45,7 +45,7 @@ class TimestampStore(WrapperStoreABC[T]):
         return self.op_schemas
 
     def get_cache_header(self, item: T) -> CacheHeader:
-        cache_header = self.store.get_cache_header()
+        cache_header = self.store.get_cache_header(item)
         updated_at = getattr(item, self.updated_at_attr)
         return CacheHeader(cache_header.cache_key, updated_at, cache_header.expire_at)
 
@@ -103,7 +103,7 @@ def _filter_read_schema(schema: SchemaABC[T], created_at_attr: str, updated_at_a
     property_schemas = []
     for s in schema.property_schemas:
         if s.name in (created_at_attr, updated_at_attr):
-            timestamp_schema = remove_optional(s.schema)
+            timestamp_schema = strip_optional(s.schema)
             if isinstance(timestamp_schema, StringSchema) and timestamp == timestamp_str:
                 s = PropertySchema(s.name, dataclasses.replace(timestamp_schema, format=StringFormat.DATE_TIME))
         property_schemas.append(s)

@@ -1,8 +1,9 @@
 import dataclasses
 from abc import ABC
-from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator
+from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Set
 
 from persisty import get_persisty_context
+from persisty.cache_header import CacheHeader
 from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, NOT_INITIALIZED
@@ -11,6 +12,7 @@ from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
+from persisty.util import secure_hash
 
 T = TypeVar('T')
 
@@ -220,6 +222,32 @@ class EntityABC(Generic[T], ABC):
     def unresolve_all(self):
         for resolver in self.get_resolvers():
             resolver.unresolve(self)
+
+    def get_cache_header(self, exclude_resolvers: Optional[Set[str]] = None):
+        if exclude_resolvers is None:
+            exclude_resolvers = set()
+        cache_header = self.get_store().get_cache_header(self)
+        keys = [cache_header.cache_key]
+        updated_at = cache_header.updated_at
+        expire_at = cache_header.expire_at
+        for resolver in self.get_resolvers():
+            if resolver.name not in exclude_resolvers and resolver.is_resolved(self):
+                sub_header = resolver.get_cache_header(self)
+                keys.append(sub_header.cache_key)
+                u = sub_header.updated_at
+                if updated_at is None:
+                    updated_at = u
+                elif u is not None and u > updated_at:
+                    updated_at = u
+                e = sub_header.expire_at
+                if expire_at is None:
+                    expire_at = e
+                elif e is not None and e < expire_at:
+                    expire_at = e
+        if len(keys) == 1:
+            return cache_header
+        cache_key = secure_hash(keys)
+        return CacheHeader(cache_key, updated_at, expire_at)
 
     def __eq__(self, other):
         for f in dataclasses.fields(self._get_wrapped_class()):

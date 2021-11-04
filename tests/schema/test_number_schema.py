@@ -2,8 +2,7 @@ from unittest import TestCase
 
 from marshy.default_context import new_default_context
 
-from persisty.schema.json_schema_abc import JsonSchemaABC
-from persisty.schema.marshaller.json_schema_marshaller_factory import JsonSchemaMarshallerFactory
+from persisty.schema.schema_abc import SchemaABC
 from persisty.schema.number_schema import NumberSchema
 from persisty.schema.schema_error import SchemaError
 
@@ -53,10 +52,9 @@ class TestNumberSchema(TestCase):
 
     def test_marshalling(self):
         context = new_default_context()
-        context.register_factory(JsonSchemaMarshallerFactory(priority=200))
         assert context.load(NumberSchema, dict(type='integer')) == NumberSchema(item_type=int)
         assert context.load(NumberSchema, dict(type='number')) == NumberSchema(item_type=float)
         json_schema = dict(type='integer', minimum=5, maximum=10, exclusiveMinimum=True, exclusiveMaximum=False)
         schema = NumberSchema(int, minimum=5, maximum=10, exclusive_minimum=True, exclusive_maximum=False)
-        assert context.load(JsonSchemaABC, json_schema) == schema
+        assert context.load(SchemaABC, json_schema) == schema
         assert context.dump(schema) == json_schema

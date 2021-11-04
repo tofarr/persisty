@@ -6,17 +6,17 @@ from persisty.schema.schema_abc import SchemaABC
 from persisty.schema.schema_error import SchemaError
 
 
-class BooleanSchema(SchemaABC):
+class NullSchema(SchemaABC):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(BooleanSchema, cls).__new__(cls, *args, **kwargs)
+            cls._instance = super(NullSchema, cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
     def get_schema_errors(self, item: ExternalType, current_path: Optional[List[str]] = None) -> Iterator[SchemaError]:
-        if not isinstance(item, bool):
+        if item is not None:
             yield SchemaError(current_path or [], 'type', item)
 
     def __repr__(self):
-        return 'BooleanSchema()'
+        return 'NullSchema()'

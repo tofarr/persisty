@@ -3,8 +3,8 @@ from unittest import TestCase
 
 from persisty.edit import Edit
 from persisty.edit_type import EditType
+from persisty.schema.any_of_schema import optional_schema
 from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.optional_schema import OptionalSchema
 from persisty.schema.property_schema import PropertySchema
 from persisty.schema.string_format import StringFormat
 from persisty.schema.string_schema import StringSchema
@@ -36,7 +36,7 @@ class TestTimestampStore(TestCase):
             PropertySchema('updated_at', StringSchema(format=StringFormat.DATE_TIME))
         )))
         create_schema = ObjectSchema[Issue](tuple((
-            PropertySchema('id', OptionalSchema(StringSchema(min_length=1))),
+            PropertySchema('id', optional_schema(StringSchema(min_length=1))),
             PropertySchema('title', StringSchema()),
         )))
         update_schema = ObjectSchema[Issue](tuple((

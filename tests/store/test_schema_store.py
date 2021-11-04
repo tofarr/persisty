@@ -5,10 +5,11 @@ from persisty.capabilities import READ_ONLY
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
-from persisty.schema import SchemaABC, T, schema_for_type
+from persisty.schema.any_of_schema import optional_schema
 from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.optional_schema import OptionalSchema
 from persisty.schema.property_schema import PropertySchema
+from persisty.schema.schema_abc import SchemaABC, T
+from persisty.schema.schema_context import schema_for_type, SchemaContext
 from persisty.schema.schema_error import SchemaError
 from persisty.schema.string_schema import StringSchema
 from persisty.store.capability_filter_store import CapabilityFilterStore
@@ -24,8 +25,8 @@ class TestSchemaStore(TestCase):
         self.store = schema_store(in_mem_store(Issue))
 
     def test_schemas(self):
-        created_at_schema = PropertySchema('created_at', OptionalSchema(StringSchema()))
-        updated_at_schema = PropertySchema('updated_at', OptionalSchema(StringSchema()))
+        created_at_schema = PropertySchema('created_at', optional_schema(StringSchema()))
+        updated_at_schema = PropertySchema('updated_at', optional_schema(StringSchema()))
         read_schema = ObjectSchema[Issue](tuple((
             PropertySchema('id', StringSchema(min_length=1)),
             PropertySchema('title', StringSchema()),
@@ -33,7 +34,7 @@ class TestSchemaStore(TestCase):
             updated_at_schema
         )))
         create_schema = ObjectSchema[Issue](tuple((
-            PropertySchema('id', OptionalSchema(StringSchema(min_length=1))),
+            PropertySchema('id', optional_schema(StringSchema(min_length=1))),
             PropertySchema('title', StringSchema()),
             created_at_schema,
             updated_at_schema
@@ -101,8 +102,8 @@ class TestSchemaStore(TestCase):
         read_schema = ObjectSchema[Issue](tuple((
             PropertySchema('id', StringSchema(min_length=1)),
             PropertySchema('title', StringSchema()),
-            PropertySchema('created_at', OptionalSchema(StringSchema())),
-            PropertySchema('updated_at', OptionalSchema(StringSchema()))
+            PropertySchema('created_at', optional_schema(StringSchema())),
+            PropertySchema('updated_at', optional_schema(StringSchema()))
         )))
         expected = StoreSchemas(None, None, read_schema)
         assert store.schemas == expected
@@ -111,13 +112,15 @@ class TestSchemaStore(TestCase):
 
     def test_schema_for_type(self):
 
-        class CustomSchema(SchemaABC):
+        class CustomSchema(SchemaABC[T]):
 
             def get_schema_errors(self, item: T, current_path: Optional[List[str]] = None) -> Iterator[SchemaError]:
                 """ Never called"""
 
         class NotADataclass:
-            __schema__ = CustomSchema()
+            @classmethod
+            def __schema_factory__(cls, schema_context: SchemaContext):
+                return CustomSchema()
 
         schema = schema_for_type(NotADataclass)
         assert isinstance(schema, CustomSchema)

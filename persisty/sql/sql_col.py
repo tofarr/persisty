@@ -2,11 +2,12 @@ from dataclasses import dataclass
 from typing import TypeVar, Type
 
 from persisty.errors import PersistyError
-from persisty.schema import SchemaABC, schema_for_type
+from persisty.schema.any_of_schema import strip_optional
 from persisty.schema.boolean_schema import BooleanSchema
 from persisty.schema.number_schema import NumberSchema
 from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.optional_schema import OptionalSchema
+from persisty.schema.schema_abc import SchemaABC
+from persisty.schema.schema_context import schema_for_type
 from persisty.schema.string_format import StringFormat
 from persisty.schema.string_schema import StringSchema
 
@@ -31,21 +32,19 @@ class SqlCol:
 
 
 def col_for_property(name: str, schema: SchemaABC):
-    not_null = True
-    if isinstance(schema, OptionalSchema):
-        not_null = False
-        schema = schema.schema
-    if isinstance(schema, NumberSchema):
-        if schema.item_type == int:
+    stripped_schema = strip_optional(schema)
+    not_null = stripped_schema is schema
+    if isinstance(stripped_schema, NumberSchema):
+        if stripped_schema.item_type == int:
             return SqlCol(name, not_null, 'INT')
         return SqlCol(name, not_null, 'FLOAT')
-    if isinstance(schema, BooleanSchema):
+    if isinstance(stripped_schema, BooleanSchema):
         return SqlCol(name, not_null, 'BOOLEAN')
-    if isinstance(schema, StringSchema):
-        if schema.format == StringFormat.DATE_TIME:
+    if isinstance(stripped_schema, StringSchema):
+        if stripped_schema.format == StringFormat.DATE_TIME:
             return SqlCol(name, not_null, 'DATETIME')
-        if schema.max_length and schema.max_length < 256:
-            return SqlCol(name, not_null, f'VARCHAR({schema.max_length})')
+        if stripped_schema.max_length and stripped_schema.max_length < 256:
+            return SqlCol(name, not_null, f'VARCHAR({stripped_schema.max_length})')
     return SqlCol(name, not_null, 'TEXT')
 
 

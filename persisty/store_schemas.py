@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from typing import TypeVar, Generic, Type, ForwardRef, Optional
 
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
-from persisty.schema import schema_for_type
+from persisty.schema.any_of_schema import strip_optional, optional_schema
 from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.optional_schema import OptionalSchema
 from persisty.schema.property_schema import PropertySchema
+from persisty.schema.schema_context import schema_for_type
 from persisty.schema.string_schema import StringSchema
 
 T = TypeVar('T')
@@ -29,8 +29,7 @@ def schemas_for_type(type_: Type[T], key_attr: Optional[str] = 'id', capabilitie
     key_schema = next((s.schema for s in schema.property_schemas if s.name == key_attr), None)
     if not key_schema:
         return StoreSchemas[T](schema, schema, schema)
-    if isinstance(key_schema, OptionalSchema):
-        key_schema = key_schema.schema
+    key_schema = strip_optional(key_schema)
     if isinstance(key_schema, StringSchema) and not key_schema.min_length:
         key_schema = dataclasses.replace(key_schema, min_length=1)
 
@@ -38,7 +37,7 @@ def schemas_for_type(type_: Type[T], key_attr: Optional[str] = 'id', capabilitie
     if capabilities.create:
         create_properties = []
         if capabilities.create_with_key and key_schema:
-            create_properties.append(PropertySchema(key_attr, OptionalSchema(key_schema)))
+            create_properties.append(PropertySchema(key_attr, optional_schema(key_schema)))
         create_properties.extend(s for s in schema.property_schemas if s.name != key_attr)
         create = ObjectSchema(tuple(create_properties))
 

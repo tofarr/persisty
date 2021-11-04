@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from typing import Optional, List, Iterator, Union, Type, TypeVar
 
-from persisty.schema.json_schema_abc import JsonSchemaABC
+from persisty.schema.schema_abc import SchemaABC
 from persisty.schema.schema_error import SchemaError
 
 T = TypeVar('T', bound=Union[int, float])
 
 
 @dataclass(frozen=True)
-class NumberSchema(JsonSchemaABC[T]):
+class NumberSchema(SchemaABC[T]):
     item_type: Type[T] = float
     minimum: Optional[T] = None
     exclusive_minimum: bool = False

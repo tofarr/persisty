@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Optional, Type, Callable
 
+from persisty.cache_header import CacheHeader
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.selection_set import SelectionSet, from_selection_set_list
 
@@ -75,6 +76,10 @@ class ResolverABC(ABC, Generic[A, B]):
                       sub_selections: Optional[SelectionSet],
                       deferred_resolutions: Optional[DeferredResolutionSet] = None):
         """ Resolve a value and pass it to the callback"""
+
+    @abstractmethod
+    def get_cache_header(self, owner_instance: A) -> CacheHeader:
+        """ Get a cache header for the resolved value """
 
     def before_create(self, owner_instance: A):
         """ Hook invoked immediately before an entity is created """

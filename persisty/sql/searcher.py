@@ -22,7 +22,7 @@ class Searcher(Generic[T]):
     _sql: str
     _count_sql: str
     _sql_table: SqlTable
-    _marshaller: MarshallerABC[T]
+    marshaller: MarshallerABC[T]
 
     def search(self, cursor, search_filter: Optional[SearchFilter[T]] = None, batch_size: int = 100) -> Iterator[T]:
         where = self._build_select_where(search_filter)
@@ -70,12 +70,12 @@ class Searcher(Generic[T]):
 
     def _read_row(self, row: List) -> T:
         values = {col.name: row[index] for index, col in enumerate(self._sql_table.cols)}
-        loaded = self._marshaller.load(values)
+        loaded = self.marshaller.load(values)
         return loaded
 
     @property
     def type(self):
-        return self._marshaller.marshalled_type
+        return self.marshaller.marshalled_type
 
     def _build_select_where(self, search_filter: Optional[SearchFilter] = None):
         where = build_where(search_filter.item_filter if search_filter else None, self._sql_table)
@@ -104,5 +104,5 @@ def searcher(sql_table: SqlTable, item_type: Type[T]):
         _sql=f"SELECT {','.join(c.name for c in sql_table.cols)} FROM {sql_table.name}",
         _count_sql=f'SELECT COUNT(*) FROM {sql_table.name}',
         _sql_table=sql_table,
-        _marshaller=get_default_context().get_marshaller(item_type)
+        marshaller=get_default_context().get_marshaller(item_type)
     )

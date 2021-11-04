@@ -1,43 +1,38 @@
 from dataclasses import dataclass
-from typing import Optional, List, Iterator, TypeVar
+from typing import Optional, List, Iterator
 
-from persisty.schema.json_schema_abc import JsonSchemaABC
+from persisty.schema.schema_abc import SchemaABC, T
 from persisty.schema.schema_error import SchemaError
-
-T = TypeVar('T')
 
 
 @dataclass(frozen=True)
-class ArraySchema(JsonSchemaABC[List[T]]):
-    item_schema: Optional[JsonSchemaABC[T]] = None
+class ArraySchema(SchemaABC[T]):
+    item_schema: Optional[SchemaABC] = None
     min_items: int = 0
     max_items: Optional[int] = None
     uniqueness: bool = False
 
-    def get_schema_errors(self,
-                          items: List[T],
-                          current_path: Optional[List[str]] = None
-                          ) -> Iterator[SchemaError]:
+    def get_schema_errors(self, item: T, current_path: Optional[List[str]] = None) -> Iterator[SchemaError]:
         if current_path is None:
             current_path = []
-        if not isinstance(items, list):
-            yield SchemaError(current_path, 'type', items)
+        if not isinstance(item, list):
+            yield SchemaError(current_path, 'type', item)
             return
         if self.item_schema is not None:
-            for index, item in enumerate(items):
+            for index, i in enumerate(item):
                 current_path.append(str(index))
-                yield from self.item_schema.get_schema_errors(item, current_path)
+                yield from self.item_schema.get_schema_errors(i, current_path)
                 current_path.pop()
-        if self.min_items is not None and len(items) < self.min_items:
-            yield SchemaError(current_path, 'min_items', items)
-        if self.max_items is not None and len(items) >= self.max_items:
-            yield SchemaError(current_path, 'max_items', items)
+        if self.min_items is not None and len(item) < self.min_items:
+            yield SchemaError(current_path, 'min_items', item)
+        if self.max_items is not None and len(item) >= self.max_items:
+            yield SchemaError(current_path, 'max_items', item)
         if self.uniqueness is True:
             existing = set()
-            for index, item in enumerate(items):
-                if item in existing:
+            for index, i in enumerate(item):
+                if i in existing:
                     current_path.append(str(index))
-                    yield SchemaError(current_path, 'non_unique', item)
+                    yield SchemaError(current_path, 'non_unique', i)
                     current_path.pop()
                     return
-                existing.add(item)
+                existing.add(i)

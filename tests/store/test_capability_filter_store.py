@@ -4,9 +4,9 @@ from persisty.capabilities import Capabilities, NO_CAPABILITIES, ALL_CAPABILITIE
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
+from persisty.schema.any_of_schema import optional_schema
 from persisty.schema.number_schema import NumberSchema
 from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.optional_schema import OptionalSchema
 from persisty.schema.property_schema import PropertySchema
 from persisty.schema.string_schema import StringSchema
 from persisty.search_filter import search_filter_from_dataclass
@@ -164,11 +164,10 @@ class TestCapabilityFilterStore(TestCase):
         assert store.name == 'Band'
         read_schema = ObjectSchema[Issue](tuple((
             PropertySchema('id', StringSchema(min_length=1)),
-            PropertySchema('band_name', OptionalSchema(StringSchema())),
-            PropertySchema('year_formed', OptionalSchema(NumberSchema(int))),
+            PropertySchema('band_name', optional_schema(StringSchema())),
+            PropertySchema('year_formed', optional_schema(NumberSchema(int))),
         )))
         expected = StoreSchemas(None, None, read_schema)
         assert store.schemas == expected
         with self.assertRaises(PersistyError):
             store.create(Issue('Issue 4', 'issue_4'))
-

@@ -3,14 +3,15 @@ from datetime import datetime, time
 import re
 from typing import Optional, List, Iterator
 import validators
+from marshy import ExternalType
 
-from persisty.schema.json_schema_abc import JsonSchemaABC
+from persisty.schema.schema_abc import SchemaABC
 from persisty.schema.string_format import StringFormat
 from persisty.schema.schema_error import SchemaError
 
 
 @dataclass(frozen=True)
-class StringSchema(JsonSchemaABC[str]):
+class StringSchema(SchemaABC[str]):
     min_length: Optional[int] = None
     max_length: Optional[int] = None
     pattern: Optional[str] = None

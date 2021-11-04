@@ -2,11 +2,14 @@ from marshy import ExternalType
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 
-from persisty.util import filter_none
+from persisty.schema.marshaller.util import filter_none
 from persisty.schema.number_schema import NumberSchema
 
 
 class NumberSchemaMarshaller(MarshallerABC[NumberSchema]):
+
+    def __init__(self):
+        super().__init__(NumberSchema)
 
     def load(self, item: ExternalItemType) -> NumberSchema:
         item_type = item['type']

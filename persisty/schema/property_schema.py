@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TypeVar, Generic, Iterator, Optional, List
 
-from persisty.schema.json_schema_abc import JsonSchemaABC
+from persisty.schema.schema_abc import SchemaABC
 from persisty.schema.schema_error import SchemaError
 from persisty.schema.schema_abc import SchemaABC, T
 
@@ -11,7 +11,7 @@ B = TypeVar('B')
 @dataclass(frozen=True)
 class PropertySchema(Generic[T, B], SchemaABC[T]):
     name: str
-    schema: JsonSchemaABC[B]
+    schema: SchemaABC
 
     def get_schema_errors(self, item: T, current_path: Optional[List[str]] = None) -> Iterator[SchemaError]:
         if current_path is None:

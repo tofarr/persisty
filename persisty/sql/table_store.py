@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Iterator, ForwardRef, Type, Callable, Any
 
+from persisty.cache_header import CacheHeader
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.item_filter.item_filter_abc import ItemFilterABC
@@ -14,6 +15,7 @@ from persisty.sql.sql_table import SqlTable, sql_table_from_type
 from persisty.sql.updater import Updater, updater
 from persisty.store.store_abc import StoreABC, T
 from persisty.store_schemas import StoreSchemas, schemas_for_type
+from persisty.util import secure_hash
 
 
 @dataclass(frozen=True)
@@ -46,6 +48,11 @@ class TableStore(StoreABC[T]):
     def get_key(self, item: T) -> str:
         # Assumes item has key attr with correct name
         return getattr(item, self.sql_table.key_col.name)
+
+    def get_cache_header(self, item: T) -> CacheHeader:
+        dumped = self.searcher.marshaller.dump(item)
+        cache_key = secure_hash(dumped)
+        return CacheHeader(cache_key)
 
     def create(self, item: T) -> str:
         with self.get_cursor() as cursor:

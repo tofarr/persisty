@@ -1,11 +1,14 @@
 from marshy import ExternalType
 from marshy.marshaller.marshaller_abc import MarshallerABC
 
-from persisty.util import filter_none
+from persisty.schema.marshaller.util import filter_none
 from persisty.schema.string_schema import StringSchema
 
 
 class StringSchemaMarshaller(MarshallerABC[StringSchema]):
+
+    def __init__(self):
+        super().__init__(StringSchema)
 
     def load(self, item: ExternalType) -> StringSchema:
         return StringSchema(

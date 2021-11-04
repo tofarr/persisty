@@ -6,6 +6,9 @@ from persisty.schema.boolean_schema import BooleanSchema
 
 class BooleanSchemaMarshaller(MarshallerABC[BooleanSchema]):
 
+    def __init__(self):
+        super().__init__(BooleanSchema)
+
     def load(self, item: ExternalItemType) -> BooleanSchema:
         return BooleanSchema()
 
