@@ -1,8 +1,9 @@
 import dataclasses
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterator, TypeVar, Callable
+from typing import Iterator, TypeVar, Callable, Any
 
+from persisty.cache_header import CacheHeader
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.schema import SchemaABC
@@ -29,7 +30,7 @@ class TimestampStore(WrapperStoreABC[T]):
     op_schemas: StoreSchemas[T]
     created_at_attr: str = 'created_at'
     updated_at_attr: str = 'updated_at'
-    timestamp: Callable = timestamp_str
+    timestamp: Callable[[], Any] = datetime.now
 
     @property
     def store(self):
@@ -42,6 +43,11 @@ class TimestampStore(WrapperStoreABC[T]):
     @property
     def schemas(self) -> StoreSchemas[T]:
         return self.op_schemas
+
+    def get_cache_header(self, item: T) -> CacheHeader:
+        cache_header = self.store.get_cache_header()
+        updated_at = getattr(item, self.updated_at_attr)
+        return CacheHeader(cache_header.cache_key, updated_at, cache_header.expire_at)
 
     def create(self, item: T) -> str:
         now = self.timestamp()

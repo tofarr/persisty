@@ -1,3 +1,4 @@
+from datetime import datetime
 import itertools
 from time import time
 
@@ -7,6 +8,7 @@ from typing import Optional, Iterator, Dict
 from marshy import ExternalType, get_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
 
+from persisty.cache_header import CacheHeader
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.page import Page
@@ -53,6 +55,11 @@ class TTLCacheStore(WrapperStoreABC[T]):
         entry = self._item_cache.get(key)
         if entry and entry.expire_at > int(time()):
             return self.item_marshaller.load(entry.value)
+
+    def get_cache_header(self, item: T) -> CacheHeader:
+        cache_header = self.store.get_cache_header()
+        expire_at = datetime.fromtimestamp(int(time()) + self.timeout)
+        return CacheHeader(cache_header.cache_key, cache_header.updated_at, expire_at)
 
     def create(self, item: T) -> str:
         key = self.store.create(item)

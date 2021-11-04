@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import Optional, Iterator, Type
 
+from persisty.cache_header import CacheHeader
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
 from persisty.item_filter.item_filter_abc import ItemFilterABC
@@ -35,6 +36,9 @@ class WrapperStoreABC(StoreABC[T]):
 
     def get_key(self, item: T) -> str:
         return self.store.get_key(item)
+
+    def get_cache_header(self, item: T) -> CacheHeader:
+        return self.store.get_cache_header(item)
 
     def create(self, item: T) -> str:
         return self.store.create(item)

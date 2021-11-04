@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Optional, Iterator, Type, ForwardRef
 
+from persisty.cache_header import CacheHeader
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
 from persisty.edit_type import EditType
@@ -37,6 +38,10 @@ class StoreABC(ABC, Generic[T]):
     @abstractmethod
     def get_key(self, item: T) -> str:
         """ Generate a string which may be used to retrieve an item. (Typically fast local operation) """
+
+    @abstractmethod
+    def get_cache_header(self, item: T) -> CacheHeader:
+        """ Get a cache header for an item """
 
     @abstractmethod
     def create(self, item: T) -> str:

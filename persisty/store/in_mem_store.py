@@ -8,6 +8,7 @@ from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
 
+from persisty.cache_header import CacheHeader
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
 from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.search_filter import SearchFilter
@@ -15,6 +16,7 @@ from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.store.store_abc import StoreABC, T
 from persisty.store_schemas import StoreSchemas, NO_SCHEMAS
+from persisty.util import secure_hash
 
 
 @dataclass(frozen=True)
@@ -46,6 +48,11 @@ class InMemStore(StoreABC[T]):
         if key is not None:
             key = str(key)
         return key
+
+    def get_cache_header(self, item: T) -> CacheHeader:
+        dumped = self.marshaller.dump(item)
+        cache_key = secure_hash(dumped)
+        return CacheHeader(cache_key)
 
     def create(self, item: T) -> str:
         key = self.get_key(item)
