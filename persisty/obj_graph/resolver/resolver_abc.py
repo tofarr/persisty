@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Optional, Type, Callable
+from typing import TypeVar, Generic, Optional, Type, Callable, Iterator, Dict
 
 from persisty.cache_header import CacheHeader
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.selection_set import SelectionSet, from_selection_set_list
+from schemey.schema_abc import SchemaABC
 
 
 class _NotInitializedType:
@@ -78,7 +79,7 @@ class ResolverABC(ABC, Generic[A, B]):
         """ Resolve a value and pass it to the callback"""
 
     @abstractmethod
-    def get_cache_header(self, owner_instance: A) -> CacheHeader:
+    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
         """ Get a cache header for the resolved value """
 
     def before_create(self, owner_instance: A):
@@ -104,3 +105,19 @@ class ResolverABC(ABC, Generic[A, B]):
     def after_destroy(self, owner_instance: A):
         """ Hook invoked immediately after an entity is destroyed """
         pass
+
+    def filter_create_schema(self, schema: SchemaABC) -> SchemaABC:
+        """ Filter the schema given - used to add additional attributes regarding referenced types and such. """
+        return schema
+
+    def filter_read_schema(self, schema: SchemaABC) -> SchemaABC:
+        """ Filter the schema given - used to add additional attributes regarding referenced types and such. """
+        return schema
+
+    def filter_update_schema(self, schema: SchemaABC) -> SchemaABC:
+        """ Filter the schema given - used to add additional attributes regarding referenced types and such. """
+        return schema
+
+    def filter_search_schema(self, schema: SchemaABC) -> SchemaABC:
+        """ Filter the schema given - used to add additional attributes regarding referenced types and such. """
+        return schema

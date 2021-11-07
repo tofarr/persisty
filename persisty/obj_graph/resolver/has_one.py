@@ -1,7 +1,8 @@
-from typing import Optional, Callable, Type
+from typing import Optional, Callable, Type, Iterator
 
 from marshy.utils import resolve_forward_refs
 
+from persisty.cache_header import CacheHeader
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
@@ -114,3 +115,8 @@ class HasOne(ResolverABC[A, B]):
                 existing_by_key.pop(foreign_key, None)
             for e in existing_by_key.values():
                 e.destroy()
+
+    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
+        entity = getattr(owner_instance, self.name)
+        exclude_resolvers = [self.inverse_attr] if self.inverse_attr else []
+        yield entity.get_cache_header(exclude_resolvers)

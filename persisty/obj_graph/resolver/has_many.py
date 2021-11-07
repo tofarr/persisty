@@ -1,15 +1,18 @@
 from collections import abc
-from typing import Optional, Callable, TypeVar, Type, Iterable
+from typing import Optional, Callable, TypeVar, Type, Iterable, Iterator
 
 import typing_inspect
 from marshy.utils import resolve_forward_refs
 
+from persisty.cache_header import CacheHeader
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A
 from persisty.obj_graph.selection_set import SelectionSet
+from schemey.object_schema import ObjectSchema
+from schemey.schema_abc import SchemaABC
 from persisty.search_filter import SearchFilter
 
 B = TypeVar('B')
@@ -118,6 +121,28 @@ class HasMany(ResolverABC[A, B]):
                 existing_by_key.pop(foreign_key, None)
             for e in existing_by_key.values():
                 e.destroy()
+
+    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
+        entities = getattr(owner_instance, self.name)
+        exclude_resolvers = [self.inverse_attr] if self.inverse_attr else []
+        yield from (entity.get_cache_header(exclude_resolvers) for entity in entities)
+
+    def filter_read_schema(self, schema: SchemaABC) -> SchemaABC:
+        if not isinstance(schema, ObjectSchema):
+            return schema
+        property_schemas = list(schema.property_schemas)
+        has_many_schema = optional_schema(HasManySchema(self.key_attr, self._entity_type))
+        property_schemas.append(has_many_schema)
+        return ObjectSchema(tuple(property_schemas))
+
+    def filter_create_schema(self, schema: SchemaABC) -> SchemaABC:
+        return self.filter_read_schema(schema)
+
+    def filter_update_schema(self, schema: SchemaABC) -> SchemaABC:
+        return self.filter_read_schema(schema)
+
+    def filter_search_schema(self, schema: SchemaABC) -> SchemaABC:
+        return self.filter_read_schema(schema)
 
 
 def get_entity_type(from_type, expected: Iterable[Type]):

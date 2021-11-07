@@ -1,6 +1,6 @@
 import dataclasses
 from abc import ABC
-from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Set
+from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Set, Dict, List, Type
 
 from persisty import get_persisty_context
 from persisty.cache_header import CacheHeader
@@ -10,9 +10,10 @@ from persisty.obj_graph.resolver.resolver_abc import ResolverABC, NOT_INITIALIZE
 from persisty.obj_graph.selection_set import SelectionSet
 from persisty.page import Page
 from persisty.errors import PersistyError
+from schemey.schema_abc import SchemaABC
 from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
-from persisty.util import secure_hash
+from persisty.store_schemas import StoreSchemas
 
 T = TypeVar('T')
 
@@ -26,6 +27,7 @@ class EntityABC(Generic[T], ABC):
 
     __wrapped_class__: T = None
     __batch_size__: 100
+    __filter_class__: Type = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)  # forwards all unused arguments
@@ -36,11 +38,15 @@ class EntityABC(Generic[T], ABC):
         return (e for e in cls.__dict__.values() if isinstance(e, ResolverABC))
 
     @classmethod
+    def get_name(cls):
+        return cls._get_wrapped_class().__name__
+
+    @classmethod
     def get_store(cls) -> StoreABC[T]:
-        store_name = cls._get_wrapped_class().__name__
+        name = cls.get_name()
         if not hasattr(cls, '__persisty_context__'):
             cls.__persisty_context__ = get_persisty_context()
-        store = cls.__persisty_context__.get_store(store_name)
+        store = cls.__persisty_context__.get_store(name)
         return store
 
     @classmethod
@@ -207,6 +213,16 @@ class EntityABC(Generic[T], ABC):
         for resolver in self.get_resolvers():
             resolver.after_destroy(self)
 
+    def patch_from(self, other):
+        for f in dataclasses.fields(self._get_wrapped_class()):
+            value = getattr(other, f.name)
+            if value is not dataclasses.MISSING:
+                setattr(self, f.name, value)
+        for resolver in self.get_resolvers():
+            if resolver.is_resolved(other):
+                value = getattr(other, resolver.name)
+                resolver.__set__(self, value)
+
     def resolve_all(self,
                     selections: Optional[SelectionSet],
                     deferred_resolutions: Optional[DeferredResolutionSet] = None):
@@ -223,31 +239,51 @@ class EntityABC(Generic[T], ABC):
         for resolver in self.get_resolvers():
             resolver.unresolve(self)
 
-    def get_cache_header(self, exclude_resolvers: Optional[Set[str]] = None):
+    def get_cache_header(self, exclude_resolvers: Optional[Set[str]] = None) -> CacheHeader:
         if exclude_resolvers is None:
             exclude_resolvers = set()
         cache_header = self.get_store().get_cache_header(self)
-        keys = [cache_header.cache_key]
-        updated_at = cache_header.updated_at
-        expire_at = cache_header.expire_at
+        cache_header = cache_header.combine_with(self._resolver_cache_headers(exclude_resolvers))
+        return cache_header
+
+    def _resolver_cache_headers(self, exclude_resolvers: Optional[Set[str]] = None) -> Iterator[CacheHeader]:
         for resolver in self.get_resolvers():
             if resolver.name not in exclude_resolvers and resolver.is_resolved(self):
-                sub_header = resolver.get_cache_header(self)
-                keys.append(sub_header.cache_key)
-                u = sub_header.updated_at
-                if updated_at is None:
-                    updated_at = u
-                elif u is not None and u > updated_at:
-                    updated_at = u
-                e = sub_header.expire_at
-                if expire_at is None:
-                    expire_at = e
-                elif e is not None and e < expire_at:
-                    expire_at = e
-        if len(keys) == 1:
-            return cache_header
-        cache_key = secure_hash(keys)
-        return CacheHeader(cache_key, updated_at, expire_at)
+                yield from resolver.get_cache_headers(self)
+
+    @classmethod
+    def get_schemas(cls) -> StoreSchemas:
+        schemas = cls.get_store().schemas
+        return StoreSchemas(
+            create=cls._filter_schema(schemas.create, 'filter_create_schema'),
+            read=cls._filter_schema(schemas.read, 'filter_read_schema'),
+            update=cls._filter_schema(schemas.update, 'filter_update_schema'),
+            search=cls._filter_schema(schemas.search, 'filter_search_schema')
+        )
+
+    @classmethod
+    def _filter_schema(cls, schema: SchemaABC[T], filter_name: str) -> SchemaABC:
+        for resolver in cls.get_resolvers():
+            schema = resolver.get(filter_name)(schema)
+        return schema
+
+    @classmethod
+    def filter_read_schema(cls, schema: SchemaABC[T], defs: Optional[Dict] = None) -> SchemaABC:
+        for resolver in cls.get_resolvers():
+            schema = resolver.filter_read_schema(schema)
+        return schema
+
+    @classmethod
+    def filter_update_schema(cls, schema: SchemaABC[T], defs: Optional[Dict] = None) -> SchemaABC:
+        for resolver in cls.get_resolvers():
+            schema = resolver.filter_update_schema(schema)
+        return schema
+
+    @classmethod
+    def filter_search_schema(cls, schema: SchemaABC[T], defs: Optional[Dict] = None) -> SchemaABC:
+        for resolver in cls.get_resolvers():
+            schema = resolver.filter_search_schema(schema)
+        return schema
 
     def __eq__(self, other):
         for f in dataclasses.fields(self._get_wrapped_class()):

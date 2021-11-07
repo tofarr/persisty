@@ -5,13 +5,13 @@ from persisty.capabilities import READ_ONLY
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
-from persisty.schema.any_of_schema import optional_schema
-from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.property_schema import PropertySchema
-from persisty.schema.schema_abc import SchemaABC, T
-from persisty.schema.schema_context import schema_for_type, SchemaContext
-from persisty.schema.schema_error import SchemaError
-from persisty.schema.string_schema import StringSchema
+from schemey.any_of_schema import optional_schema
+from schemey.object_schema import ObjectSchema
+from schemey.property_schema import PropertySchema
+from schemey.schema_abc import SchemaABC, T
+from schemey.schema_context import schema_for_type, SchemaContext
+from schemey.schema_error import SchemaError
+from schemey.string_schema import StringSchema
 from persisty.store.capability_filter_store import CapabilityFilterStore
 from persisty.store.in_mem_store import in_mem_store
 from persisty.store.schema_store import schema_store

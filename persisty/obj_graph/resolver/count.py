@@ -1,8 +1,9 @@
-from typing import Optional, Callable, Type
+from typing import Optional, Callable, Type, Iterator
 
 from marshy.factory.optional_marshaller_factory import get_optional_type
 from marshy.utils import resolve_forward_refs
 
+from persisty.cache_header import CacheHeader
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilterOp, AttrFilter
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
@@ -10,6 +11,10 @@ from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A
 from persisty.obj_graph.selection_set import SelectionSet
+from schemey.any_of_schema import optional_schema
+from schemey.number_schema import NumberSchema
+from schemey.object_schema import ObjectSchema
+from schemey.schema_abc import SchemaABC
 from persisty.search_filter import SearchFilter
 
 
@@ -56,3 +61,17 @@ class Count(ResolverABC[A, int]):
             for entity in entities:
                 setattr(entity, self.foreign_key_attr, None)
                 entity.update()
+
+    @staticmethod
+    def get_cache_header(owner_instance: A) -> Iterator[CacheHeader]:
+        return tuple()
+
+    def filter_read_schema(self, schema: SchemaABC) -> SchemaABC:
+        if not isinstance(schema, ObjectSchema):
+            return schema
+        property_schemas = list(schema.property_schemas)
+        property_schemas.append(optional_schema(NumberSchema(int, minimum=0)))
+        return ObjectSchema(tuple(property_schemas))
+
+    def filter_search_schema(self, schema: SchemaABC) -> SchemaABC:
+        return self.filter_read_schema(schema)

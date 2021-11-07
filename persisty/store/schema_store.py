@@ -5,7 +5,7 @@ from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
-from persisty.schema.schema_abc import SchemaABC
+from schemey.schema_abc import SchemaABC
 from persisty.store_schemas import StoreSchemas, schemas_for_type
 
 

@@ -2,14 +2,14 @@ from dataclasses import dataclass
 from typing import TypeVar, Type
 
 from persisty.errors import PersistyError
-from persisty.schema.any_of_schema import strip_optional
-from persisty.schema.boolean_schema import BooleanSchema
-from persisty.schema.number_schema import NumberSchema
-from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.schema_abc import SchemaABC
-from persisty.schema.schema_context import schema_for_type
-from persisty.schema.string_format import StringFormat
-from persisty.schema.string_schema import StringSchema
+from schemey.any_of_schema import strip_optional
+from schemey.boolean_schema import BooleanSchema
+from schemey.number_schema import NumberSchema
+from schemey.object_schema import ObjectSchema
+from schemey.schema_abc import SchemaABC
+from schemey.schema_context import schema_for_type
+from schemey.string_format import StringFormat
+from schemey.string_schema import StringSchema
 
 T = TypeVar('T')
 

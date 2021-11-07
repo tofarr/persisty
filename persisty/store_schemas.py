@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from typing import TypeVar, Generic, Type, ForwardRef, Optional
 
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
-from persisty.schema.any_of_schema import strip_optional, optional_schema
-from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.property_schema import PropertySchema
-from persisty.schema.schema_context import schema_for_type
-from persisty.schema.string_schema import StringSchema
+from schemey.any_of_schema import strip_optional, optional_schema
+from schemey.object_schema import ObjectSchema
+from schemey.property_schema import PropertySchema
+from schemey.schema_context import schema_for_type
+from schemey.string_schema import StringSchema
 
 T = TypeVar('T')
 
@@ -17,6 +17,7 @@ class StoreSchemas(Generic[T]):
     create: ForwardRef('persisty.schema.SchemaABC[T]') = None
     update: ForwardRef('persisty.schema.SchemaABC[T]') = None
     read: ForwardRef('persisty.schema.SchemaABC[T]') = None
+    search: ForwardRef('persisty.schema.SchemaABC[T]') = None
 
 
 NO_SCHEMAS = StoreSchemas()
@@ -53,8 +54,15 @@ def schemas_for_type(type_: Type[T], key_attr: Optional[str] = 'id', capabilitie
         read_properties.extend(s for s in schema.property_schemas if s.name != key_attr)
         read = ObjectSchema(tuple(read_properties))
 
+    search = None
+    if capabilities.search:
+        read_properties = [PropertySchema(key_attr, key_schema)]
+        read_properties.extend(s for s in schema.property_schemas if s.name != key_attr)
+        search = ObjectSchema(tuple(read_properties))
+
     return StoreSchemas[T](
         create=create,
         update=update,
-        read=read
+        read=read,
+        search=search
     )

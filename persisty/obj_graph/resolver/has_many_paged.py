@@ -1,5 +1,6 @@
-from typing import Optional, Callable, TypeVar, Type
+from typing import Optional, Callable, TypeVar, Type, Iterator
 
+from persisty.cache_header import CacheHeader
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
@@ -8,7 +9,10 @@ from persisty.obj_graph.resolver.has_many import get_entity_type
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A
 from persisty.obj_graph.selection_set import SelectionSet
 from persisty.page import Page
+from schemey.object_schema import ObjectSchema
+from schemey.schema_abc import SchemaABC
 from persisty.search_filter import SearchFilter
+from persisty.util import secure_hash
 
 B = TypeVar('B')
 
@@ -77,3 +81,21 @@ class HasManyPaged(ResolverABC[A, B]):
             for entity in self._search(owner_instance):
                 setattr(entity, self.foreign_key_attr, None)
                 entity.update()
+
+    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
+        # last modified of paged is unknowable (Suppose something on another page changes?)
+        entities = getattr(owner_instance, self.name)
+        exclude_resolvers = [self.inverse_attr] if self.inverse_attr else []
+        yield from (e.get_cache_header(exclude_resolvers) for e in entities)
+
+    def filter_read_schema(self, schema: SchemaABC) -> SchemaABC:
+        if not isinstance(schema, ObjectSchema):
+            return schema
+        property_schemas = list(schema.property_schemas)
+        has_many_schema = optional_schema(HasManyPagedSchema(self.key_attr, self._entity_type))
+        property_schemas.append(has_many_schema)
+        return ObjectSchema(tuple(property_schemas))
+
+    def filter_search_schema(self, schema: SchemaABC) -> SchemaABC:
+        return self.filter_read_schema(schema)
+

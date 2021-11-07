@@ -3,11 +3,11 @@ from unittest import TestCase
 
 from persisty.edit import Edit
 from persisty.edit_type import EditType
-from persisty.schema.any_of_schema import optional_schema
-from persisty.schema.object_schema import ObjectSchema
-from persisty.schema.property_schema import PropertySchema
-from persisty.schema.string_format import StringFormat
-from persisty.schema.string_schema import StringSchema
+from schemey.any_of_schema import optional_schema
+from schemey.object_schema import ObjectSchema
+from schemey.property_schema import PropertySchema
+from schemey.string_format import StringFormat
+from schemey.string_schema import StringSchema
 from persisty.search_filter import search_filter_from_dataclass
 from persisty.store.in_mem_store import in_mem_store
 from persisty.store.schema_store import schema_store
