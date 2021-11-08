@@ -1,13 +1,14 @@
 from dataclasses import dataclass
+from http import HTTPStatus
 from typing import Optional, List
 
 from persisty.obj_graph.entity_abc import EntityABC
-from persisty.server.handlers.entity.entity_handler_abc import EntityHandlerABC
+from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response
 
 
-@dataclass
+@dataclass(frozen=True)
 class EntityReadAllHandler(EntityHandlerABC):
     max_keys: int = 100
 
@@ -18,10 +19,10 @@ class EntityReadAllHandler(EntityHandlerABC):
         entity_type = self.get_entity_type(request)
         keys = self.get_keys(request)
         if entity_type is None or keys is None:
-            return Response(404)
+            return Response(HTTPStatus.NOT_FOUND)
 
         if len(keys) > self.max_keys:
-            return Response(400)  # Bad request
+            return Response(HTTPStatus.BAD_REQUEST)  # Bad request
 
         selections = self.get_selections(request)
         entities = list(entity_type.read_all(keys=keys, error_on_missing=False, selections=selections))
@@ -31,10 +32,10 @@ class EntityReadAllHandler(EntityHandlerABC):
         else:
             response_headers = cache_header.get_cache_control_headers()
             if not self.is_modified(request, cache_header):
-                return Response(304, response_headers)
+                return Response(HTTPStatus.NOT_MODIFIED, response_headers)
 
         content = self.marshaller_context.dump(entities, List[entity_type])
-        return Response(200, response_headers, content)
+        return Response(HTTPStatus.OK, response_headers, content)
 
     @staticmethod
     def get_keys(request: Request) -> Optional[List[str]]:

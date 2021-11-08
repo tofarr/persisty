@@ -9,5 +9,5 @@ class Request:
     method: str
     path: List[str]
     headers: Dict[str, str]
-    params: Dict[str, str]
+    params: Dict[str, List[str]]
     input: Optional[ExternalType] = None

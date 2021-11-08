@@ -1,8 +1,7 @@
 import dataclasses
 from abc import ABC
-from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Set, Dict, List, Type
+from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Set, Type
 
-from persisty import get_persisty_context
 from persisty.cache_header import CacheHeader
 from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
@@ -11,9 +10,10 @@ from persisty.obj_graph.selection_set import SelectionSet
 from persisty.page import Page
 from persisty.errors import PersistyError
 from schemey.schema_abc import SchemaABC
+
+from persisty.persisty_meta import PersistyMeta
 from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
-from persisty.store_schemas import StoreSchemas
 
 T = TypeVar('T')
 
@@ -45,7 +45,8 @@ class EntityABC(Generic[T], ABC):
     def get_store(cls) -> StoreABC[T]:
         name = cls.get_name()
         if not hasattr(cls, '__persisty_context__'):
-            cls.__persisty_context__ = get_persisty_context()
+            from persisty.persisty_context import get_default_persisty_context
+            cls.__persisty_context__ = get_default_persisty_context()
         store = cls.__persisty_context__.get_store(name)
         return store
 
@@ -252,37 +253,22 @@ class EntityABC(Generic[T], ABC):
                 yield from resolver.get_cache_headers(self)
 
     @classmethod
-    def get_schemas(cls) -> StoreSchemas:
-        schemas = cls.get_store().schemas
-        return StoreSchemas(
-            create=cls._filter_schema(schemas.create, 'filter_create_schema'),
-            read=cls._filter_schema(schemas.read, 'filter_read_schema'),
-            update=cls._filter_schema(schemas.update, 'filter_update_schema'),
-            search=cls._filter_schema(schemas.search, 'filter_search_schema')
+    def get_meta(cls) -> PersistyMeta:
+        store = cls.get_store()
+        schemas = store.schemas
+        return PersistyMeta(
+            name=store.name,
+            capabilities=store.capabilities,
+            schema_for_create=cls._filter_schema(schemas.create, 'filter_create_schema'),
+            schema_for_read=cls._filter_schema(schemas.read, 'filter_read_schema'),
+            schema_for_update=cls._filter_schema(schemas.update, 'filter_update_schema'),
+            schema_for_search=cls._filter_schema(schemas.search, 'filter_search_schema')
         )
 
     @classmethod
     def _filter_schema(cls, schema: SchemaABC[T], filter_name: str) -> SchemaABC:
         for resolver in cls.get_resolvers():
-            schema = resolver.get(filter_name)(schema)
-        return schema
-
-    @classmethod
-    def filter_read_schema(cls, schema: SchemaABC[T], defs: Optional[Dict] = None) -> SchemaABC:
-        for resolver in cls.get_resolvers():
-            schema = resolver.filter_read_schema(schema)
-        return schema
-
-    @classmethod
-    def filter_update_schema(cls, schema: SchemaABC[T], defs: Optional[Dict] = None) -> SchemaABC:
-        for resolver in cls.get_resolvers():
-            schema = resolver.filter_update_schema(schema)
-        return schema
-
-    @classmethod
-    def filter_search_schema(cls, schema: SchemaABC[T], defs: Optional[Dict] = None) -> SchemaABC:
-        for resolver in cls.get_resolvers():
-            schema = resolver.filter_search_schema(schema)
+            schema = getattr(resolver, filter_name)(schema)
         return schema
 
     def __eq__(self, other):

@@ -8,6 +8,7 @@ from persisty.server.response import Response
 
 
 class HandlerABC(ABC):
+    priority: int = 100
 
     @abstractmethod
     def match(self, request: Request) -> bool:
@@ -34,3 +35,8 @@ class HandlerABC(ABC):
     def is_param_true(request: Request, param_name: str) -> bool:
         return request.params.get(param_name) in ['1', 'true']
 
+    def __ne__(self, other):
+        return self.priority != getattr(other, 'priority', None)
+
+    def __lt__(self, other):
+        return self.priority < getattr(other, 'priority', None)

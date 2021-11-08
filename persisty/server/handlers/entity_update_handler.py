@@ -1,4 +1,6 @@
-from persisty.server.handlers.entity.entity_handler_abc import EntityHandlerABC
+from http import HTTPStatus
+
+from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response
 
@@ -11,10 +13,10 @@ class EntityUpdateHandler(EntityHandlerABC):
     def handle_request(self, request: Request) -> Response:
         entity_type = self.get_entity_type(request)
         if entity_type is None:
-            return Response(404)
+            return Response(HTTPStatus.NOT_FOUND)
         previous_entity = entity_type.read(request.path[1])
         if previous_entity is None:
-            return Response(404)
+            return Response(HTTPStatus.NOT_FOUND)
         entity = self.marshaller_context.load(entity_type, request.input)
         if request.path == 'PATCH':
             previous_entity.patch_from(entity)
@@ -23,4 +25,4 @@ class EntityUpdateHandler(EntityHandlerABC):
         cache_header = entity.get_cache_header()
         response_headers = cache_header.get_cache_control_headers()
         content = self.marshaller_context.dump(entity)
-        return Response(200, response_headers, content)
+        return Response(HTTPStatus.OK, response_headers, content)
