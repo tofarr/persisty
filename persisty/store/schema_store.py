@@ -55,7 +55,7 @@ class SchemaStore(WrapperStoreABC[T]):
     def _validate_item(item: T, schema: SchemaABC[T]):
         if schema is None:
             return
-        error = next(schema.get_schema_errors(item), None)
+        error = next(schema.get_schema_errors(item, {}), None)
         if error:
             raise error
 

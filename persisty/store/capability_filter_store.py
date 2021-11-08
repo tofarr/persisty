@@ -31,7 +31,8 @@ class CapabilityFilterStore(WrapperStoreABC[T]):
         return StoreSchemas(
             create=schemas.create if capabilities.create else None,
             update=schemas.update if capabilities.update else None,
-            read=schemas.read if capabilities.read or capabilities.search else None
+            read=schemas.read if capabilities.read else None,
+            search=schemas.search if capabilities.search else None
         )
 
     def create(self, item: T) -> str:

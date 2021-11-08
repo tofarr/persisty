@@ -1,5 +1,8 @@
 from unittest import TestCase
 
+from schemey.ref_schema import RefSchema
+from schemey.with_defs_schema import WithDefsSchema
+
 from persisty.capabilities import Capabilities, NO_CAPABILITIES, ALL_CAPABILITIES, READ_ONLY
 from persisty.edit import Edit
 from persisty.edit_type import EditType
@@ -160,14 +163,16 @@ class TestCapabilityFilterStore(TestCase):
             assert state == {beatles, jefferson, updated_stones}
 
     def test_schema(self):
-        store = (CapabilityFilterStore(schema_store(in_mem_store(Band)), READ_ONLY))
+        store = CapabilityFilterStore(schema_store(in_mem_store(Band)), READ_ONLY)
         assert store.name == 'Band'
-        read_schema = ObjectSchema[Issue](tuple((
-            PropertySchema('id', StringSchema(min_length=1)),
-            PropertySchema('band_name', optional_schema(StringSchema())),
-            PropertySchema('year_formed', optional_schema(NumberSchema(int))),
-        )))
-        expected = StoreSchemas(None, None, read_schema)
+        read_schema = WithDefsSchema({
+            'Band': ObjectSchema[Issue](tuple((
+                PropertySchema('id', StringSchema(min_length=1), True),
+                PropertySchema('band_name', optional_schema(StringSchema())),
+                PropertySchema('year_formed', optional_schema(NumberSchema(int))),
+            )))
+        }, RefSchema('Band'))
+        expected = StoreSchemas(None, None, read_schema, read_schema)
         assert store.schemas == expected
         with self.assertRaises(PersistyError):
             store.create(Issue('Issue 4', 'issue_4'))

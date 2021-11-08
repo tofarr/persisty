@@ -1,6 +1,9 @@
 from datetime import datetime
 from unittest import TestCase
 
+from schemey.ref_schema import RefSchema
+from schemey.with_defs_schema import WithDefsSchema
+
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from schemey.any_of_schema import optional_schema
@@ -29,20 +32,20 @@ class TestTimestampStore(TestCase):
 
     def test_schemas_present(self):
         store = timestamp_store(schema_store(self.store))
-        read_schema = ObjectSchema[Issue](tuple((
-            PropertySchema('id', StringSchema(min_length=1)),
-            PropertySchema('title', StringSchema()),
+        read_schema = WithDefsSchema({'Issue': ObjectSchema[Issue](tuple((
+            PropertySchema('id', StringSchema(min_length=1), True),
+            PropertySchema('title', StringSchema(), True),
             PropertySchema('created_at', StringSchema(format=StringFormat.DATE_TIME)),
             PropertySchema('updated_at', StringSchema(format=StringFormat.DATE_TIME))
-        )))
-        create_schema = ObjectSchema[Issue](tuple((
+        )))}, RefSchema('Issue'))
+        create_schema = WithDefsSchema({'Issue': ObjectSchema[Issue](tuple((
             PropertySchema('id', optional_schema(StringSchema(min_length=1))),
-            PropertySchema('title', StringSchema()),
-        )))
-        update_schema = ObjectSchema[Issue](tuple((
-            PropertySchema('id', StringSchema(min_length=1)),
-            PropertySchema('title', StringSchema()),
-        )))
+            PropertySchema('title', StringSchema(), True),
+        )))}, RefSchema('Issue'))
+        update_schema = WithDefsSchema({'Issue': ObjectSchema[Issue](tuple((
+            PropertySchema('id', StringSchema(min_length=1), True),
+            PropertySchema('title', StringSchema(), True),
+        )))}, RefSchema('Issue'))
         expected = StoreSchemas[Issue](create_schema, update_schema, read_schema)
         assert store.schemas == expected
 

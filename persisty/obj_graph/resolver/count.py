@@ -62,8 +62,7 @@ class Count(ResolverABC[A, int]):
                 setattr(entity, self.foreign_key_attr, None)
                 entity.update()
 
-    @staticmethod
-    def get_cache_header(owner_instance: A) -> Iterator[CacheHeader]:
+    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
         return tuple()
 
     def filter_read_schema(self, schema: SchemaABC) -> SchemaABC:

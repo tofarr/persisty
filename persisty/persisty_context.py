@@ -89,4 +89,27 @@ def get_default_persisty_context() -> PersistyContext:
         imported_module = importlib.import_module(import_module)
         context_fn = getattr(imported_module, import_path[-1])
         _default_context = context_fn()
+
+        from persisty.store.in_mem_store import in_mem_store
+        from persisty.store.schema_store import schema_store
+        from persisty.store.logging_store import LoggingStore
+        from tests.fixtures.items import Band, Member
+        from tests.fixtures.entities import BandEntity, MemberEntity
+        _default_context.register_store(
+            schema_store(
+                LoggingStore(
+                    in_mem_store(Band)
+                )
+            )
+        )
+        _default_context.register_store(
+            schema_store(
+                LoggingStore(
+                    in_mem_store(Member)
+                )
+            )
+        )
+        _default_context.register_entity(BandEntity)
+        _default_context.register_entity(MemberEntity)
+
     return _default_context

@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterator, TypeVar, Callable, Any
 
+from schemey.ref_schema import RefSchema
+from schemey.with_defs_schema import WithDefsSchema
+
 from persisty.cache_header import CacheHeader
 from persisty.edit import Edit
 from persisty.edit_type import EditType
@@ -90,14 +93,30 @@ def timestamp_store(store: StoreABC[T],
 
 
 def _filter_timestamp_from_schema(schema: SchemaABC[T], created_at_attr: str, updated_at_attr: str):
+    defs = None
+    ref = None
+    return_schema = schema
+    if isinstance(schema, WithDefsSchema) and isinstance(schema.schema, RefSchema):
+        defs = schema.defs
+        ref = schema.schema.ref
+        schema = schema.defs[ref]
     if not isinstance(schema, ObjectSchema):
         return schema
     property_schemas = (s for s in schema.property_schemas
                         if s.name not in (created_at_attr, updated_at_attr))
-    return ObjectSchema(tuple(property_schemas))
+    schema = ObjectSchema(tuple(property_schemas))
+    if defs:
+        schema = WithDefsSchema({**defs, ref: schema}, RefSchema(ref))
+    return schema
 
 
 def _filter_read_schema(schema: SchemaABC[T], created_at_attr: str, updated_at_attr: str, timestamp: Callable):
+    defs = None
+    ref = None
+    if isinstance(schema, WithDefsSchema) and isinstance(schema.schema, RefSchema):
+        defs = schema.defs
+        ref = schema.schema.ref
+        schema = schema.defs[ref]
     if not isinstance(schema, ObjectSchema):
         return schema
     property_schemas = []
@@ -107,4 +126,7 @@ def _filter_read_schema(schema: SchemaABC[T], created_at_attr: str, updated_at_a
             if isinstance(timestamp_schema, StringSchema) and timestamp == timestamp_str:
                 s = PropertySchema(s.name, dataclasses.replace(timestamp_schema, format=StringFormat.DATE_TIME))
         property_schemas.append(s)
-    return ObjectSchema(tuple(property_schemas))
+    schema = ObjectSchema(tuple(property_schemas))
+    if defs:
+        schema = WithDefsSchema({**defs, ref: schema}, RefSchema(ref))
+    return schema

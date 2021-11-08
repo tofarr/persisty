@@ -1,4 +1,4 @@
-from typing import Optional, Callable, Type, Iterator, Dict
+from typing import Optional, Callable, Type, Iterator
 
 from marshy.factory.optional_marshaller_factory import get_optional_type
 from marshy.utils import resolve_forward_refs
@@ -8,7 +8,6 @@ from persisty.obj_graph.deferred.deferred_lookup import DeferredLookup
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A, B
-from persisty.obj_graph.resolver.schema.belongs_to_schema import BelongsToSchema
 from persisty.obj_graph.selection_set import SelectionSet
 from schemey.any_of_schema import strip_optional, optional_schema
 from schemey.object_schema import ObjectSchema
@@ -102,6 +101,7 @@ class BelongsTo(ResolverABC[A, B]):
             return schema
         id_property_schema = next(p for p in schema.property_schemas if p.key_attr == self.key_attr)
         property_schemas = list(schema.property_schemas)
+        from persisty.obj_graph.resolver.schema.belongs_to_schema import BelongsToSchema
         belongs_to_schema = BelongsToSchema(self.key_attr, self._entity_type)
         if strip_optional(id_property_schema.schema) != id_property_schema.schema:
             belongs_to_schema = optional_schema(belongs_to_schema)

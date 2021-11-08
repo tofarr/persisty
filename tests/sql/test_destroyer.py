@@ -5,7 +5,7 @@ from persisty.sql.destroyer import Destroyer
 from tests.store.test_in_mem_store import TestInMemStore
 
 
-class TestTableStore(TestInMemStore):
+class TestDestroyer(TestInMemStore):
 
     def test_destroy_exception(self):
         connection = sqlite3.connect(':memory:')

@@ -1,4 +1,4 @@
-from persisty import get_persisty_context
+from persisty.persisty_context import get_default_persisty_context
 from persisty.errors import PersistyError
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
@@ -28,7 +28,7 @@ class TestHasManyPaged(TestHasMany):
                                                               inverse_attr='_band',
                                                               on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingBandEntity)
-        members = list(get_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS),
+        members = list(get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS),
                                                                          error_on_missing=False))
         assert members == [None, None, None, None]
 
@@ -44,7 +44,7 @@ class TestHasManyPaged(TestHasMany):
                                                               inverse_attr='_band',
                                                               on_destroy=OnDestroy.NULLIFY)
         self._do_destroy(NullifyingBandEntity)
-        for m in get_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS)):
+        for m in get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS)):
             assert m.band_id is None
 
     def test_destroy_invalid(self):

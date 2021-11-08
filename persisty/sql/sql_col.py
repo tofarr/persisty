@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from typing import TypeVar, Type
 
+from schemey.ref_schema import RefSchema
+from schemey.with_defs_schema import WithDefsSchema
+
 from persisty.errors import PersistyError
 from schemey.any_of_schema import strip_optional
 from schemey.boolean_schema import BooleanSchema
@@ -51,6 +54,8 @@ def col_for_property(name: str, schema: SchemaABC):
 def cols_for_type(item_type: Type):
     # noinspection PyTypeChecker
     schema = schema_for_type(item_type)
+    if isinstance(schema, WithDefsSchema) and isinstance(schema.schema, RefSchema):
+        schema = schema.defs[schema.schema.ref]
     if not isinstance(schema, ObjectSchema):
         raise PersistyError(f'unknown_type:{schema}')
     for p in schema.property_schemas:

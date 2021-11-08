@@ -4,7 +4,7 @@ from unittest import TestCase
 
 from marshy import get_default_context
 
-from persisty import get_persisty_context
+from persisty.persisty_context import get_default_persisty_context
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
 from persisty.errors import PersistyError
@@ -21,14 +21,14 @@ class TestInMemStore(TestCase):
 
     def setUp(self):
         logging.basicConfig(level='INFO', format='%(message)s')
-        persisty_context = get_persisty_context()
+        persisty_context = get_default_persisty_context()
         store = LoggingStore(in_mem_store(Band))
         setup_bands(store)
         persisty_context.register_store(store)
 
     @classmethod
     def get_band_store(cls) -> StoreABC[Band]:
-        persisty_context = get_persisty_context()
+        persisty_context = get_default_persisty_context()
         store = persisty_context.get_store(Band)
         return store
 

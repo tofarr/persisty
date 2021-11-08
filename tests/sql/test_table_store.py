@@ -1,4 +1,4 @@
-from persisty import get_persisty_context
+from persisty.persisty_context import get_default_persisty_context
 from persisty.sql.close_wrapper import CloseWrapper
 from persisty.sql.sql_table import sql_table_from_type
 from persisty.sql.table_store import table_store
@@ -21,7 +21,7 @@ class TestTableStore(TestInMemStore):
         create_sql = sql_table.create_table_sql()
         cursor.execute(create_sql)
         store = table_store(self.cursor, Band, sql_table)
-        persisty_context = get_persisty_context()
+        persisty_context = get_default_persisty_context()
         setup_bands(store)
         persisty_context.register_store(store)
 

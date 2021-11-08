@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Iterator, Type
+from typing import Optional, List, Iterator, Type, Dict
 
 from marshy import ExternalType
 from marshy.marshaller.marshaller_abc import MarshallerABC
@@ -14,13 +14,17 @@ class BelongsToSchema(SchemaABC, T):
     belongs_to_key: str
     belongs_to_entity: str
 
-    def get_schema_errors(self, item: T, current_path: Optional[List[str]] = None) -> Iterator[SchemaError]:
+    def get_schema_errors(self,
+                          item: T,
+                          defs: Optional[Dict[str, SchemaABC]],
+                          current_path: Optional[List[str]] = None,
+                          ) -> Iterator[SchemaError]:
         if item is None:
             yield SchemaError(current_path, 'missing_dependency')
 
     @classmethod
     def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
-        return _BelongsToSchemaMarshaller()
+        return _BelongsToSchemaMarshaller(cls)
 
 
 class _BelongsToSchemaMarshaller(MarshallerABC[BelongsToSchema]):

@@ -6,7 +6,7 @@ from marshy.default_context import new_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 
-from persisty import get_persisty_context, PersistyContext
+from persisty.persisty_context import get_default_persisty_context, PersistyContext
 from persisty.errors import PersistyError
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.entity_marshaller_factory import EntityMarshallerFactory
@@ -21,7 +21,7 @@ from tests.fixtures.items import Band, Member
 class TestEntity(TestCase):
 
     def setUp(self):
-        persisty_context = get_persisty_context()
+        persisty_context = get_default_persisty_context()
         band_store = in_mem_store(Band)
         setup_bands(band_store)
         persisty_context.register_store(band_store)

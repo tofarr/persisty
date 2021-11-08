@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from persisty import get_persisty_context
+from persisty.persisty_context import get_default_persisty_context
 from persisty.store.in_mem_store import in_mem_store
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
@@ -22,11 +22,11 @@ class TestTTLCacheStore(TestInMemStore):
     """ Mostly here for coverage """
 
     def setUp(self):
-        persisty_context = get_persisty_context()
+        persisty_context = get_default_persisty_context()
         store = WrapperStore[T](in_mem_store(Band))
         setup_bands(store)
         persisty_context.register_store(store)
 
     def test_name(self):
-        store = get_persisty_context().get_store(Band)
+        store = get_default_persisty_context().get_store(Band)
         assert store.name == getattr(store, 'wrapped_store').name

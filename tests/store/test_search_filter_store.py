@@ -1,4 +1,4 @@
-from persisty import get_persisty_context
+from persisty.persisty_context import get_default_persisty_context
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
@@ -13,7 +13,7 @@ from tests.store.test_in_mem_store import TestInMemStore
 class TestSearchFilterStore(TestInMemStore):
 
     def setUp(self):
-        persisty_context = get_persisty_context()
+        persisty_context = get_default_persisty_context()
         wrapped_store = in_mem_store(Band)
         wrapped_store.create(Band('mozart', 'Mozart', 1756))  # mostly filtered out
         store = SearchFilterStore(wrapped_store, AttrFilter('year_formed', AttrFilterOp.gte, 1900))

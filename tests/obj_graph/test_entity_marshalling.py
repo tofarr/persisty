@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from marshy import get_default_context
 
-from persisty import get_persisty_context
+from persisty.persisty_context import get_default_persisty_context
 from persisty.obj_graph.entity_marshaller_factory import EntityMarshallerFactory
 from persisty.obj_graph.selection_set import from_selection_set_list
 from persisty.store.in_mem_store import in_mem_store
@@ -16,7 +16,7 @@ class TestEntity(TestCase):
     def setUp(self):
         get_default_context().register_factory(EntityMarshallerFactory(200))
 
-        persisty_context = get_persisty_context()
+        persisty_context = get_default_persisty_context()
         band_store = in_mem_store(Band)
         setup_bands(band_store)
         persisty_context.register_store(band_store)

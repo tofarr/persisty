@@ -3,7 +3,7 @@ from typing import Optional, ForwardRef
 from unittest import TestCase
 from uuid import uuid4
 
-from persisty import get_persisty_context
+from persisty.persisty_context import get_default_persisty_context
 from persisty.errors import PersistyError
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
@@ -43,7 +43,7 @@ BARS = [Bar(f'Bar {i}', f'bar_{i}', f'foo_{i}') for i in range(1, 10)]
 class TestHasOne(TestCase):
 
     def setUp(self):
-        persisty_context = get_persisty_context()
+        persisty_context = get_default_persisty_context()
         foo_store = in_mem_store(Foo)
         for foo in FOOS:
             foo_store.create(foo)
@@ -63,7 +63,7 @@ class TestHasOne(TestCase):
         class CascadingFooEntity(EntityABC, Foo):
             bar: BAR_ENTITY = HasOne('foo_id', inverse_attr='_foo', on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingFooEntity)
-        store = get_persisty_context().get_store(Bar)
+        store = get_default_persisty_context().get_store(Bar)
         assert store.read('bar_1') is None
 
     @staticmethod
@@ -76,7 +76,7 @@ class TestHasOne(TestCase):
         class NullifyingFooEntity(EntityABC, Foo):
             bar: BAR_ENTITY = HasOne('foo_id', inverse_attr='_foo', on_destroy=OnDestroy.NULLIFY)
         self._do_destroy(NullifyingFooEntity)
-        bar = get_persisty_context().get_store(Bar).read('bar_1')
+        bar = get_default_persisty_context().get_store(Bar).read('bar_1')
         assert bar.foo_id is None
 
     def test_destroy_invalid(self):

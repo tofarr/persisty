@@ -1,7 +1,7 @@
 from typing import Iterable
 from unittest import TestCase
 
-from persisty import get_persisty_context
+from persisty.persisty_context import get_default_persisty_context
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.entity_abc import EntityABC
@@ -20,7 +20,7 @@ BEATLES_MEMBER_IDS = {'john', 'paul', 'george', 'ringo'}
 class TestHasMany(TestCase):
 
     def setUp(self):
-        persisty_context = get_persisty_context()
+        persisty_context = get_default_persisty_context()
         band_store = in_mem_store(Band)
         setup_bands(band_store)
         persisty_context.register_store(band_store)
@@ -37,7 +37,7 @@ class TestHasMany(TestCase):
             members: Iterable[MEMBER_ENTITY_CLASS] = \
                 HasMany(foreign_key_attr='band_id', inverse_attr='_band', on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingBandEntity)
-        store = get_persisty_context().get_store(Member)
+        store = get_default_persisty_context().get_store(Member)
         members = list(store.read_all(iter(BEATLES_MEMBER_IDS), error_on_missing=False))
         assert members == [None, None, None, None]
 
@@ -52,7 +52,7 @@ class TestHasMany(TestCase):
             members: Iterable[MEMBER_ENTITY_CLASS] = \
                 HasMany(foreign_key_attr='band_id', inverse_attr='_band', on_destroy=OnDestroy.NULLIFY)
         self._do_destroy(NullifyingBandEntity)
-        for m in get_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS)):
+        for m in get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS)):
             assert m.band_id is None
 
     def test_destroy_invalid(self):
