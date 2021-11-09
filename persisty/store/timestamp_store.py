@@ -22,10 +22,6 @@ from persisty.store_schemas import StoreSchemas
 T = TypeVar('T')
 
 
-def timestamp_str():
-    return datetime.now().isoformat()
-
-
 @dataclass(frozen=True)
 class TimestampStore(WrapperStoreABC[T]):
     """ Store which updates timestamps on items prior to storage. """
@@ -80,7 +76,7 @@ class TimestampStore(WrapperStoreABC[T]):
 def timestamp_store(store: StoreABC[T],
                     created_at_attr: str = 'created_at',
                     updated_at_attr: str = 'updated_at',
-                    timestamp: Callable = timestamp_str,
+                    timestamp: Callable = datetime.now,
                     schemas: StoreSchemas[T] = None) -> TimestampStore[T]:
     if schemas is None:
         schemas = store.schemas
@@ -123,7 +119,7 @@ def _filter_read_schema(schema: SchemaABC[T], created_at_attr: str, updated_at_a
     for s in schema.property_schemas:
         if s.name in (created_at_attr, updated_at_attr):
             timestamp_schema = strip_optional(s.schema)
-            if isinstance(timestamp_schema, StringSchema) and timestamp == timestamp_str:
+            if isinstance(timestamp_schema, StringSchema) and timestamp == datetime.now:
                 s = PropertySchema(s.name, dataclasses.replace(timestamp_schema, format=StringFormat.DATE_TIME))
         property_schemas.append(s)
     schema = ObjectSchema(tuple(property_schemas))

@@ -49,10 +49,12 @@ class Wsgi:
         return request
 
 
-if __name__ == '__main__':
-    host = environ.get(WSGI_HOST) or 'localhost'
-    port = environ.get(WSGI_PORT)
-    port = int(port) if port else 8080
+def start_server(host: str = None, port: int = None):
+    if host is None:
+        host = environ.get(WSGI_HOST) or 'localhost'
+    if port is None:
+        port = environ.get(WSGI_PORT)
+        port = int(port) if port else 8080
     persisty_context = get_default_persisty_context()
     handler = persisty_context.get_request_handler()
     wsgi = Wsgi(handler)

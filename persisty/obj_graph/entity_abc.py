@@ -3,6 +3,7 @@ from abc import ABC
 from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Set, Type
 
 from marshy.marshaller_context import MarshallerContext
+from schemey.schema_context import get_default_schema_context
 
 from persisty.cache_header import CacheHeader
 from persisty.item_filter.item_filter_abc import ItemFilterABC
@@ -258,13 +259,17 @@ class EntityABC(Generic[T], ABC):
     def get_meta(cls) -> PersistyMeta:
         store = cls.get_store()
         schemas = store.schemas
+        filter_type = getattr(cls, '__filter_class__', None)
+        # TODO: DO NOT USE A GLOBAL HERE!
+        filter_schema = get_default_schema_context().get_schema(filter_type) if filter_type else None
         return PersistyMeta(
             name=store.name,
             capabilities=store.capabilities,
             schema_for_create=cls._filter_schema(schemas.create, 'filter_create_schema'),
             schema_for_read=cls._filter_schema(schemas.read, 'filter_read_schema'),
             schema_for_update=cls._filter_schema(schemas.update, 'filter_update_schema'),
-            schema_for_search=cls._filter_schema(schemas.search, 'filter_search_schema')
+            schema_for_search=cls._filter_schema(schemas.search, 'filter_search_schema'),
+            schema_for_filter=filter_schema
         )
 
     @classmethod

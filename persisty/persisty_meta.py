@@ -14,3 +14,5 @@ class PersistyMeta:
     schema_for_update: Optional[SchemaABC] = None
     schema_for_read: Optional[SchemaABC] = None
     schema_for_search: Optional[SchemaABC] = None
+    schema_for_filter: Optional[SchemaABC] = None
+

@@ -2,6 +2,7 @@ from dataclasses import dataclass, fields
 from typing import List
 
 from marshy.marshaller.marshaller_abc import MarshallerABC, T
+from marshy.marshaller_context import MarshallerContext
 
 
 @dataclass(frozen=True)
@@ -56,13 +57,17 @@ class Capabilities:
                     eq = False
         return not eq
 
+    @classmethod
+    def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
+        return _CapabilitiesMarshaller()
+
 
 ALL_CAPABILITIES = Capabilities(**{f.name: True for f in fields(Capabilities)})
 NO_CAPABILITIES = Capabilities(**{f.name: False for f in fields(Capabilities)})
 READ_ONLY = Capabilities(read=True, search=True)
 
 
-class CapabilitiesMarshaller(MarshallerABC):
+class _CapabilitiesMarshaller(MarshallerABC):
 
     def __init__(self):
         super().__init__(Capabilities)

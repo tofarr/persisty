@@ -31,7 +31,7 @@ class TTLCacheStore(WrapperStoreABC[T]):
     but performant business logic as the client code does not have to save references to the items.
     """
     wrapped_store: StoreABC[T]
-    timeout: int = 30
+    ttl: int = 30
     batch_size: int = 100
     item_marshaller: MarshallerABC[T] = None
     _item_cache: Dict[str, TTLEntry] = field(default_factory=dict)
@@ -49,7 +49,7 @@ class TTLCacheStore(WrapperStoreABC[T]):
         return self.wrapped_store
 
     def _store_item_in_cache(self, key: str, item: T):
-        self._item_cache[key] = TTLEntry(self.item_marshaller.dump(item), int(time()) + self.timeout)
+        self._item_cache[key] = TTLEntry(self.item_marshaller.dump(item), int(time()) + self.ttl)
 
     def _load_item_from_cache(self, key: str):
         entry = self._item_cache.get(key)
@@ -57,8 +57,8 @@ class TTLCacheStore(WrapperStoreABC[T]):
             return self.item_marshaller.load(entry.value)
 
     def get_cache_header(self, item: T) -> CacheHeader:
-        cache_header = self.store.get_cache_header()
-        expire_at = datetime.fromtimestamp(int(time()) + self.timeout)
+        cache_header = self.store.get_cache_header(item)
+        expire_at = datetime.fromtimestamp(int(time()) + self.ttl)
         return CacheHeader(cache_header.cache_key, cache_header.updated_at, expire_at)
 
     def create(self, item: T) -> str:

@@ -16,7 +16,8 @@ class CacheHeader:
         return filter_none({
             'ETag': self.cache_key,
             'Cache-Control': self.get_cache_control_str(),
-            'Last-Modified': None if self.updated_at is None else formatdate(self.updated_at)
+            'Last-Modified': None if self.updated_at is None else formatdate(self.updated_at.timestamp()),
+            'Expires': None if self.expire_at is None else formatdate(self.expire_at.timestamp())
         })
 
     def get_cache_control_str(self):

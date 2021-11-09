@@ -89,37 +89,4 @@ def get_default_persisty_context() -> PersistyContext:
         imported_module = importlib.import_module(import_module)
         context_fn = getattr(imported_module, import_path[-1])
         _default_context = context_fn()
-
-        marshy_context = get_default_context()
-        from persisty.marshaller.edit_marshaller_factory import EditMarshallerFactory
-        marshy_context.register_factory(EditMarshallerFactory())
-        from persisty.marshaller.page_marshaller_factory import PageMarshallerFactory
-        marshy_context.register_factory(PageMarshallerFactory())
-
-        from persisty.store.in_mem_store import in_mem_store
-        from persisty.store.schema_store import schema_store
-        from persisty.store.logging_store import LoggingStore
-        from tests.fixtures.items import Band, Member
-        from tests.fixtures.entities import BandEntity, MemberEntity
-        _default_context.register_store(
-            schema_store(
-                LoggingStore(
-                    in_mem_store(Band)
-                )
-            )
-        )
-        _default_context.register_store(
-            schema_store(
-                LoggingStore(
-                    in_mem_store(Member)
-                )
-            )
-        )
-        _default_context.register_entity(BandEntity)
-        _default_context.register_entity(MemberEntity)
-        from tests.fixtures.data import setup_bands
-        setup_bands(_default_context.get_store(Band))
-        from tests.fixtures.data import setup_members
-        setup_members(_default_context.get_store(Member))
-
     return _default_context
