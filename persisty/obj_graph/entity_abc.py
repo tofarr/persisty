@@ -2,6 +2,8 @@ import dataclasses
 from abc import ABC
 from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Set, Type
 
+from marshy.marshaller_context import MarshallerContext
+
 from persisty.cache_header import CacheHeader
 from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
@@ -276,3 +278,8 @@ class EntityABC(Generic[T], ABC):
             if getattr(self, f.name) != getattr(other, f.name, None):
                 return False
         return True
+
+    @classmethod
+    def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
+        from persisty.obj_graph.entity_marshaller import EntityMarshaller
+        return EntityMarshaller(cls, marshaller_context)
