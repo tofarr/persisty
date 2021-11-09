@@ -1,6 +1,8 @@
+from collections import Iterable
 from dataclasses import fields, dataclass
-from typing import TypeVar
+from typing import TypeVar, Type, List
 
+import typing_inspect
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
@@ -31,6 +33,11 @@ class EntityMarshaller(MarshallerABC[T]):
     def dump(self, item: T) -> ExternalItemType:
         field_values = {f.name: self.context.dump(getattr(item, f.name))
                         for f in fields(self.marshalled_type)}
-        resolved_values = {r.name: self.context.dump(getattr(item, r.name), r.resolved_type)
+        resolved_values = {r.name: self.context.dump(getattr(item, r.name), self._resolved_type(r.resolved_type))
                            for r in self.marshalled_type.get_resolvers() if r.is_resolved(item)}
         return {**field_values, **resolved_values}
+
+    def _resolved_type(self, type_: Type):
+        if typing_inspect.get_origin(type_) == Iterable:
+            return List[typing_inspect.get_args(type_)[0]]
+        return type_

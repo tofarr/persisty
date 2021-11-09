@@ -20,7 +20,7 @@ class BandFilter:
     year_formed__ne: Optional[int] = None
     band_name__startswith: Optional[str] = None
     band_name__contains: Optional[str] = None
-    sort: Union[str, List[str], None] = None
+    sort: Optional[List[str]] = None
 
 
 @dataclass

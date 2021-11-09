@@ -32,7 +32,7 @@ class TestEntity(TestCase):
     def test_invalid_entity(self):
         with self.assertRaises(RuntimeError):
             class InvalidBandEntity(EntityABC, Band):
-                members = HasMany(foreign_key_attr='band_id', inverse_attr='_band')
+                members = HasMany(foreign_key_attr='band_id')
 
             InvalidBandEntity()
 

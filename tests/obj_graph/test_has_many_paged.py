@@ -13,7 +13,7 @@ BEATLES_MEMBER_IDS = {'john', 'paul', 'george', 'ringo'}
 
 
 class BandEntityPaged(EntityABC, Band):
-    members: Page[MEMBER_ENTITY_CLASS] = HasManyPaged(foreign_key_attr='band_id', inverse_attr='_band', limit=2)
+    members: Page[MEMBER_ENTITY_CLASS] = HasManyPaged(foreign_key_attr='band_id', limit=2)
 
 
 class TestHasManyPaged(TestHasMany):
@@ -24,12 +24,10 @@ class TestHasManyPaged(TestHasMany):
 
     def test_destroy_cascade(self):
         class CascadingBandEntity(EntityABC, Band):
-            members: Page[MEMBER_ENTITY_CLASS] = HasManyPaged(foreign_key_attr='band_id',
-                                                              inverse_attr='_band',
-                                                              on_destroy=OnDestroy.CASCADE)
+            members: Page[MEMBER_ENTITY_CLASS] = HasManyPaged(foreign_key_attr='band_id', on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingBandEntity)
         members = list(get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS),
-                                                                         error_on_missing=False))
+                                                                                 error_on_missing=False))
         assert members == [None, None, None, None]
 
     @staticmethod
@@ -40,9 +38,7 @@ class TestHasManyPaged(TestHasMany):
 
     def test_destroy_nullify(self):
         class NullifyingBandEntity(EntityABC, Band):
-            members: Page[MEMBER_ENTITY_CLASS] = HasManyPaged(foreign_key_attr='band_id',
-                                                              inverse_attr='_band',
-                                                              on_destroy=OnDestroy.NULLIFY)
+            members: Page[MEMBER_ENTITY_CLASS] = HasManyPaged(foreign_key_attr='band_id', on_destroy=OnDestroy.NULLIFY)
         self._do_destroy(NullifyingBandEntity)
         for m in get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS)):
             assert m.band_id is None
@@ -50,7 +46,7 @@ class TestHasManyPaged(TestHasMany):
     def test_destroy_invalid(self):
         with self.assertRaises(RuntimeError):
             class NullifyingBandEntity(EntityABC, Band):
-                members = HasManyPaged(foreign_key_attr='band_id', inverse_attr='_band', on_destroy=OnDestroy.NULLIFY)
+                members = HasManyPaged(foreign_key_attr='band_id', on_destroy=OnDestroy.NULLIFY)
 
             NullifyingBandEntity()
 

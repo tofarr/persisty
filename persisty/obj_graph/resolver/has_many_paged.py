@@ -12,7 +12,6 @@ from persisty.page import Page
 from schemey.object_schema import ObjectSchema
 from schemey.schema_abc import SchemaABC
 from persisty.search_filter import SearchFilter
-from persisty.util import secure_hash
 
 B = TypeVar('B')
 
@@ -21,14 +20,12 @@ class HasManyPaged(ResolverABC[A, B]):
 
     def __init__(self,
                  foreign_key_attr: str,
-                 inverse_attr: Optional[str] = None,
                  limit: int = 20,
                  on_destroy: OnDestroy = OnDestroy.NO_ACTION,
                  private_name_: Optional[str] = None,
                  resolved_type: Optional[Type[B]] = None):
         super().__init__(private_name_, resolved_type)
         self.foreign_key_attr = foreign_key_attr
-        self.inverse_attr = inverse_attr
         self.limit = limit
         self.on_destroy = on_destroy
         self._entity_type = None
@@ -46,9 +43,6 @@ class HasManyPaged(ResolverABC[A, B]):
         if sub_selections:
             for entity in page.items:
                 entity.resolve_all(sub_selections, deferred_resolutions)
-        if self.inverse_attr:
-            for entity in page.items:
-                setattr(entity, self.inverse_attr, owner_instance)
         callback(page)
 
     def _get_entity_type(self):
@@ -82,11 +76,12 @@ class HasManyPaged(ResolverABC[A, B]):
                 setattr(entity, self.foreign_key_attr, None)
                 entity.update()
 
-    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
+    def get_cache_headers(self, owner_instance: A, selections: SelectionSet) -> Iterator[CacheHeader]:
         # last modified of paged is unknowable (Suppose something on another page changes?)
-        entities = getattr(owner_instance, self.name)
-        exclude_resolvers = [self.inverse_attr] if self.inverse_attr else []
-        yield from (e.get_cache_header(exclude_resolvers) for e in entities)
+        sub_selections = selections.get_selections('items')
+        if sub_selections:
+            page = getattr(owner_instance, self.name)
+            yield from (e.get_cache_header(sub_selections) for e in page.items)
 
     def filter_read_schema(self, schema: SchemaABC) -> SchemaABC:
         if not isinstance(schema, ObjectSchema):

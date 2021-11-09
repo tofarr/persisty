@@ -242,17 +242,17 @@ class EntityABC(Generic[T], ABC):
         for resolver in self.get_resolvers():
             resolver.unresolve(self)
 
-    def get_cache_header(self, exclude_resolvers: Optional[Set[str]] = None) -> CacheHeader:
-        if exclude_resolvers is None:
-            exclude_resolvers = set()
+    def get_cache_header(self, selections: Optional[SelectionSet] = None) -> CacheHeader:
         cache_header = self.get_store().get_cache_header(self)
-        cache_header = cache_header.combine_with(self._resolver_cache_headers(exclude_resolvers))
+        if selections:
+            cache_header = cache_header.combine_with(self._resolver_cache_headers(selections))
         return cache_header
 
-    def _resolver_cache_headers(self, exclude_resolvers: Optional[Set[str]] = None) -> Iterator[CacheHeader]:
+    def _resolver_cache_headers(self, selections: SelectionSet) -> Iterator[CacheHeader]:
         for resolver in self.get_resolvers():
-            if resolver.name not in exclude_resolvers and resolver.is_resolved(self):
-                yield from resolver.get_cache_headers(self)
+            sub_selections = selections.get_selections(resolver.name)
+            if sub_selections:
+                yield from resolver.get_cache_headers(self, sub_selections)
 
     @classmethod
     def get_meta(cls) -> PersistyMeta:

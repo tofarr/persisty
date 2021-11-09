@@ -18,13 +18,11 @@ class HasOne(ResolverABC[A, B]):
 
     def __init__(self,
                  foreign_key_attr: str,
-                 inverse_attr: Optional[str] = None,
                  on_destroy: OnDestroy = OnDestroy.NO_ACTION,
                  private_name_: Optional[str] = None,
                  resolved_type: Optional[Type[B]] = None):
         super().__init__(private_name_, resolved_type)
         self.foreign_key_attr = foreign_key_attr
-        self.inverse_attr = inverse_attr
         self.on_destroy = on_destroy
         self._entity_type: Type[B] = None
         self.is_overridden_name = None
@@ -46,8 +44,6 @@ class HasOne(ResolverABC[A, B]):
             return
         if sub_selections:
             entity.resolve_all(sub_selections, deferred_resolutions)
-        if self.inverse_attr:
-            setattr(entity, self.inverse_attr, owner_instance)
         callback(entity)
 
     def unresolve(self, owner_instance: A):
@@ -116,7 +112,6 @@ class HasOne(ResolverABC[A, B]):
             for e in existing_by_key.values():
                 e.destroy()
 
-    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
+    def get_cache_headers(self, owner_instance: A, selections: SelectionSet) -> Iterator[CacheHeader]:
         entity = getattr(owner_instance, self.name)
-        exclude_resolvers = [self.inverse_attr] if self.inverse_attr else []
-        yield entity.get_cache_header(exclude_resolvers)
+        yield entity.get_cache_header(selections)

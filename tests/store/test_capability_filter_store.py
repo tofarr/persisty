@@ -91,7 +91,7 @@ class TestCapabilityFilterStore(TestCase):
 
     def test_allow_search(self):
         store = self.get_band_store(Capabilities(search=True))
-        bands = list(store.search(search_filter_from_dataclass(BandFilter(query='The', sort='band_name'), Band)))
+        bands = list(store.search(search_filter_from_dataclass(BandFilter(query='The', sort=['band_name']), Band)))
         expected = [b for b in BANDS if b.id in ('beatles', 'rolling_stones')]
         expected.sort(key=lambda b: b.band_name)
         assert expected == bands

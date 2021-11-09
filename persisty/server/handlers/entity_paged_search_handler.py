@@ -46,7 +46,7 @@ class EntityPagedSearchHandler(EntityHandlerABC):
     def get_limit(self, request: Request):
         limit_str = request.params.get('limit')
         if limit_str:
-            limit = int(limit_str)
+            limit = int(limit_str[0])
             if limit < 0 or limit > self.max_limit:
                 raise ValueError(f'invalid_limit:{limit}')
             return limit

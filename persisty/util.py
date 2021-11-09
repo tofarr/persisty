@@ -1,6 +1,9 @@
 import base64
 import hashlib
 import json
+import logging
+import os
+import sys
 
 from marshy.types import ExternalType, ExternalItemType
 
@@ -34,3 +37,18 @@ def secure_hash(item) -> str:
 
 def filter_none(item: ExternalItemType) -> ExternalItemType:
     return {k: v for k, v in item.items() if v is not None}
+
+
+LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
+
+
+def get_logger(name: str):
+    """
+    Get a logger with it's level set from the default environment variable for logging
+    :param name: the name for the logger
+    :return: a logger
+    """
+    logger = logging.getLogger(name)
+    logger.addHandler(logging.StreamHandler(sys.stdout))
+    logger.setLevel(LEVEL)
+    return logger

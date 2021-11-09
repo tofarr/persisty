@@ -114,7 +114,7 @@ class TestInMemStore(TestCase):
 
     def test_paged_search(self):
         store = self.get_band_store()
-        search_filter = search_filter_from_dataclass(BandFilter(sort='band_name'), Band)
+        search_filter = search_filter_from_dataclass(BandFilter(sort=['band_name']), Band)
         expected_bands = list(sorted(BANDS, key=lambda b: b.band_name))
         page_1 = store.paged_search(search_filter, limit=2)
         assert page_1.items == expected_bands[0:2]
@@ -123,7 +123,7 @@ class TestInMemStore(TestCase):
 
     def test_gt_filter(self):
         store = self.get_band_store()
-        filter_ = search_filter_from_dataclass(BandFilter(year_formed__gt=1962, sort='id'), Band)
+        filter_ = search_filter_from_dataclass(BandFilter(year_formed__gt=1962, sort=['id']), Band)
         expected_bands = (b for b in BANDS if b.year_formed > 1962)
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
@@ -132,7 +132,7 @@ class TestInMemStore(TestCase):
 
     def test_gte_filter(self):
         store = self.get_band_store()
-        filter_ = search_filter_from_dataclass(BandFilter(year_formed__gte=1962, sort='id'), Band)
+        filter_ = search_filter_from_dataclass(BandFilter(year_formed__gte=1962, sort=['id']), Band)
         expected_bands = (b for b in BANDS if b.year_formed >= 1962)
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
@@ -141,7 +141,7 @@ class TestInMemStore(TestCase):
 
     def test_lt_filter(self):
         store = self.get_band_store()
-        filter_ = search_filter_from_dataclass(BandFilter(year_formed__lt=1962, sort='id'), Band)
+        filter_ = search_filter_from_dataclass(BandFilter(year_formed__lt=1962, sort=['id']), Band)
         expected_bands = (b for b in BANDS if b.year_formed < 1962)
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
@@ -150,7 +150,7 @@ class TestInMemStore(TestCase):
 
     def test_lte_filter(self):
         store = self.get_band_store()
-        filter_ = search_filter_from_dataclass(BandFilter(year_formed__lte=1962, sort='id'), Band)
+        filter_ = search_filter_from_dataclass(BandFilter(year_formed__lte=1962, sort=['id']), Band)
         expected_bands = (b for b in BANDS if b.year_formed <= 1962)
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
@@ -159,7 +159,7 @@ class TestInMemStore(TestCase):
 
     def test_eq_filter(self):
         store = self.get_band_store()
-        filter_ = search_filter_from_dataclass(BandFilter(year_formed__eq=1962, sort='id'), Band)
+        filter_ = search_filter_from_dataclass(BandFilter(year_formed__eq=1962, sort=['id']), Band)
         expected_bands = (b for b in BANDS if b.year_formed == 1962)
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
@@ -168,7 +168,7 @@ class TestInMemStore(TestCase):
 
     def test_ne_filter(self):
         store = self.get_band_store()
-        filter_ = search_filter_from_dataclass(BandFilter(year_formed__ne=1962, sort='id'), Band)
+        filter_ = search_filter_from_dataclass(BandFilter(year_formed__ne=1962, sort=['id']), Band)
         expected_bands = (b for b in BANDS if b.year_formed != 1962)
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(store.search(filter_))
@@ -177,7 +177,7 @@ class TestInMemStore(TestCase):
 
     def test_startswith_filter(self):
         store = self.get_band_store()
-        filter_ = search_filter_from_dataclass(BandFilter(band_name__startswith='The', sort='band_name'), Band)
+        filter_ = search_filter_from_dataclass(BandFilter(band_name__startswith='The', sort=['band_name']), Band)
         expected_bands = (b for b in BANDS if b.band_name.startswith('The'))
         expected_bands = list(sorted(expected_bands, key=lambda b: b.band_name))
         bands = list(store.search(filter_))
@@ -186,7 +186,7 @@ class TestInMemStore(TestCase):
 
     def test_contains_filter(self):
         store = self.get_band_store()
-        filter_ = search_filter_from_dataclass(BandFilter(band_name__contains='he', sort='band_name'), Band)
+        filter_ = search_filter_from_dataclass(BandFilter(band_name__contains='he', sort=['band_name']), Band)
         expected_bands = (b for b in BANDS if 'he' in b.band_name)
         expected_bands = list(sorted(expected_bands, key=lambda b: b.band_name))
         bands = list(store.search(filter_))
@@ -242,6 +242,6 @@ class TestInMemStore(TestCase):
             Edit.destroy(store.get_key(BANDS[1]))
         ]
         store.edit_all(edits)
-        filter_ = search_filter_from_dataclass(BandFilter(sort='band_name'), Band)
+        filter_ = search_filter_from_dataclass(BandFilter(sort=['band_name']), Band)
         bands = list(sorted(store.search(filter_), key=lambda b: b.band_name))
         assert bands == expected_bands

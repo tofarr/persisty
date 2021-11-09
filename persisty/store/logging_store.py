@@ -8,13 +8,14 @@ from persisty.page import Page
 from persisty.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
+from persisty.util import get_logger
 
 
 @dataclass(frozen=True)
 class LoggingStore(WrapperStoreABC[T]):
     """ Store which logs everything going in and out. Useful for debugging. """
     wrapped_store: StoreABC[T]
-    logger: logging.Logger = field(default_factory=lambda: logging.getLogger(__name__))
+    logger: logging.Logger = field(default_factory=lambda: get_logger(__name__))
 
     @property
     def store(self):

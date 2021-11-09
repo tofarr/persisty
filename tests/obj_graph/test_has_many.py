@@ -35,7 +35,7 @@ class TestHasMany(TestCase):
     def test_destroy_cascade(self):
         class CascadingBandEntity(EntityABC, Band):
             members: Iterable[MEMBER_ENTITY_CLASS] = \
-                HasMany(foreign_key_attr='band_id', inverse_attr='_band', on_destroy=OnDestroy.CASCADE)
+                HasMany(foreign_key_attr='band_id', on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingBandEntity)
         store = get_default_persisty_context().get_store(Member)
         members = list(store.read_all(iter(BEATLES_MEMBER_IDS), error_on_missing=False))
@@ -50,7 +50,7 @@ class TestHasMany(TestCase):
     def test_destroy_nullify(self):
         class NullifyingBandEntity(EntityABC, Band):
             members: Iterable[MEMBER_ENTITY_CLASS] = \
-                HasMany(foreign_key_attr='band_id', inverse_attr='_band', on_destroy=OnDestroy.NULLIFY)
+                HasMany(foreign_key_attr='band_id', on_destroy=OnDestroy.NULLIFY)
         self._do_destroy(NullifyingBandEntity)
         for m in get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS)):
             assert m.band_id is None
@@ -58,9 +58,7 @@ class TestHasMany(TestCase):
     def test_destroy_invalid(self):
         with self.assertRaises(PersistyError):
             class NullifyingBandEntity(EntityABC, Band):
-                members: Page[MEMBER_ENTITY_CLASS] = HasMany(foreign_key_attr='band_id',
-                                                             inverse_attr='_band',
-                                                             on_destroy=OnDestroy.NULLIFY)
+                members: Page[MEMBER_ENTITY_CLASS] = HasMany(foreign_key_attr='band_id', on_destroy=OnDestroy.NULLIFY)
 
             self._do_destroy(NullifyingBandEntity)
 

@@ -91,9 +91,9 @@ class BelongsTo(ResolverABC[A, B]):
     def before_update(self, owner_instance: A):
         self.before_create(owner_instance)
 
-    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
+    def get_cache_headers(self, owner_instance: A, selections: SelectionSet) -> Iterator[CacheHeader]:
         entity = getattr(owner_instance, self.name)
-        cache_header = entity.get_cache_header()
+        cache_header = entity.get_cache_header(selections)
         yield cache_header
 
     def filter_read_schema(self, schema: SchemaABC) -> SchemaABC:

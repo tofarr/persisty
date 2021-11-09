@@ -29,7 +29,7 @@ class Bar:
 
 
 class FooEntity(EntityABC[Foo], Foo):
-    bar: BAR_ENTITY = HasOne('foo_id', inverse_attr='_foo')
+    bar: BAR_ENTITY = HasOne('foo_id')
 
 
 class BarEntity(EntityABC[Bar], Bar):
@@ -61,7 +61,7 @@ class TestHasOne(TestCase):
 
     def test_destroy_cascade(self):
         class CascadingFooEntity(EntityABC, Foo):
-            bar: BAR_ENTITY = HasOne('foo_id', inverse_attr='_foo', on_destroy=OnDestroy.CASCADE)
+            bar: BAR_ENTITY = HasOne('foo_id', on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingFooEntity)
         store = get_default_persisty_context().get_store(Bar)
         assert store.read('bar_1') is None
@@ -74,7 +74,7 @@ class TestHasOne(TestCase):
 
     def test_destroy_nullify(self):
         class NullifyingFooEntity(EntityABC, Foo):
-            bar: BAR_ENTITY = HasOne('foo_id', inverse_attr='_foo', on_destroy=OnDestroy.NULLIFY)
+            bar: BAR_ENTITY = HasOne('foo_id', on_destroy=OnDestroy.NULLIFY)
         self._do_destroy(NullifyingFooEntity)
         bar = get_default_persisty_context().get_store(Bar).read('bar_1')
         assert bar.foo_id is None
@@ -82,7 +82,7 @@ class TestHasOne(TestCase):
     def test_destroy_invalid(self):
         with self.assertRaises(PersistyError):
             class NullifyingFooEntity(EntityABC, Foo):
-                bar: str = HasOne('foo_id', inverse_attr='_foo', on_destroy=OnDestroy.NULLIFY)
+                bar: str = HasOne('foo_id', on_destroy=OnDestroy.NULLIFY)
 
             self._do_destroy(NullifyingFooEntity)
 

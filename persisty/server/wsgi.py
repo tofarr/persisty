@@ -43,7 +43,7 @@ class Wsgi:
             method=environ['REQUEST_METHOD'],
             path=[p for p in (environ['PATH_INFO'] or '/').split('/') if p],
             headers={k[5:]: v for k, v in environ.items() if k.startswith('HTTP_')},
-            params=parse_qs(environ.get('QUERY_STRING')),
+            params={k: v[0] for k, v in parse_qs(environ.get('QUERY_STRING')).items()},
             input=json.load(request_body) if request_body else None
         )
         return request

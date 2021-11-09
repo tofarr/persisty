@@ -27,14 +27,12 @@ class HasMany(ResolverABC[A, B]):
 
     def __init__(self,
                  foreign_key_attr: str,
-                 inverse_attr: Optional[str] = None,
                  on_destroy: OnDestroy = OnDestroy.NO_ACTION,
                  private_name_: Optional[str] = None,
                  _is_overridden_name: Optional[str] = None,
                  resolved_type: Optional[Type[B]] = None):
         super().__init__(private_name_, resolved_type)
         self.foreign_key_attr = foreign_key_attr
-        self.inverse_attr = inverse_attr
         self.on_destroy = on_destroy
         self._entity_type = None  # Resolve later
         self.is_overridden_name = None
@@ -62,9 +60,6 @@ class HasMany(ResolverABC[A, B]):
         if sub_selections:
             for entity in entities:
                 entity.resolve_all(sub_selections, deferred_resolutions)
-        if self.inverse_attr:
-            for entity in entities:
-                setattr(entity, self.inverse_attr, owner_instance)
         setattr(owner_instance, self.is_overridden_name, False)
         callback(entities)
 
@@ -122,10 +117,9 @@ class HasMany(ResolverABC[A, B]):
             for e in existing_by_key.values():
                 e.destroy()
 
-    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
+    def get_cache_headers(self, owner_instance: A, selections: SelectionSet) -> Iterator[CacheHeader]:
         entities = getattr(owner_instance, self.name)
-        exclude_resolvers = [self.inverse_attr] if self.inverse_attr else []
-        yield from (entity.get_cache_header(exclude_resolvers) for entity in entities)
+        yield from (entity.get_cache_header(selections) for entity in entities)
 
     def filter_read_schema(self, schema: SchemaABC) -> SchemaABC:
         if not isinstance(schema, ObjectSchema):

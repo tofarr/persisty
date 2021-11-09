@@ -79,7 +79,7 @@ class ResolverABC(ABC, Generic[A, B]):
         """ Resolve a value and pass it to the callback"""
 
     @abstractmethod
-    def get_cache_headers(self, owner_instance: A) -> Iterator[CacheHeader]:
+    def get_cache_headers(self, owner_instance: A, selections: SelectionSet) -> Iterator[CacheHeader]:
         """ Get a cache header for the resolved value """
 
     def before_create(self, owner_instance: A):
