@@ -3,10 +3,10 @@ from typing import Optional, Iterator, ForwardRef, Type, Callable, Any
 
 from persisty.cache_header import CacheHeader
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
-from persisty.item_filter import AttrFilter, AttrFilterOp
-from persisty.item_filter.item_filter_abc import ItemFilterABC
+from persisty2.item_filter import AttrFilter, AttrFilterOp
+from persisty2.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 
 from persisty.sql.destroyer import Destroyer, destroyer
 from persisty.sql.inserter import Inserter, inserter

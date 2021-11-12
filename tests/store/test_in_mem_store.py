@@ -8,7 +8,7 @@ from persisty.persisty_context import get_default_persisty_context
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
 from persisty.errors import PersistyError
-from persisty.search_filter import search_filter_from_dataclass
+from persisty2.search_filter import search_filter_from_dataclass
 from persisty.store.in_mem_store import in_mem_store, InMemStore
 from persisty.store.logging_store import LoggingStore
 from persisty.store.store_abc import StoreABC

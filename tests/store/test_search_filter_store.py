@@ -2,7 +2,7 @@ from persisty.persisty_context import get_default_persisty_context
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
-from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty2.item_filter import AttrFilter, AttrFilterOp
 from persisty.store.in_mem_store import in_mem_store
 from persisty.store.search_filter_store import SearchFilterStore
 from tests.fixtures.data import setup_bands

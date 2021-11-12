@@ -12,7 +12,7 @@ from persisty.cache_header import CacheHeader
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.page import Page
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 

@@ -4,7 +4,7 @@ from typing import Iterator
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
-from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty2.item_filter import AttrFilter, AttrFilterOp
 from persisty.secure.current_user import get_current_user
 from persisty.store.search_filter_store import SearchFilterStore
 from persisty.store.store_abc import StoreABC

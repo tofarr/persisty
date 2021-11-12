@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from persisty.capabilities import READ_ONLY, ALL_CAPABILITIES
 from persisty.errors import PersistyError
-from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty2.item_filter import AttrFilter, AttrFilterOp
 from persisty.secure.current_user import set_current_user
 from persisty.secure.role_check import RoleCheck
 from persisty.secure.role_secured_store import role_secured_store

@@ -3,7 +3,7 @@ from http import HTTPStatus
 from typing import Optional, Type
 
 from persisty.obj_graph.entity_abc import EntityABC
-from persisty.search_filter import SearchFilter, search_filter_from_dataclass
+from persisty2.search_filter import SearchFilter, search_filter_from_dataclass
 from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response

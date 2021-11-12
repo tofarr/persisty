@@ -6,10 +6,10 @@ from marshy import get_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
 
 from persisty.errors import PersistyError
-from persisty.item_comparator import ItemComparatorABC, MultiComparator, AttrComparator
-from persisty.item_filter.item_filter_abc import ItemFilterABC
+from persisty2.item_comparator import ItemComparatorABC, MultiComparator, AttrComparator
+from persisty2.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 from persisty.sql.sql_table import SqlTable
 from persisty.sql.where import build_where, Where
 

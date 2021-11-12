@@ -4,14 +4,14 @@ from marshy.utils import resolve_forward_refs
 
 from persisty.cache_header import CacheHeader
 from persisty.errors import PersistyError
-from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty2.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A, B
 from persisty.obj_graph.selection_set import SelectionSet
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 
 
 class HasOne(ResolverABC[A, B]):

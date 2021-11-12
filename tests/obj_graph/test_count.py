@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from persisty.persisty_context import get_default_persisty_context
 from persisty.errors import PersistyError
-from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty2.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.count import Count

@@ -2,12 +2,12 @@ import itertools
 from dataclasses import dataclass
 from typing import Any, Union, Iterable, Sized, Optional
 
-from persisty.item_filter import AttrFilter, AttrFilterOp
-from persisty.item_filter.and_filter import AndFilter
-from persisty.item_filter.item_filter_abc import ItemFilterABC
-from persisty.item_filter.not_filter import NotFilter
-from persisty.item_filter.or_filter import OrFilter
-from persisty.item_filter.query_filter import QueryFilter
+from persisty2.item_filter import AttrFilter, AttrFilterOp
+from persisty2.item_filter.and_filter import AndFilter
+from persisty2.item_filter.item_filter_abc import ItemFilterABC
+from persisty2.item_filter.not_filter import NotFilter
+from persisty2.item_filter import OrFilter
+from persisty2.item_filter.query_filter import QueryFilter
 from persisty.sql.sql_table import SqlTable
 
 

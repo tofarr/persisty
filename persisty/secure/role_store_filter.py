@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Generic, Optional
 
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
-from persisty.item_filter.item_filter_abc import ItemFilterABC, T
+from persisty2.item_filter.item_filter_abc import ItemFilterABC, T
 from persisty.store.capability_filter_store import CapabilityFilterStore
 from persisty.store.search_filter_store import SearchFilterStore
 from persisty.secure.role_check import RoleCheck

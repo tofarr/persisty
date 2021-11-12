@@ -12,7 +12,7 @@ from schemey.number_schema import NumberSchema
 from schemey.object_schema import ObjectSchema
 from schemey.property_schema import PropertySchema
 from schemey.string_schema import StringSchema
-from persisty.search_filter import search_filter_from_dataclass
+from persisty2.search_filter import search_filter_from_dataclass
 from persisty.store.capability_filter_store import CapabilityFilterStore
 from persisty.store.in_mem_store import in_mem_store
 from persisty.store.schema_store import schema_store

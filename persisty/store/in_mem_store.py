@@ -10,8 +10,8 @@ from marshy.types import ExternalItemType
 
 from persisty.cache_header import CacheHeader
 from persisty.capabilities import Capabilities, ALL_CAPABILITIES
-from persisty.item_filter.item_filter_abc import ItemFilterABC
-from persisty.search_filter import SearchFilter
+from persisty2.item_filter.item_filter_abc import ItemFilterABC
+from persisty2.search_filter import SearchFilter
 from persisty.page import Page
 from persisty.errors import PersistyError
 from persisty.store.store_abc import StoreABC, T

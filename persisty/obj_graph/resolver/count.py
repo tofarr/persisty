@@ -5,7 +5,7 @@ from marshy.utils import resolve_forward_refs
 
 from persisty.cache_header import CacheHeader
 from persisty.errors import PersistyError
-from persisty.item_filter import AttrFilterOp, AttrFilter
+from persisty2.item_filter import AttrFilterOp, AttrFilter
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
@@ -15,7 +15,7 @@ from schemey.any_of_schema import optional_schema
 from schemey.number_schema import NumberSchema
 from schemey.object_schema import ObjectSchema
 from schemey.schema_abc import SchemaABC
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 
 
 class Count(ResolverABC[A, int]):

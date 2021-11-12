@@ -6,9 +6,9 @@ from uuid import uuid4
 from persisty.edit import Edit
 from persisty.edit_type import EditType
 from persisty.errors import PersistyError
-from persisty.item_filter import AttrFilterOp, AttrFilter
+from persisty2.item_filter import AttrFilterOp, AttrFilter
 from persisty.page import Page
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 from persisty.secure.current_user import set_current_user
 from persisty.secure.current_user_filter_store import CurrentUserFilterStore
 from persisty.store.in_mem_store import in_mem_store

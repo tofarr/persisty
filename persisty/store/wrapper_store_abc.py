@@ -4,9 +4,9 @@ from typing import Optional, Iterator, Type
 from persisty.cache_header import CacheHeader
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
-from persisty.item_filter.item_filter_abc import ItemFilterABC
+from persisty2.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 from persisty.store.store_abc import T, StoreABC
 from persisty.store_schemas import StoreSchemas
 

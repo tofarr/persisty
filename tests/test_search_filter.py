@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-from persisty.item_comparator import MultiComparator, AttrComparator
-from persisty.item_filter import AttrFilter, AttrFilterOp
-from persisty.item_filter.and_filter import AndFilter
-from persisty.item_filter.not_filter import NotFilter
-from persisty.item_filter.or_filter import OrFilter
-from persisty.search_filter import SearchFilter, search_filter_from_dataclass
+from persisty2.item_comparator import MultiComparator, AttrComparator
+from persisty2.item_filter import AttrFilter, AttrFilterOp
+from persisty2.item_filter.and_filter import AndFilter
+from persisty2.item_filter.not_filter import NotFilter
+from persisty2.item_filter import OrFilter
+from persisty2.search_filter import SearchFilter, search_filter_from_dataclass
 from tests.fixtures.data import BANDS
 from tests.fixtures.items import Band, BandFilter
 

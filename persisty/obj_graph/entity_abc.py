@@ -1,12 +1,12 @@
 import dataclasses
 from abc import ABC
-from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Set, Type
+from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Type
 
 from marshy.marshaller_context import MarshallerContext
 from schemey.schema_context import get_default_schema_context
 
 from persisty.cache_header import CacheHeader
-from persisty.item_filter.item_filter_abc import ItemFilterABC
+from persisty2.item_filter.item_filter_abc import ItemFilterABC
 from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, NOT_INITIALIZED
 from persisty.obj_graph.selection_set import SelectionSet
@@ -15,7 +15,7 @@ from persisty.errors import PersistyError
 from schemey.schema_abc import SchemaABC
 
 from persisty.persisty_meta import PersistyMeta
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
 
 T = TypeVar('T')

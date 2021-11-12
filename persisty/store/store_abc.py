@@ -5,10 +5,10 @@ from persisty.cache_header import CacheHeader
 from persisty.capabilities import Capabilities
 from persisty.edit import Edit
 from persisty.edit_type import EditType
-from persisty.item_filter.item_filter_abc import ItemFilterABC
+from persisty2.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
 from persisty.errors import PersistyError
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 
 T = TypeVar('T')
 

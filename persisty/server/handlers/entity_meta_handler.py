@@ -9,7 +9,7 @@ from persisty.server.response import Response
 class EntityMetaHandler(EntityHandlerABC):
 
     def match(self, request: Request) -> bool:
-        matched = len(request.path) == 1 and request.method == 'GET' and self.is_param_true(request, 'meta')
+        matched = len(request.path) == 1 and request.method == 'GET' and self.is_param_true(request, 'config')
         return matched
 
     def handle_request(self, request: Request) -> Response:

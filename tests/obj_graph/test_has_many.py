@@ -3,12 +3,12 @@ from unittest import TestCase
 
 from persisty.persisty_context import get_default_persisty_context
 from persisty.errors import PersistyError
-from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty2.item_filter import AttrFilter, AttrFilterOp
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.has_many import HasMany
 from persisty.page import Page
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 from persisty.store.in_mem_store import in_mem_store
 from tests.fixtures.data import setup_bands, setup_members
 from tests.fixtures.entities import BandEntity, MEMBER_ENTITY_CLASS, MemberEntity

@@ -3,9 +3,9 @@ from dataclasses import field, dataclass
 from typing import Optional, Iterator
 
 from persisty.edit import Edit
-from persisty.item_filter.item_filter_abc import ItemFilterABC
+from persisty2.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
-from persisty.search_filter import SearchFilter
+from persisty2.search_filter import SearchFilter
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 from persisty.util import get_logger

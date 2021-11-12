@@ -5,7 +5,7 @@ from typing import Optional, Type
 from persisty.cache_header import CacheHeader
 from persisty.obj_graph.entity_abc import EntityABC
 from persisty.page import Page
-from persisty.search_filter import SearchFilter, search_filter_from_dataclass
+from persisty2.search_filter import SearchFilter, search_filter_from_dataclass
 from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response
