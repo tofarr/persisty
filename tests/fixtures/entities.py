@@ -1,8 +1,8 @@
 from typing import ForwardRef, Iterable
 
-from persisty.obj_graph.entity_abc import EntityABC
-from persisty.obj_graph.resolver.belongs_to import BelongsTo
-from persisty.obj_graph.resolver.has_many import HasMany
+from persisty.obj_graph import EntityABC
+from persisty.obj_graph import BelongsTo
+from persisty.obj_graph import HasMany
 from tests.fixtures.items import Member, Band, MemberFilter, BandFilter
 
 BAND_ENTITY_CLASS = ForwardRef(f'{__name__}.BandEntity')

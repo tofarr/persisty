@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from http import HTTPStatus
 
 from persisty.server.handlers.entity_handler_abc import EntityHandlerABC

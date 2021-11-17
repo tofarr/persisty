@@ -25,7 +25,7 @@ class CacheHeader:
             max_age = (self.expire_at - datetime.now()).seconds
             if max_age > 0:
                 return f'private,max-age={max_age}'
-        return 'no-store'
+        return 'no-storage'
 
     def combine_with(self, cache_headers: Iterator['CacheHeader']) -> 'CacheHeader':
         keys = [self.cache_key]

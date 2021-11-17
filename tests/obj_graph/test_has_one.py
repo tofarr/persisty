@@ -3,13 +3,13 @@ from typing import Optional, ForwardRef
 from unittest import TestCase
 from uuid import uuid4
 
-from persisty.persisty_context import get_default_persisty_context
-from persisty.errors import PersistyError
-from persisty.obj_graph.entity_abc import EntityABC
-from persisty.obj_graph.resolver.before_destroy import OnDestroy
-from persisty.obj_graph.resolver.belongs_to import BelongsTo
-from persisty.obj_graph.resolver.has_one import HasOne
-from persisty.store.in_mem_store import in_mem_store
+from old.persisty.persisty_context import get_default_persisty_context
+from old.persisty import PersistyError
+from persisty.obj_graph import EntityABC
+from persisty.obj_graph import OnDestroy
+from persisty.obj_graph import BelongsTo
+from persisty.obj_graph import HasOne
+from old.persisty.storage.in_mem_storage import in_mem_storage
 
 FOO_ENTITY = ForwardRef(f'{__name__}.FooEntity')
 BAR_ENTITY = ForwardRef(f'{__name__}.BarEntity')
@@ -44,14 +44,14 @@ class TestHasOne(TestCase):
 
     def setUp(self):
         persisty_context = get_default_persisty_context()
-        foo_store = in_mem_store(Foo)
+        foo_storage = in_mem_storage(Foo)
         for foo in FOOS:
-            foo_store.create(foo)
-        persisty_context.register_store(foo_store)
-        bar_store = in_mem_store(Bar)
+            foo_storage.create(foo)
+        persisty_context.register_storage(foo_storage)
+        bar_storage = in_mem_storage(Bar)
         for bar in BARS:
-            bar_store.create(bar)
-        persisty_context.register_store(bar_store)
+            bar_storage.create(bar)
+        persisty_context.register_storage(bar_storage)
 
     def test_read_missing(self):
         empty = FooEntity('Missing', None)
@@ -63,8 +63,8 @@ class TestHasOne(TestCase):
         class CascadingFooEntity(EntityABC, Foo):
             bar: BAR_ENTITY = HasOne('foo_id', on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingFooEntity)
-        store = get_default_persisty_context().get_store(Bar)
-        assert store.read('bar_1') is None
+        storage = get_default_persisty_context().get_storage(Bar)
+        assert storage.read('bar_1') is None
 
     @staticmethod
     def _do_destroy(entity):
@@ -76,7 +76,7 @@ class TestHasOne(TestCase):
         class NullifyingFooEntity(EntityABC, Foo):
             bar: BAR_ENTITY = HasOne('foo_id', on_destroy=OnDestroy.NULLIFY)
         self._do_destroy(NullifyingFooEntity)
-        bar = get_default_persisty_context().get_store(Bar).read('bar_1')
+        bar = get_default_persisty_context().get_storage(Bar).read('bar_1')
         assert bar.foo_id is None
 
     def test_destroy_invalid(self):

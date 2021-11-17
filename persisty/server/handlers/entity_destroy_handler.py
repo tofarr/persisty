@@ -19,5 +19,5 @@ class EntityDestroyHandler(EntityHandlerABC):
         if entity_type is None:
             return Response(HTTPStatus.NOT_FOUND)
         key = request.path[1]
-        result = entity_type.get_store().destroy(key)
+        result = entity_type.get_storage().destroy(key)
         return Response(HTTPStatus.OK if result else HTTPStatus.NOT_FOUND)

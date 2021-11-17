@@ -1,9 +1,9 @@
 from typing import Optional, Callable, TypeVar, Type, Iterator
 
 from persisty.cache_header import CacheHeader
-from persisty.errors import PersistyError
-from persisty2.item_filter import AttrFilter, AttrFilterOp
-from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
+from old.persisty import PersistyError
+from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.has_many import get_entity_type
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A
@@ -11,7 +11,7 @@ from persisty.obj_graph.selection_set import SelectionSet
 from persisty.page import Page
 from schemey.object_schema import ObjectSchema
 from schemey.schema_abc import SchemaABC
-from persisty2.search_filter import SearchFilter
+from old.persisty2.storage_filter import StorageFilter
 
 B = TypeVar('B')
 
@@ -35,11 +35,11 @@ class HasManyPaged(ResolverABC[A, B]):
                       callback: Callable[[Optional[Page[B]]], None],
                       sub_selections: Optional[SelectionSet],
                       deferred_resolutions: Optional[DeferredResolutionSet] = None):
-        search_filter = self._search_filter(owner_instance)
-        if search_filter is None:
+        storage_filter = self._storage_filter(owner_instance)
+        if storage_filter is None:
             callback(None)
             return
-        page = self._get_entity_type().paged_search(search_filter, limit=self.limit)
+        page = self._get_entity_type().paged_search(storage_filter, limit=self.limit)
         if sub_selections:
             for entity in page.items:
                 entity.resolve_all(sub_selections, deferred_resolutions)
@@ -52,16 +52,16 @@ class HasManyPaged(ResolverABC[A, B]):
         self._entity_type = get_entity_type(self.resolved_type, (Page,))
         return self._entity_type
 
-    def _search_filter(self, owner_instance: A):
+    def _storage_filter(self, owner_instance: A):
         key = owner_instance.get_key()
         if key is None:
             return
-        search_filter = SearchFilter(AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key))
-        return search_filter
+        storage_filter = StorageFilter(AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key))
+        return storage_filter
 
     def _search(self, owner_instance: A):
-        search_filter = self._search_filter(owner_instance)
-        entities = self._get_entity_type().search(search_filter)
+        storage_filter = self._storage_filter(owner_instance)
+        entities = self._get_entity_type().search(storage_filter)
         return entities
 
     def __set__(self, instance, value):

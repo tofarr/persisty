@@ -18,9 +18,9 @@ class EntityEditAllHandler(EntityHandlerABC):
 
     def handle_request(self, request: Request) -> Response:
         entity_type = self.get_entity_type(request)
-        store = entity_type.get_store()
-        edits = self.marshaller_context.load(List[Edit[store.item_type]], request.input)
+        storage = entity_type.get_storage()
+        edits = self.marshaller_context.load(List[Edit[storage.item_type]], request.input)
         if len(edits) > self.max_edits:
             return Response(HTTPStatus.BAD_REQUEST)
-        store.edit_all(edits)
+        storage.edit_all(edits)
         return Response(HTTPStatus.OK)

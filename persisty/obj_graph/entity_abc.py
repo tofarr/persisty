@@ -1,81 +1,80 @@
 import dataclasses
 from abc import ABC
-from typing import Optional, TypeVar, Generic, Union, ForwardRef, Iterator, Type
+from typing import TypeVar, Generic, Iterator, Optional, ForwardRef, Union
 
-from marshy.marshaller_context import MarshallerContext
-from schemey.schema_context import get_default_schema_context
-
-from persisty.cache_header import CacheHeader
-from persisty2.item_filter.item_filter_abc import ItemFilterABC
-from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
-from persisty.obj_graph.resolver.resolver_abc import ResolverABC, NOT_INITIALIZED
-from persisty.obj_graph.selection_set import SelectionSet
-from persisty.page import Page
+from persisty.attr.attr import attrs_from_class
+from persisty.attr.attr_abc import AttrABC
+from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.errors import PersistyError
-from schemey.schema_abc import SchemaABC
-
-from persisty.persisty_meta import PersistyMeta
-from persisty2.search_filter import SearchFilter
-from persisty.store.store_abc import StoreABC
+from persisty.item_filter.item_filter_abc import ItemFilterABC
+from persisty.obj_graph.entity_config import EntityConfig
+from persisty.obj_graph.selections import Selections
+from persisty.page import Page
+from persisty.persisty_context_abc import get_default_persisty_context
+from persisty.storage.storage_filter import StorageFilter
+from persisty.storage.storage_meta import StorageMeta
 
 T = TypeVar('T')
-
-REMOTE_VALUES_ATTR = '__remote_values__'
-ITEMS_ATTR = 'items'
-KEY_ATTR = '__key_attr__'
-ID = 'id'
+U = Union[ForwardRef('EntityABC'), T]
 
 
-class EntityABC(Generic[T], ABC):
+class EntityABC(ABC, Generic[T]):
+    __entity_config__: EntityConfig[T]
+    __local_values__: T
+    __remote_values__: T
 
-    __wrapped_class__: T = None
-    __batch_size__: 100
-    __filter_class__: Type = None
+    def __init_subclass__(cls, **kwargs):
+        if getattr(cls, '__entity_config__', None) is None:
+            item_class = next(c for c in cls.mro() if c != EntityABC)
+            # noinspection PyUnresolvedReferences
+            if not dataclasses.is_dataclass(item_class) or item_class.__dataclass_params__.frozen:
+                raise ValueError(f'non_frozen_dataclass_required:{item_class}')
+            item_attrs = attrs_from_class(item_class)
+            relational_attrs = tuple(a for a in (c.__dict__.values() for c in cls.mro()) if isinstance(a, AttrABC))
+            persisty_context = get_default_persisty_context()
+            storage = persisty_context.get_storage(item_class)
+            # noinspection PyTypeChecker
+            cls.__entity_config__ = EntityConfig(item_class, item_attrs, relational_attrs, storage)
+            for attr in item_attrs:
+                setattr(cls, attr.name, attr)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)  # forwards all unused arguments
-        self.__remote_values__ = NOT_INITIALIZED
-
-    @classmethod
-    def get_resolvers(cls) -> Iterator[ResolverABC]:
-        return (e for e in cls.__dict__.values() if isinstance(e, ResolverABC))
-
-    @classmethod
-    def get_name(cls):
-        return cls._get_wrapped_class().__name__
-
-    @classmethod
-    def get_store(cls) -> StoreABC[T]:
-        name = cls.get_name()
-        if not hasattr(cls, '__persisty_context__'):
-            from persisty.persisty_context import get_default_persisty_context
-            cls.__persisty_context__ = get_default_persisty_context()
-        store = cls.__persisty_context__.get_store(name)
-        return store
+    def __init__(self, **kwargs):
+        self.__local_values__ = kwargs.get('__local_values__') or self.__entity_config__.item_class()
+        self.__remote_values__ = kwargs.get('__remote_values__') or dataclasses.MISSING
+        for k, v in kwargs.items():
+            if not k.startswith('__'):
+                setattr(self, k, v)
 
     @classmethod
-    def _get_wrapped_class(cls):
-        if not cls.__wrapped_class__:
-            cls.__wrapped_class__ = next(s for s in cls.__mro__[1:] if dataclasses.is_dataclass(s))
-        return cls.__wrapped_class__
+    def get_storage(cls):
+        return cls.__entity_config__.storage
+
+    def get_key(self):
+        key = self.get_storage().meta.key_config.get_key(self.__local_values__)
+        return key
+
+    def get_meta(self):
+        meta = self.get_storage().meta
+        return StorageMeta(
+            name=self.__name__,
+            attrs=list(self.__entity_config__.attrs),
+            key_config=meta.key_config,
+            access_control=meta.access_control,
+            cache_control=meta.cache_control
+        )
 
     @classmethod
     def _wrap_entities(cls,
                        items: Iterator[T],
-                       selections: Optional[SelectionSet],
+                       selections: Optional[Selections],
                        deferred_resolutions: Optional[DeferredResolutionSet]
-                       ):
+                       ) -> Iterator[U]:
         if selections is None:
-            selections = SelectionSet()
+            selections = Selections()
         local_deferred_resolutions = deferred_resolutions or DeferredResolutionSet()
-        init_funcs = [f for f in dataclasses.fields(cls._get_wrapped_class()) if f.init]
-        non_init_funcs = [f for f in dataclasses.fields(cls._get_wrapped_class()) if not f.init]
         entities = []
         for item in items:
-            entity = cls(**{f.name: getattr(item, f.name) for f in init_funcs})
-            for f in non_init_funcs:
-                object.__setattr__(entity, f.name, getattr(item, f.name))
-            object.__setattr__(entity, REMOTE_VALUES_ATTR, item)
+            entity = cls(__local_values__=item, __remote_values__=dataclasses.replace(item))
             entities.append(entity)
             entity.resolve_all(selections, local_deferred_resolutions)
         if not deferred_resolutions:
@@ -85,11 +84,11 @@ class EntityABC(Generic[T], ABC):
     @classmethod
     def read(cls,
              key: str,
-             selections: Optional[SelectionSet] = None,
+             selections: Optional[Selections] = None,
              deferred_resolutions: Optional[DeferredResolutionSet] = None
-             ) -> Union[ForwardRef('EntityABC'), T]:
-        store = cls.get_store()
-        item = store.read(key)
+             ) -> U:
+        storage = cls.get_storage()
+        item = storage.read(key)
         if item is None:
             return None
         entities = cls._wrap_entities((item,), selections, deferred_resolutions)
@@ -99,74 +98,71 @@ class EntityABC(Generic[T], ABC):
     def read_all(cls,
                  keys: Iterator[str],
                  error_on_missing: bool = True,
-                 selections: Optional[SelectionSet] = None,
+                 selections: Optional[Selections] = None,
                  deferred_resolutions: Optional[DeferredResolutionSet] = None
-                 ) -> Iterator[T]:
-        store = cls.get_store()
-        items = store.read_all(keys, error_on_missing)
+                 ) -> Iterator[U]:
+        storage = cls.get_storage()
+        items = storage.read_all(keys, error_on_missing)
         entities = cls._wrap_entities(items, selections, deferred_resolutions)
         return entities
 
     @classmethod
     def search(cls,
-               search_filter: Optional[SearchFilter[T]] = None,
-               selections: Optional[SelectionSet] = None,
+               storage_filter: Optional[StorageFilter[T]] = None,
+               selections: Optional[Selections] = None,
                deferred_resolutions: Optional[DeferredResolutionSet] = None):
-        store = cls.get_store()
-        items = store.search(search_filter)
+        storage = cls.get_storage()
+        items = storage.search(storage_filter)
         entities = cls._wrap_entities(items, selections, deferred_resolutions)
         return entities
 
     @classmethod
     def count(cls, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
-        store = cls.get_store()
-        count = store.count(item_filter)
+        storage = cls.get_storage()
+        count = storage.count(item_filter)
         return count
 
     @classmethod
     def paged_search(cls,
-                     search_filter: Optional[SearchFilter[T]] = None,
+                     storage_filter: Optional[StorageFilter[T]] = None,
                      page_key: Optional[str] = None,
                      limit: int = 20,
-                     selections: Optional[SelectionSet] = None,
+                     selections: Optional[Selections] = None,
                      deferred_resolutions: Optional[DeferredResolutionSet] = None):
-        store = cls.get_store()
-        page = store.paged_search(search_filter, page_key, limit)
+        storage = cls.get_storage()
+        page = storage.paged_search(storage_filter, page_key, limit)
         entities = cls._wrap_entities(iter(page.items), selections, deferred_resolutions)
         wrapped_page = Page(list(entities), page.next_page_key)
         return wrapped_page
 
     @property
-    def is_save_required(self):
-        for resolver in self.get_resolvers():
-            if resolver.is_overridden(self):
-                return True
-        return self != self.__remote_values__
-
-    def get_key(self):
-        key = self.get_store().get_key(self)
-        return key
-
-    @property
     def is_existing(self):
-        store = self.get_store()
-        key = store.get_key(self)
+        storage = self.get_storage()
+        key = self.get_key()
         if key is None:
             return False
-        if self.__remote_values__ is NOT_INITIALIZED:
-            self.__remote_values__ = store.read(key)
+        if self.__remote_values__ is dataclasses.MISSING:
+            self.__remote_values__ = storage.read(key)
         return bool(self.__remote_values__)
 
     def load(self):
-        store = self.get_store()
-        key = store.get_key(self if self.__remote_values__ is NOT_INITIALIZED else self.__remote_values__)
+        storage = self.get_storage()
+        item = self.__local_values__ if self.__remote_values__ is dataclasses.MISSING else self.__remote_values__
+        key = storage.meta.key_config.get_key(item)
         if key is None:
             raise PersistyError('missing_key')
-        self.__remote_values__ = store.read(key)
-        if not self.__remote_values__:
+        loaded = storage.read(key)
+        self.__remote_values__ = loaded
+        if not loaded:
             raise PersistyError(f'no_such_entity:{key}')
-        for f in dataclasses.fields(self._get_wrapped_class()):
-            object.__setattr__(self, f.name, getattr(self.__remote_values__, f.name))
+        self.__local_values__ = dataclasses.replace(loaded)
+
+    @property
+    def is_save_required(self):
+        for attr in self.__entity_config__.relational_attrs:
+            if attr.is_save_required(self):
+                return True
+        return self.__local_values__ != self.__remote_values__
 
     def save(self):
         if not self.is_save_required:
@@ -177,114 +173,69 @@ class EntityABC(Generic[T], ABC):
             return self.create()
 
     def create(self):
-        for resolver in self.get_resolvers():
-            resolver.before_create(self)
-        store = self.get_store()
-        key = store.create(self)
-        object.__setattr__(self, self._get_key_attr(), key)
-        self._build_remote_from_local()
-        for resolver in self.get_resolvers():
-            resolver.after_create(self)
-
-    def _get_key_attr(self):
-        return self.__key_attr__ if hasattr(self, '__key_attr__') else 'id'
-
-    def _build_remote_from_local(self):
-        self.__remote_values__ = self.to_item()
-
-    def to_item(self) -> T:
-        init_fields = (f for f in dataclasses.fields(self._get_wrapped_class()) if f.init)
-        kwargs = {f.name: getattr(self, f.name) for f in init_fields}
-        item = self._get_wrapped_class()(**kwargs)
-        return item
+        for attr in self.__entity_config__.relational_attrs:
+            attr.before_create(self)
+        storage = self.get_storage()
+        key = storage.create(self.__local_values__)
+        self.__entity_config__.storage.meta.key_config.set_key(self.__local_values__, key)
+        self.__remote_values__ = dataclasses.replace(self.__local_values__)
+        for attr in self.__entity_config__.relational_attrs:
+            attr.after_create(self)
 
     def update(self):
-        for resolver in self.get_resolvers():
-            resolver.before_update(self)
-        store = self.get_store()
-        store.update(self)
-        self._build_remote_from_local()
-        for resolver in self.get_resolvers():
-            resolver.after_update(self)
+        for attr in self.__entity_config__.relational_attrs:
+            attr.before_update(self)
+        storage = self.get_storage()
+        storage.update(self)
+        self.__remote_values__ = dataclasses.replace(self.__local_values__)
+        for attr in self.__entity_config__.relational_attrs:
+            attr.after_update(self)
 
     def destroy(self):
-        for resolver in self.get_resolvers():
-            resolver.before_destroy(self)
-        store = self.get_store()
-        key = store.get_key(self)
-        store.destroy(key)
+        for attr in self.__entity_config__.relational_attrs:
+            attr.before_update(self)
+        storage = self.get_storage()
+        key = storage.meta.key_config.get_key(self.__local_values__)
+        if not key:
+            return False
+        destroyed = storage.destroy(key)
+        if not destroyed:
+            return False
         self.__remote_values__ = None
-        for resolver in self.get_resolvers():
-            resolver.after_destroy(self)
+        for attr in self.__entity_config__.relational_attrs:
+            attr.before_update(self)
+        return True
 
-    def patch_from(self, other):
-        for f in dataclasses.fields(self._get_wrapped_class()):
-            value = getattr(other, f.name)
+    def patch_from(self, other: U):
+        for attr in self.__entity_config__.attrs:
+            value = getattr(other, attr.name)
             if value is not dataclasses.MISSING:
-                setattr(self, f.name, value)
-        for resolver in self.get_resolvers():
-            if resolver.is_resolved(other):
-                value = getattr(other, resolver.name)
-                resolver.__set__(self, value)
+                setattr(self, attr.name, value)
 
     def resolve_all(self,
-                    selections: Optional[SelectionSet],
+                    selections: Optional[Selections],
                     deferred_resolutions: Optional[DeferredResolutionSet] = None):
         if selections is None:
             return
         local_deferred_resolutions = DeferredResolutionSet() if deferred_resolutions is None else deferred_resolutions
-        for resolver in self.get_resolvers():
-            if resolver.is_selected(selections):
-                resolver.resolve(self, selections, local_deferred_resolutions)
+        for attr in self.__entity_config__.relational_attrs:
+            sub_selections = selections.get_selections(attr.name)
+            if sub_selections:
+                attr.resolve(self, sub_selections, deferred_resolutions)
         if deferred_resolutions is None:
             local_deferred_resolutions.resolve()
 
     def unresolve_all(self):
-        for resolver in self.get_resolvers():
-            resolver.unresolve(self)
+        for attr in self.__entity_config__.relational_attrs:
+            attr.unresolve(self)
 
-    def get_cache_header(self, selections: Optional[SelectionSet] = None) -> CacheHeader:
-        cache_header = self.get_store().get_cache_header(self)
-        if selections:
-            cache_header = cache_header.combine_with(self._resolver_cache_headers(selections))
+    def get_cache_header(self, selections: Optional[Selections]):
+        cache_header = self.get_storage().meta.cache_control.get_cache_header(self.__local_values__)
+        if selections is not None:
+            cache_header = cache_header.combine_with(self._get_relational_cache_headers(selections))
         return cache_header
 
-    def _resolver_cache_headers(self, selections: SelectionSet) -> Iterator[CacheHeader]:
-        for resolver in self.get_resolvers():
-            sub_selections = selections.get_selections(resolver.name)
-            if sub_selections:
-                yield from resolver.get_cache_headers(self, sub_selections)
-
-    @classmethod
-    def get_meta(cls) -> PersistyMeta:
-        store = cls.get_store()
-        schemas = store.schemas
-        filter_type = getattr(cls, '__filter_class__', None)
-        # TODO: DO NOT USE A GLOBAL HERE!
-        filter_schema = get_default_schema_context().get_schema(filter_type) if filter_type else None
-        return PersistyMeta(
-            name=store.name,
-            capabilities=store.capabilities,
-            schema_for_create=cls._filter_schema(schemas.create, 'filter_create_schema'),
-            schema_for_read=cls._filter_schema(schemas.read, 'filter_read_schema'),
-            schema_for_update=cls._filter_schema(schemas.update, 'filter_update_schema'),
-            schema_for_search=cls._filter_schema(schemas.search, 'filter_search_schema'),
-            schema_for_filter=filter_schema
-        )
-
-    @classmethod
-    def _filter_schema(cls, schema: SchemaABC[T], filter_name: str) -> SchemaABC:
-        for resolver in cls.get_resolvers():
-            schema = getattr(resolver, filter_name)(schema)
-        return schema
-
-    def __eq__(self, other):
-        for f in dataclasses.fields(self._get_wrapped_class()):
-            if getattr(self, f.name) != getattr(other, f.name, None):
-                return False
-        return True
-
-    @classmethod
-    def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
-        from persisty.obj_graph.entity_marshaller import EntityMarshaller
-        return EntityMarshaller(cls, marshaller_context)
+    def _get_relational_cache_headers(self, selections: Selections):
+        for attr in self.__entity_config__.relational_attrs:
+            sub_selections = selections.get_selections(attr.name)
+            yield from attr.get_cache_headers(self, sub_selections)

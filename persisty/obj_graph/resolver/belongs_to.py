@@ -4,8 +4,8 @@ from marshy.factory.optional_marshaller_factory import get_optional_type
 from marshy.utils import resolve_forward_refs
 
 from persisty.cache_header import CacheHeader
-from persisty.obj_graph.deferred.deferred_lookup import DeferredLookup
-from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
+from persisty.deferred.deferred_lookup import DeferredLookup
+from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
 
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A, B
 from persisty.obj_graph.selection_set import SelectionSet

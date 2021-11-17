@@ -5,15 +5,15 @@ import typing_inspect
 from marshy.utils import resolve_forward_refs
 
 from persisty.cache_header import CacheHeader
-from persisty.errors import PersistyError
-from persisty2.item_filter import AttrFilter, AttrFilterOp
-from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
+from old.persisty import PersistyError
+from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A
 from persisty.obj_graph.selection_set import SelectionSet
 from schemey.object_schema import ObjectSchema
 from schemey.schema_abc import SchemaABC
-from persisty2.search_filter import SearchFilter
+from old.persisty2.storage_filter import StorageFilter
 
 B = TypeVar('B')
 
@@ -78,8 +78,8 @@ class HasMany(ResolverABC[A, B]):
         key = owner_instance.get_key()
         if key is None:
             return
-        search_filter = SearchFilter(AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key))
-        entities = self._get_entity_type().search(search_filter)
+        storage_filter = StorageFilter(AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key))
+        entities = self._get_entity_type().search(storage_filter)
         return entities
 
     def is_overridden(self, owner_instance: A) -> bool:

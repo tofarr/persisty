@@ -1,4 +1,4 @@
-from persisty.store.store_abc import StoreABC
+from old.persisty.storage.storage_abc import StorageABC
 from tests.fixtures.items import Band, Member
 
 BANDS = [
@@ -24,11 +24,11 @@ MEMBERS = [
 ]
 
 
-def setup_bands(store: StoreABC[Band]):
+def setup_bands(storage: StorageABC[Band]):
     for band in BANDS:
-        store.create(band)
+        storage.create(band)
 
 
-def setup_members(store: StoreABC[Member]):
+def setup_members(storage: StorageABC[Member]):
     for member in MEMBERS:
-        store.create(member)
+        storage.create(member)

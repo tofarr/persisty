@@ -1,7 +1,7 @@
 import dataclasses
 from unittest import TestCase
 
-from persisty.capabilities import Capabilities, ALL_CAPABILITIES, NO_CAPABILITIES, CapabilitiesMarshaller
+from old.persisty import Capabilities, ALL_CAPABILITIES, NO_CAPABILITIES, CapabilitiesMarshaller
 
 A = Capabilities(**{f.name: (i & 1 == 1) for i, f in enumerate(dataclasses.fields(Capabilities))})
 B = Capabilities(**{f.name: (i & 1 == 0) for i, f in enumerate(dataclasses.fields(Capabilities))})

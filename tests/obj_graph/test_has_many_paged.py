@@ -1,9 +1,9 @@
-from persisty.persisty_context import get_default_persisty_context
-from persisty.errors import PersistyError
-from persisty.obj_graph.entity_abc import EntityABC
-from persisty.obj_graph.resolver.before_destroy import OnDestroy
-from persisty.obj_graph.resolver.has_many_paged import HasManyPaged
-from persisty.page import Page
+from old.persisty.persisty_context import get_default_persisty_context
+from old.persisty import PersistyError
+from persisty.obj_graph import EntityABC
+from persisty.obj_graph import OnDestroy
+from persisty.obj_graph import HasManyPaged
+from old.persisty import Page
 from tests.fixtures.data import BANDS
 from tests.fixtures.entities import MEMBER_ENTITY_CLASS
 from tests.fixtures.items import Band, Member
@@ -26,7 +26,7 @@ class TestHasManyPaged(TestHasMany):
         class CascadingBandEntity(EntityABC, Band):
             members: Page[MEMBER_ENTITY_CLASS] = HasManyPaged(foreign_key_attr='band_id', on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingBandEntity)
-        members = list(get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS),
+        members = list(get_default_persisty_context().get_storage(Member).read_all(iter(BEATLES_MEMBER_IDS),
                                                                                  error_on_missing=False))
         assert members == [None, None, None, None]
 
@@ -40,7 +40,7 @@ class TestHasManyPaged(TestHasMany):
         class NullifyingBandEntity(EntityABC, Band):
             members: Page[MEMBER_ENTITY_CLASS] = HasManyPaged(foreign_key_attr='band_id', on_destroy=OnDestroy.NULLIFY)
         self._do_destroy(NullifyingBandEntity)
-        for m in get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS)):
+        for m in get_default_persisty_context().get_storage(Member).read_all(iter(BEATLES_MEMBER_IDS)):
             assert m.band_id is None
 
     def test_destroy_invalid(self):

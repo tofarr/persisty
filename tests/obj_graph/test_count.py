@@ -1,12 +1,12 @@
 from unittest import TestCase
 
-from persisty.persisty_context import get_default_persisty_context
-from persisty.errors import PersistyError
-from persisty2.item_filter import AttrFilter, AttrFilterOp
-from persisty.obj_graph.entity_abc import EntityABC
-from persisty.obj_graph.resolver.before_destroy import OnDestroy
-from persisty.obj_graph.resolver.count import Count
-from persisty.store.in_mem_store import in_mem_store
+from old.persisty.persisty_context import get_default_persisty_context
+from old.persisty import PersistyError
+from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty.obj_graph import EntityABC
+from persisty.obj_graph import OnDestroy
+from persisty.obj_graph import Count
+from old.persisty.storage.in_mem_storage import in_mem_storage
 from tests.fixtures.data import setup_bands, setup_members
 from tests.fixtures.entities import MemberEntity
 from tests.fixtures.items import Band, Member
@@ -23,12 +23,12 @@ class TestCount(TestCase):
 
     def setUp(self):
         persisty_context = get_default_persisty_context()
-        band_store = in_mem_store(Band)
-        setup_bands(band_store)
-        persisty_context.register_store(band_store)
-        member_store = in_mem_store(Member)
-        setup_members(member_store)
-        persisty_context.register_store(member_store)
+        band_storage = in_mem_storage(Band)
+        setup_bands(band_storage)
+        persisty_context.register_storage(band_storage)
+        member_storage = in_mem_storage(Member)
+        setup_members(member_storage)
+        persisty_context.register_storage(member_storage)
 
     def test_count(self):
         beatles = CountBandula.read('beatles')
@@ -48,7 +48,7 @@ class TestCount(TestCase):
                                      entity_type=MemberEntity,
                                      on_destroy=OnDestroy.CASCADE)
         self._do_destroy(CascadingCountBandula)
-        members = list(get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS),
+        members = list(get_default_persisty_context().get_storage(Member).read_all(iter(BEATLES_MEMBER_IDS),
                                                                          error_on_missing=False))
         assert members == [None, None, None, None]
 
@@ -59,7 +59,7 @@ class TestCount(TestCase):
                                      on_destroy=OnDestroy.NULLIFY)
 
         self._do_destroy(NullifyingCountBandula)
-        for m in get_default_persisty_context().get_store(Member).read_all(iter(BEATLES_MEMBER_IDS)):
+        for m in get_default_persisty_context().get_storage(Member).read_all(iter(BEATLES_MEMBER_IDS)):
             assert m.band_id is None
 
     @staticmethod

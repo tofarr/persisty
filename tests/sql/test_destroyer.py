@@ -1,11 +1,11 @@
 import sqlite3
 
-from persisty.errors import PersistyError
-from persisty.sql.destroyer import Destroyer
-from tests.store.test_in_mem_store import TestInMemStore
+from old.persisty import PersistyError
+from persisty.storage.sql import Destroyer
+from tests import TestInMemStorage
 
 
-class TestDestroyer(TestInMemStore):
+class TestDestroyer(TestInMemStorage):
 
     def test_destroy_exception(self):
         connection = sqlite3.connect(':memory:')

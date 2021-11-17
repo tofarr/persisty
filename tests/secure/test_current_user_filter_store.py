@@ -4,14 +4,14 @@ from unittest import TestCase
 from uuid import uuid4
 
 from persisty.edit import Edit
-from persisty.edit_type import EditType
-from persisty.errors import PersistyError
-from persisty2.item_filter import AttrFilterOp, AttrFilter
-from persisty.page import Page
-from persisty2.search_filter import SearchFilter
-from persisty.secure.current_user import set_current_user
-from persisty.secure.current_user_filter_store import CurrentUserFilterStore
-from persisty.store.in_mem_store import in_mem_store
+from old.persisty import EditType
+from old.persisty import PersistyError
+from persisty.item_filter import AttrFilterOp, AttrFilter
+from old.persisty import Page
+from old.persisty2.storage_filter import StorageFilter
+from persisty.security.current_user import set_current_user
+from old.persisty.secure.current_user_filter_storage import CurrentUserFilterStorage
+from old.persisty.storage.in_mem_storage import in_mem_storage
 from tests.secure.test_current_user import User
 
 
@@ -32,7 +32,7 @@ COMMENTS = [
 ]
 
 
-class TestCurrentUserFilterStore(TestCase):
+class TestCurrentUserFilterStorage(TestCase):
 
     def setUp(self):
         set_current_user(WE)
@@ -41,77 +41,77 @@ class TestCurrentUserFilterStore(TestCase):
         set_current_user(None)
 
     @staticmethod
-    def get_store() -> CurrentUserFilterStore[Comment]:
-        store = in_mem_store(Comment)
-        store.edit_all(Edit(EditType.CREATE, item=c) for c in COMMENTS)
-        store = CurrentUserFilterStore(store)
-        return store
+    def get_storage() -> CurrentUserFilterStorage[Comment]:
+        storage = in_mem_storage(Comment)
+        storage.edit_all(Edit(EditType.CREATE, item=c) for c in COMMENTS)
+        storage = CurrentUserFilterStorage(storage)
+        return storage
 
     def test_read(self):
-        store = self.get_store()
+        storage = self.get_storage()
         we_comment = next(c for c in COMMENTS if c.user_id == WE.id)
-        assert store.read(we_comment.id) == we_comment
+        assert storage.read(we_comment.id) == we_comment
         other_comment = next(c for c in COMMENTS if c.user_id != WE.id)
-        assert store.read(other_comment.id) is None
+        assert storage.read(other_comment.id) is None
 
     def test_read_no_user(self):
         set_current_user(None)
-        store = self.get_store()
+        storage = self.get_storage()
         we_comment = next(c for c in COMMENTS if c.user_id == WE.id)
         with self.assertRaises(PersistyError):
-            store.read(we_comment.id)
+            storage.read(we_comment.id)
 
     def test_search(self):
-        store = self.get_store()
-        assert {c for c in store.search()} == {c for c in COMMENTS if c.user_id == WE.id}
-        assert list(store.search(SearchFilter(AttrFilter('user_id', AttrFilterOp.eq, 'they')))) == []
+        storage = self.get_storage()
+        assert {c for c in storage.search()} == {c for c in COMMENTS if c.user_id == WE.id}
+        assert list(storage.search(StorageFilter(AttrFilter('user_id', AttrFilterOp.eq, 'they')))) == []
 
     def test_paged_search(self):
-        store = self.get_store()
-        assert store.paged_search() == Page([c for c in COMMENTS if c.user_id == WE.id])
+        storage = self.get_storage()
+        assert storage.paged_search() == Page([c for c in COMMENTS if c.user_id == WE.id])
 
     def test_count(self):
-        store = self.get_store()
-        assert store.count() == 2
-        assert store.count(AttrFilter('user_id', AttrFilterOp.eq, 'they')) == 0
+        storage = self.get_storage()
+        assert storage.count() == 2
+        assert storage.count(AttrFilter('user_id', AttrFilterOp.eq, 'they')) == 0
 
     def test_create(self):
-        store = self.get_store()
+        storage = self.get_storage()
         comment = Comment('Another comment', THEY.id)
-        store.create(comment)
+        storage.create(comment)
         assert comment.user_id == WE.id
-        assert comment == store.read(comment.id)
+        assert comment == storage.read(comment.id)
 
     def test_create_disallow(self):
-        store = self.get_store()
+        storage = self.get_storage()
         existing_comment = next(c for c in COMMENTS if c.user_id != WE.id)
         comment = Comment(**existing_comment.__dict__)
         with self.assertRaises(PersistyError):
-            store.create(comment)
-        assert existing_comment == store.wrapped_store.read(comment.id)
+            storage.create(comment)
+        assert existing_comment == storage.wrapped_storage.read(comment.id)
 
     def test_update(self):
-        store = self.get_store()
+        storage = self.get_storage()
         comment = Comment('Another comment')
-        store.create(comment)
+        storage.create(comment)
         assert comment.user_id == WE.id
         comment.text = 'Another comment - updated'
         comment.user_id = THEY.id
-        store.update(comment)
+        storage.update(comment)
         assert comment.user_id == WE.id
-        assert comment == store.read(comment.id)
+        assert comment == storage.read(comment.id)
 
     def test_update_disallow(self):
-        store = self.get_store()
+        storage = self.get_storage()
         existing_comment = next(c for c in COMMENTS if c.user_id != WE.id)
         comment = Comment(**existing_comment.__dict__)
         with self.assertRaises(PersistyError):
-            store.update(comment)
-        assert existing_comment == store.wrapped_store.read(comment.id)
+            storage.update(comment)
+        assert existing_comment == storage.wrapped_storage.read(comment.id)
 
     def test_edit_all(self):
-        store = self.get_store()
+        storage = self.get_storage()
         comment = Comment('Another comment', THEY.id)
-        store.edit_all([Edit(EditType.CREATE, item=comment)])
+        storage.edit_all([Edit(EditType.CREATE, item=comment)])
         assert comment.user_id == WE.id
-        assert comment == store.read(comment.id)
+        assert comment == storage.read(comment.id)

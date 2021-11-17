@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from persisty.edit import Edit
-from persisty.edit_type import EditType
+from old.persisty import EditType
 from tests.fixtures.data import BANDS
 
 

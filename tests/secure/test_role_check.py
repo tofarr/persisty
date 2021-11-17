@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from persisty.secure.role_check import RoleCheck
+from old.persisty.secure import RoleCheck
 from tests.secure.test_current_user import User
 
 

@@ -2,9 +2,9 @@ from unittest import TestCase
 
 from marshy import get_default_context
 
-from persisty.persisty_context import get_default_persisty_context
-from persisty.obj_graph.selection_set import from_selection_set_list
-from persisty.store.in_mem_store import in_mem_store
+from old.persisty.persisty_context import get_default_persisty_context
+from persisty.obj_graph import from_selection_set_list
+from old.persisty.storage.in_mem_storage import in_mem_storage
 from tests.fixtures.data import setup_bands, setup_members
 from tests.fixtures.entities import MemberEntity
 from tests.fixtures.items import Band, Member
@@ -14,12 +14,12 @@ class TestEntity(TestCase):
 
     def setUp(self):
         persisty_context = get_default_persisty_context()
-        band_store = in_mem_store(Band)
-        setup_bands(band_store)
-        persisty_context.register_store(band_store)
-        member_store = in_mem_store(Member)
-        setup_members(member_store)
-        persisty_context.register_store(member_store)
+        band_storage = in_mem_storage(Band)
+        setup_bands(band_storage)
+        persisty_context.register_storage(band_storage)
+        member_storage = in_mem_storage(Member)
+        setup_members(member_storage)
+        persisty_context.register_storage(member_storage)
 
     def test_dump(self):
         member = MemberEntity.read('john')

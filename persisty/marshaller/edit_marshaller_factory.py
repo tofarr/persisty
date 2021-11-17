@@ -1,9 +1,8 @@
-from typing import Type, Optional, List
+from typing import Type, Optional
 
 import typing_inspect
 from marshy.factory.marshaller_factory_abc import MarshallerFactoryABC
 from marshy.marshaller import str_marshaller
-from marshy.marshaller.iterable_marshaller import IterableMarshaller
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.marshaller.obj_marshaller import ObjMarshaller, AttrConfig
 from marshy.marshaller.optional_marshaller import OptionalMarshaller

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Optional, Type, Callable, Iterator, Dict
+from typing import TypeVar, Generic, Optional, Type, Callable, Iterator
 
 from persisty.cache_header import CacheHeader
-from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
+from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph.selection_set import SelectionSet, from_selection_set_list
 from schemey.schema_abc import SchemaABC
 

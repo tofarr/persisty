@@ -3,7 +3,7 @@ from typing import Iterable
 from unittest import TestCase
 from uuid import uuid4
 
-from persisty.secure.current_user import get_current_user, set_current_user
+from persisty.security.current_user import get_current_user, set_current_user
 
 
 @dataclass(frozen=True)

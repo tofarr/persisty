@@ -1,13 +1,13 @@
 from unittest import TestCase
 
-from persisty.capabilities import READ_ONLY, ALL_CAPABILITIES
-from persisty.errors import PersistyError
-from persisty2.item_filter import AttrFilter, AttrFilterOp
-from persisty.secure.current_user import set_current_user
-from persisty.secure.role_check import RoleCheck
-from persisty.secure.role_secured_store import role_secured_store
-from persisty.secure.role_store_filter import RoleStoreFilter
-from persisty.store.in_mem_store import in_mem_store
+from old.persisty import READ_ONLY, ALL_CAPABILITIES
+from old.persisty import PersistyError
+from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty.security.current_user import set_current_user
+from old.persisty.secure import RoleCheck
+from old.persisty.secure.role_secured_storage import role_secured_storage
+from old.persisty.secure.role_storage_filter import RoleStorageFilter
+from old.persisty.storage.in_mem_storage import in_mem_storage
 from tests.fixtures.data import setup_bands
 from tests.fixtures.items import Band
 from tests.secure.test_current_user import User
@@ -16,41 +16,41 @@ ADMIN = User('admin', ('admin',))
 USER = User('user', ('user',))
 
 
-class TestRoleSecuredStore(TestCase):
+class TestRoleSecuredStorage(TestCase):
 
     @staticmethod
-    def get_role_secured_store():
-        """ Create a store that only admins can edit """
-        store = in_mem_store(Band)
-        setup_bands(store)
-        store = role_secured_store(store, [
-            RoleStoreFilter(RoleCheck(['user']), READ_ONLY, AttrFilter('year_formed', AttrFilterOp.gt, 1900)),
-            RoleStoreFilter(RoleCheck(['admin']), ALL_CAPABILITIES)
+    def get_role_secured_storage():
+        """ Create a storage that only admins can edit """
+        storage = in_mem_storage(Band)
+        setup_bands(storage)
+        storage = role_secured_storage(storage, [
+            RoleStorageFilter(RoleCheck(['user']), READ_ONLY, AttrFilter('year_formed', AttrFilterOp.gt, 1900)),
+            RoleStorageFilter(RoleCheck(['admin']), ALL_CAPABILITIES)
         ])
-        return store
+        return storage
 
     def test_create_by_admin(self):
         set_current_user(ADMIN)
         try:
-            store = self.get_role_secured_store()
+            storage = self.get_role_secured_storage()
             jefferson = Band('jefferson_airplane', 'Jefferson Airplane')
-            store.create(jefferson)
-            assert jefferson == store.read('jefferson_airplane')
+            storage.create(jefferson)
+            assert jefferson == storage.read('jefferson_airplane')
         finally:
             set_current_user(None)
 
     def test_create_by_user(self):
         set_current_user(USER)
         try:
-            store = self.get_role_secured_store()
+            storage = self.get_role_secured_storage()
             jefferson = Band('jefferson_airplane', 'Jefferson Airplane')
             with self.assertRaises(PersistyError):
-                store.create(jefferson)
-            assert store.read('jefferson_airplane') is None
+                storage.create(jefferson)
+            assert storage.read('jefferson_airplane') is None
         finally:
             set_current_user(None)
 
     def test_read_disallowed(self):
-        store = self.get_role_secured_store()
+        storage = self.get_role_secured_storage()
         with self.assertRaises(PersistyError):
-            store.read('beatles')
+            storage.read('beatles')

@@ -3,15 +3,15 @@ from typing import Optional, Callable, Type, Iterator
 from marshy.utils import resolve_forward_refs
 
 from persisty.cache_header import CacheHeader
-from persisty.errors import PersistyError
-from persisty2.item_filter import AttrFilter, AttrFilterOp
-from persisty.obj_graph.deferred.deferred_resolution_set import DeferredResolutionSet
-from persisty.obj_graph.entity_abc import EntityABC
+from old.persisty import PersistyError
+from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
+from persisty.obj_graph.old_entity_abc import EntityABC
 from persisty.obj_graph.resolver.before_destroy import OnDestroy
 
 from persisty.obj_graph.resolver.resolver_abc import ResolverABC, A, B
 from persisty.obj_graph.selection_set import SelectionSet
-from persisty2.search_filter import SearchFilter
+from old.persisty2.storage_filter import StorageFilter
 
 
 class HasOne(ResolverABC[A, B]):
@@ -61,8 +61,8 @@ class HasOne(ResolverABC[A, B]):
         key = owner_instance.get_key()
         if key is None:
             return None
-        search_filter = SearchFilter(AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key))
-        entities = self._get_entity_type().search(search_filter)
+        storage_filter = StorageFilter(AttrFilter(self.foreign_key_attr, AttrFilterOp.eq, key))
+        entities = self._get_entity_type().search(storage_filter)
         return entities
 
     def _get_entity_type(self):

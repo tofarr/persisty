@@ -3,9 +3,9 @@ from http import HTTPStatus
 from typing import Optional, Type
 
 from persisty.cache_header import CacheHeader
-from persisty.obj_graph.entity_abc import EntityABC
+from persisty.obj_graph.old_entity_abc import EntityABC
 from persisty.page import Page
-from persisty2.search_filter import SearchFilter, search_filter_from_dataclass
+from old.persisty2.storage_filter import StorageFilter, storage_filter_from_dataclass
 from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response
@@ -23,11 +23,11 @@ class EntityPagedSearchHandler(EntityHandlerABC):
         if entity_type is None:
             return Response(HTTPStatus.NOT_FOUND)
 
-        search_filter = self.get_search_filter(request, entity_type)
+        storage_filter = self.get_storage_filter(request, entity_type)
         page_key = request.params.get('page_key')
         limit = self.get_limit(request)
         selections = self.get_selections(request)
-        page = entity_type.paged_search(search_filter, page_key, limit, selections)
+        page = entity_type.paged_search(storage_filter, page_key, limit, selections)
 
         cache_header = CacheHeader('0').combine_with(e.get_cache_header() for e in page.items)
         response_headers = cache_header.get_cache_control_headers()
@@ -37,11 +37,11 @@ class EntityPagedSearchHandler(EntityHandlerABC):
         content = self.marshaller_context.dump(page, Page[entity_type])
         return Response(HTTPStatus.OK, response_headers, content)
 
-    def get_search_filter(self, request: Request, entity_type: Type[EntityABC]) -> Optional[SearchFilter]:
+    def get_storage_filter(self, request: Request, entity_type: Type[EntityABC]) -> Optional[StorageFilter]:
         if entity_type.__filter_class__ is not None:
             filter_obj = self.marshaller_context.load(entity_type.__filter_class__, request.params)
-            search_filter = search_filter_from_dataclass(filter_obj, entity_type.get_store().item_type)
-            return search_filter
+            storage_filter = storage_filter_from_dataclass(filter_obj, entity_type.get_storage().item_type)
+            return storage_filter
 
     def get_limit(self, request: Request):
         limit_str = request.params.get('limit')

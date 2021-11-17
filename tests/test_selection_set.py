@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from persisty.obj_graph.selection_set import SelectionSet, from_selection_set_list
+from persisty.obj_graph import SelectionSet, from_selection_set_list
 
 
 class TestEdit(TestCase):

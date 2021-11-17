@@ -5,17 +5,17 @@ from typing import Optional
 from marshy import get_default_context
 
 from persisty.edit import Edit
-from persisty.edit_type import EditType
+from old.persisty import EditType
 from persisty.marshaller import register_all_marshallers
-from persisty.obj_graph.entity_abc import EntityABC
+from persisty.obj_graph import EntityABC
 from persisty.server.wsgi import start_server
-from persisty.persisty_context import get_default_persisty_context
+from old.persisty.persisty_context import get_default_persisty_context
 
-from persisty.store.in_mem_store import in_mem_store
-from persisty.store.schema_store import schema_store
-from persisty.store.logging_store import LoggingStore
-from persisty.store.timestamp_store import timestamp_store
-from persisty.store.ttl_cache_store import TTLCacheStore
+from old.persisty.storage.in_mem_storage import in_mem_storage
+from old.persisty.storage.schema_storage import schema_storage
+from old.persisty.storage import LoggingStorage
+from old.persisty.storage.timestamp_storage import timestamp_storage
+from old.persisty.storage.ttl_cache_storage import TTLCacheStorage
 from tests.fixtures.items import Band, Member
 from tests.fixtures.entities import BandEntity, MemberEntity
 
@@ -38,31 +38,31 @@ if __name__ == '__main__':
     marshy_context = get_default_context()
     register_all_marshallers(marshy_context)
 
-    # Configure stores...
+    # Configure storages...
     persisty_context = get_default_persisty_context()
-    persisty_context.register_store(
-        schema_store(
-            TTLCacheStore(
-                LoggingStore(
-                    in_mem_store(Band)
+    persisty_context.register_storage(
+        schema_storage(
+            TTLCacheStorage(
+                LoggingStorage(
+                    in_mem_storage(Band)
                 )
             )
         )
     )
-    persisty_context.register_store(
-        schema_store(
-            LoggingStore(
-                in_mem_store(Member)
+    persisty_context.register_storage(
+        schema_storage(
+            LoggingStorage(
+                in_mem_storage(Member)
             )
         )
     )
 
-    persisty_context.register_store(
-        schema_store(
-            timestamp_store(
-                TTLCacheStore(
-                    LoggingStore(
-                        in_mem_store(Person)
+    persisty_context.register_storage(
+        schema_storage(
+            timestamp_storage(
+                TTLCacheStorage(
+                    LoggingStorage(
+                        in_mem_storage(Person)
                     )
                 )
             )
@@ -74,14 +74,14 @@ if __name__ == '__main__':
 
     from tests.fixtures.data import setup_bands
 
-    setup_bands(persisty_context.get_store(Band))
+    setup_bands(persisty_context.get_storage(Band))
     from tests.fixtures.data import setup_members
 
-    setup_members(persisty_context.get_store(Member))
+    setup_members(persisty_context.get_storage(Member))
 
-    persisty_context.get_store(Person).edit_all(
+    persisty_context.get_storage(Person).edit_all(
         Edit(EditType.CREATE, None, Person(member.member_name))
-        for member in persisty_context.get_store(Member).search()
+        for member in persisty_context.get_storage(Member).search()
     )
 
     # Start the server

@@ -7,7 +7,7 @@ from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
 
-from persisty.obj_graph.entity_abc import EntityABC
+from persisty.obj_graph.old_entity_abc import EntityABC
 
 T = TypeVar('T', bound=EntityABC)
 
@@ -20,24 +20,8 @@ class EntityMarshaller(MarshallerABC[T]):
         init_field_values = {f.name: self.context.load(f.type, item.get(f.name))
                              for f in fields(self.marshalled_type) if f.name in item and f.init}
         entity = self.marshalled_type(**init_field_values)
-        for f in fields(self.marshalled_type):
-            if f.name in item and not f.init:
-                value = self.context.load(f.type, item.get(f.name))
-                setattr(entity, f.name, value)
-        for r in self.marshalled_type.get_resolvers():
-            if r.name in item:
-                resolved_value = self.context.load(r.resolved_type, item.get(r.name))
-                r.__set__(entity, resolved_value)
         return entity
 
     def dump(self, item: T) -> ExternalItemType:
-        field_values = {f.name: self.context.dump(getattr(item, f.name))
-                        for f in fields(self.marshalled_type)}
-        resolved_values = {r.name: self.context.dump(getattr(item, r.name), self._resolved_type(r.resolved_type))
-                           for r in self.marshalled_type.get_resolvers() if r.is_resolved(item)}
-        return {**field_values, **resolved_values}
-
-    def _resolved_type(self, type_: Type):
-        if typing_inspect.get_origin(type_) == Iterable:
-            return List[typing_inspect.get_args(type_)[0]]
-        return type_
+        dumped = {a.name: self.context.dump(getattr(item, a.name), a.type) for a in item.__entity_config__.attrs}
+        return dumped

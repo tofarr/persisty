@@ -5,7 +5,7 @@ from typing import Dict
 from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
-from persisty.persisty_context import get_default_persisty_context
+from old.persisty.persisty_context import get_default_persisty_context
 from persisty.server.handlers.handler_abc import HandlerABC
 from persisty.server.request import Request
 

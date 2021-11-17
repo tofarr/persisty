@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Optional, Type
 
-from persisty.obj_graph.entity_abc import EntityABC
-from persisty2.search_filter import SearchFilter, search_filter_from_dataclass
+from persisty.obj_graph.old_entity_abc import EntityABC
+from old.persisty2.storage_filter import StorageFilter, storage_filter_from_dataclass
 from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response
@@ -21,13 +21,13 @@ class EntityCountHandler(EntityHandlerABC):
         if entity_type is None:
             return Response(HTTPStatus.NOT_FOUND)
 
-        search_filter = self.get_search_filter(request, entity_type)
-        count = entity_type.count(search_filter.item_filter)
+        storage_filter = self.get_storage_filter(request, entity_type)
+        count = entity_type.count(storage_filter.item_filter)
 
         return Response(HTTPStatus.OK, content=count)
 
-    def get_search_filter(self, request: Request, entity_type: Type[EntityABC]) -> Optional[SearchFilter]:
+    def get_storage_filter(self, request: Request, entity_type: Type[EntityABC]) -> Optional[StorageFilter]:
         if entity_type.__filter_class__ is not None:
             filter_obj = self.marshaller_context.load(entity_type.__filter_class__, request.params)
-            search_filter = search_filter_from_dataclass(filter_obj, entity_type.get_store().item_type)
-            return search_filter
+            storage_filter = storage_filter_from_dataclass(filter_obj, entity_type.get_storage().item_type)
+            return storage_filter

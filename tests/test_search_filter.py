@@ -1,21 +1,21 @@
 from unittest import TestCase
 
-from persisty2.item_comparator import MultiComparator, AttrComparator
-from persisty2.item_filter import AttrFilter, AttrFilterOp
-from persisty2.item_filter.and_filter import AndFilter
-from persisty2.item_filter.not_filter import NotFilter
-from persisty2.item_filter import OrFilter
-from persisty2.search_filter import SearchFilter, search_filter_from_dataclass
+from old.persisty2 import MultiComparator, AttrComparator
+from persisty.item_filter import AttrFilter, AttrFilterOp
+from persisty.item_filter import AndFilter
+from persisty.item_filter import NotFilter
+from persisty.item_filter import OrFilter
+from old.persisty2.storage_filter import StorageFilter, storage_filter_from_dataclass
 from tests.fixtures.data import BANDS
 from tests.fixtures.items import Band, BandFilter
 
 
-class CustomSearchFilter:
+class CustomStorageFilter:
 
     @staticmethod
-    def to_search_filter(filter_type: Band) -> SearchFilter[Band]:
+    def to_storage_filter(filter_type: Band) -> StorageFilter[Band]:
         assert filter_type is Band
-        return SearchFilter(item_comparator=MultiComparator([
+        return StorageFilter(item_comparator=MultiComparator([
             AttrComparator('year_formed'),
             AttrComparator('band_name'),
         ]))
@@ -23,20 +23,20 @@ class CustomSearchFilter:
 
 class TestEdit(TestCase):
 
-    def test_to_search_filter_custom(self):
-        search_filter = search_filter_from_dataclass(CustomSearchFilter(), Band)
-        assert search_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].band_name]
-        assert search_filter.item_filter is None
+    def test_to_storage_filter_custom(self):
+        storage_filter = storage_filter_from_dataclass(CustomStorageFilter(), Band)
+        assert storage_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].band_name]
+        assert storage_filter.item_filter is None
 
-    def test_to_search_filter(self):
-        search_filter = search_filter_from_dataclass(BandFilter(sort=['year_formed', 'band_name']), Band)
-        assert search_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].band_name]
-        assert search_filter.item_filter is None
+    def test_to_storage_filter(self):
+        storage_filter = storage_filter_from_dataclass(BandFilter(sort=['year_formed', 'band_name']), Band)
+        assert storage_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].band_name]
+        assert storage_filter.item_filter is None
 
-    def test_to_search_filter_invalid(self):
+    def test_to_storage_filter_invalid(self):
         with self.assertRaises(ValueError):
             # noinspection PyTypeChecker
-            search_filter_from_dataclass(BandFilter(sort=23), Band)
+            storage_filter_from_dataclass(BandFilter(sort=23), Band)
 
     def test_and_filter(self):
         a1 = AttrFilter('year_formed', AttrFilterOp.ne, 1900)

@@ -6,13 +6,13 @@ from marshy.default_context import new_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 
-from persisty.persisty_context import get_default_persisty_context, PersistyContext
-from persisty.errors import PersistyError
-from persisty.obj_graph.entity_abc import EntityABC
-from persisty.obj_graph.entity_marshaller_factory import EntityMarshallerFactory
-from persisty.obj_graph.resolver.has_many import HasMany
-from persisty.obj_graph.selection_set import from_selection_set_list
-from persisty.store.in_mem_store import in_mem_store
+from old.persisty.persisty_context import get_default_persisty_context, PersistyContext
+from old.persisty import PersistyError
+from persisty.obj_graph import EntityABC
+from persisty.obj_graph import EntityMarshallerFactory
+from persisty.obj_graph import HasMany
+from persisty.obj_graph import from_selection_set_list
+from old.persisty.storage.in_mem_storage import in_mem_storage
 from tests.fixtures.data import setup_bands, setup_members, BANDS
 from tests.fixtures.entities import BandEntity, MemberEntity
 from tests.fixtures.items import Band, Member
@@ -22,12 +22,12 @@ class TestEntity(TestCase):
 
     def setUp(self):
         persisty_context = get_default_persisty_context()
-        band_store = in_mem_store(Band)
-        setup_bands(band_store)
-        persisty_context.register_store(band_store)
-        member_store = in_mem_store(Member)
-        setup_members(member_store)
-        persisty_context.register_store(member_store)
+        band_storage = in_mem_storage(Band)
+        setup_bands(band_storage)
+        persisty_context.register_storage(band_storage)
+        member_storage = in_mem_storage(Member)
+        setup_members(member_storage)
+        persisty_context.register_storage(member_storage)
 
     def test_invalid_entity(self):
         with self.assertRaises(RuntimeError):
@@ -108,7 +108,7 @@ class TestEntity(TestCase):
             length: float
 
         persisty_context = PersistyContext()
-        persisty_context.register_store(in_mem_store(Cube))
+        persisty_context.register_storage(in_mem_storage(Cube))
 
         class CubeEntity(EntityABC[Cube], Cube):
             __persisty_context__ = persisty_context
@@ -145,7 +145,7 @@ class TestEntity(TestCase):
         marshaller_context.register_factory(EntityMarshallerFactory(200))
 
         persisty_context = PersistyContext()
-        persisty_context.register_store(in_mem_store(Cube, marshaller_context=marshaller_context))
+        persisty_context.register_storage(in_mem_storage(Cube, marshaller_context=marshaller_context))
 
         class CubeEntity(EntityABC[Cube], Cube):
             __persisty_context__ = persisty_context
