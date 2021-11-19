@@ -1,13 +1,14 @@
 from dataclasses import dataclass, MISSING, Field, is_dataclass, fields
 from typing import Type, Optional, Iterable
 
+from schemey.any_of_schema import strip_optional
 from schemey.schema_abc import SchemaABC
 from schemey.schema_context import SchemaContext, get_default_schema_context
 
 from persisty.attr.attr_abc import AttrABC, A, B
 from persisty.attr.attr_access_control import REQUIRED, OPTIONAL
 from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
-from persisty.obj_graph.selections import Selections
+from persisty.entity.selections import Selections
 from persisty.attr.attr_access_control_abc import AttrAccessControlABC
 
 LOCAL_VALUES = '__local_values__'
@@ -17,18 +18,22 @@ REMOTE_VALUES = '__remote_values__'
 @dataclass
 class Attr(AttrABC[A, B]):
     name: Optional[str] = None
-    type: Optional[Type[B]] = None
     schema: Optional[SchemaABC[B]] = None
     attr_access_control: Optional[AttrAccessControlABC] = None
 
+    @property
+    def type(self):
+        return self.schema.item_type
+
     def __set_name__(self, owner, name):
         self.name = name
-        if self.type is None:
-            self.type = owner.__annotations__.get(self.name)
-            if not self.type:
-                raise ValueError(f'missing_annotation:{owner}:{self.name}')
+        type_ = owner.__annotations__.get(self.name)
         if self.schema is None:
-            self.schema = get_default_schema_context().get_schema(self.type)
+            if not type_:
+                raise ValueError(f'missing_annotation:{owner}:{self.name}')
+            self.schema = get_default_schema_context().get_schema(type_)
+        elif type_:
+            assert self.schema.item_type == type_
         if self.attr_access_control is None:
             self.access_control = REQUIRED if self.schema.default_value is MISSING else OPTIONAL
 
@@ -87,12 +92,11 @@ def attr_from_field(field: Field, schema_context: SchemaContext = None, access_c
         if schema_context is None:
             schema_context = get_default_schema_context()
         default_value = None if field.default is MISSING else field.default
-
-        schema = schema_context.get_schema(field.type, default_value)
+        schema = strip_optional(schema_context.get_schema(field.type, default_value))
     if access_control is None:
         if field.default is MISSING and field.default_factory is MISSING:
             access_control = REQUIRED
         else:
             access_control = OPTIONAL
-    attr = Attr(field.name, field.type, schema, access_control)
+    attr = Attr(field.name, schema, access_control)
     return attr

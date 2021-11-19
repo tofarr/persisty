@@ -7,9 +7,11 @@ from schemey.property_schema import PropertySchema
 from schemey.schema_abc import SchemaABC
 
 from persisty.attr.attr import Attr
+from persisty.attr.attr_access_control import OPTIONAL, REQUIRED
 from persisty.attr.attr_mode import AttrMode
 from persisty.edit import Edit
 from persisty.edit_type import EditType
+from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.wrappers.wrapper_storage_abc import WrapperStorageABC, T
 
@@ -52,8 +54,26 @@ class SchemaValidatedStorage(WrapperStorageABC[T]):
 def schema_validated_storage(storage: StorageABC[T]) -> SchemaValidatedStorage[T]:
     """ Wrap the storage given and make sure that validation rules are being enforced """
     meta = storage.meta
-    create_schema = _get_schema_for_mode(storage.item_type, meta.attrs, 'create_mode')
-    update_schema = _get_schema_for_mode(storage.item_type, meta.attrs, 'update_mode')
+    create_attrs = meta.attrs
+    update_attrs = meta.attrs
+    if isinstance(meta.key_config, AttrKeyConfig):
+        non_key_attrs = tuple(a for a in update_attrs if a.name != meta.key_config.attr)
+        key_schema = strip_optional(next(a for a in update_attrs if a.name == meta.key_config.attr).schema)
+        key_attr = Attr(meta.key_config.attr, key_schema, REQUIRED)
+        update_attrs = [key_attr]
+        update_attrs.extend(non_key_attrs)
+        update_attrs = tuple(update_attrs)
+        if meta.key_config.key_generation == AttrMode.EXCLUDED:
+            create_attrs = non_key_attrs
+        elif meta.key_config.key_generation == AttrMode.OPTIONAL:
+            key_attr = Attr(meta.key_config.attr, optional_schema(key_schema), OPTIONAL)
+            create_attrs = [key_attr]
+            create_attrs.extend(non_key_attrs)
+            create_attrs = tuple(create_attrs)
+        elif meta.key_config.key_generation == AttrMode.REQUIRED:
+            create_attrs = update_attrs
+    create_schema = _get_schema_for_mode(storage.item_type, create_attrs, 'create_mode')
+    update_schema = _get_schema_for_mode(storage.item_type, update_attrs, 'update_mode')
     return SchemaValidatedStorage(storage, create_schema, update_schema)
 
 

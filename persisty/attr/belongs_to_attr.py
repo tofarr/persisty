@@ -8,7 +8,7 @@ from persisty.attr.attr_abc import AttrABC, A, B
 from persisty.attr.attr_access_control import AttrAccessControl, OPTIONAL
 from persisty.deferred.deferred_lookup import DeferredLookup
 from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
-from persisty.obj_graph.selections import Selections
+from persisty.entity.selections import Selections
 
 
 @dataclass

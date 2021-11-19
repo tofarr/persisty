@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from old.persisty import PersistyError
+from persisty.errors import PersistyError
 from persisty.storage.sql.sql_table import SqlTable
 
 

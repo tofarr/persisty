@@ -5,6 +5,11 @@ class AccessControlABC(ABC):
 
     @property
     @abstractmethod
+    def is_meta_accessible(self):
+        """ Determine if information about this resource is available """
+
+    @property
+    @abstractmethod
     def is_creatable(self) -> bool:
         """ Determine if resource is creatable """
 

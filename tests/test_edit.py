@@ -1,8 +1,8 @@
 from unittest import TestCase
 
 from persisty.edit import Edit
-from old.persisty import EditType
-from tests.fixtures.data import BANDS
+from persisty.edit_type import EditType
+from tests.fixtures.storage_data import BANDS
 
 
 class TestEdit(TestCase):

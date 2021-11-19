@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, Iterator, Any
 
-from persisty.access_control.access_control import AccessControl
+from persisty.access_control.access_control import AccessControl, ALL_ACCESS
 from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.edit import Edit
 from persisty.edit_type import EditType
@@ -96,3 +96,10 @@ class AccessFilteredStorage(WrapperStorageABC[T]):
                 if not self.access_control.is_destroyable:
                     raise PersistyError(f'not_possible:{self.meta.name}:destroy')
             yield edit
+
+
+def with_access_filtered(storage: StorageABC):
+    meta = storage.meta
+    if meta.access_control != ALL_ACCESS:
+        storage = AccessFilteredStorage(storage, meta.access_control)
+    return storage

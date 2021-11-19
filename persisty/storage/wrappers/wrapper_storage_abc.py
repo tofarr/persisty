@@ -11,8 +11,8 @@ from persisty.storage.storage_meta import StorageMeta
 
 class WrapperStorageABC(StorageABC[T]):
 
-    @abstractmethod
     @property
+    @abstractmethod
     def storage(self) -> StorageABC[T]:
         """ Get the wrapped storage """
 

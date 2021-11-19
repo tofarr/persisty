@@ -42,7 +42,7 @@ class TimestampedStorage(WrapperStorageABC[T]):
         """ created_at / updated_at attrs are included in the response but not in create / update """
         for attr in attrs:
             if attr.name in [self.created_at_attr, self.updated_at_attr]:
-                yield Attr(attr.name, attr.type, attr.schema, ACCESS_CONTROL)
+                yield Attr(attr.name, attr.schema, ACCESS_CONTROL)
             else:
                 yield attr
 
@@ -69,3 +69,11 @@ class TimestampedStorage(WrapperStorageABC[T]):
             now = self.timestamp()
             setattr(edit.item, self.updated_at_attr, now)
         return edit
+
+
+def with_timestamps(storage: StorageABC):
+    meta = storage.meta
+    timestamp_attrs = [a for a in meta.attrs if a.name in ['created_at', 'updated_at'] and a.type == datetime]
+    if len(timestamp_attrs) == 2:
+        storage = TimestampedStorage(storage)
+    return storage

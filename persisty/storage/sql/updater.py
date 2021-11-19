@@ -5,7 +5,7 @@ from marshy import get_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 
-from old.persisty import PersistyError
+from persisty.errors import PersistyError
 from persisty.storage.sql.sql_table import SqlTable
 
 T = TypeVar('T')

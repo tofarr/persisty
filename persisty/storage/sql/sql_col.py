@@ -1,16 +1,18 @@
 from dataclasses import dataclass
-from typing import TypeVar, Type
+from datetime import datetime
+from typing import TypeVar, Type, Optional
 
-from schemey.ref_schema import RefSchema
-from schemey.with_defs_schema import WithDefsSchema
+from schemey.datetime_schema import DatetimeSchema
 
-from old.persisty import PersistyError
+from persisty.attr.attr import Attr
+from persisty.attr.attr_access_control import REQUIRED, OPTIONAL
+from persisty.errors import PersistyError
 from schemey.any_of_schema import strip_optional
 from schemey.boolean_schema import BooleanSchema
 from schemey.number_schema import NumberSchema
 from schemey.object_schema import ObjectSchema
 from schemey.schema_abc import SchemaABC
-from schemey.schema_context import schema_for_type
+from schemey.schema_context import schema_for_type, get_default_schema_context, SchemaContext
 from schemey.string_format import StringFormat
 from schemey.string_schema import StringSchema
 
@@ -40,6 +42,8 @@ def col_for_property(name: str, schema: SchemaABC):
     if isinstance(stripped_schema, NumberSchema):
         if stripped_schema.item_type == int:
             return SqlCol(name, not_null, 'INT')
+        elif stripped_schema.item_type == datetime:
+            return SqlCol(name, not_null, 'DATETIME')
         return SqlCol(name, not_null, 'FLOAT')
     if isinstance(stripped_schema, BooleanSchema):
         return SqlCol(name, not_null, 'BOOLEAN')
@@ -54,8 +58,6 @@ def col_for_property(name: str, schema: SchemaABC):
 def cols_for_type(item_type: Type):
     # noinspection PyTypeChecker
     schema = schema_for_type(item_type)
-    if isinstance(schema, WithDefsSchema) and isinstance(schema.schema, RefSchema):
-        schema = schema.defs[schema.schema.ref]
     if not isinstance(schema, ObjectSchema):
         raise PersistyError(f'unknown_type:{schema}')
     for p in schema.property_schemas:

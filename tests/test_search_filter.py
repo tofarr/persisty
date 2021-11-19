@@ -1,13 +1,13 @@
 from unittest import TestCase
 
-from old.persisty2 import MultiComparator, AttrComparator
+from persisty.item_comparator import MultiComparator, AttrComparator
 from persisty.item_filter import AttrFilter, AttrFilterOp
-from persisty.item_filter import AndFilter
-from persisty.item_filter import NotFilter
-from persisty.item_filter import OrFilter
-from old.persisty2.storage_filter import StorageFilter, storage_filter_from_dataclass
-from tests.fixtures.data import BANDS
-from tests.fixtures.items import Band, BandFilter
+from persisty.item_filter.and_filter import AndFilter
+from persisty.item_filter.not_filter import NotFilter
+from persisty.item_filter.or_filter import OrFilter
+from persisty.storage.storage_filter import StorageFilter, storage_filter_from_dataclass
+from tests.fixtures.item_types import Band, BandFilter
+from tests.fixtures.storage_data import BANDS
 
 
 class CustomStorageFilter:
@@ -17,7 +17,7 @@ class CustomStorageFilter:
         assert filter_type is Band
         return StorageFilter(item_comparator=MultiComparator([
             AttrComparator('year_formed'),
-            AttrComparator('band_name'),
+            AttrComparator('title'),
         ]))
 
 
@@ -25,12 +25,12 @@ class TestEdit(TestCase):
 
     def test_to_storage_filter_custom(self):
         storage_filter = storage_filter_from_dataclass(CustomStorageFilter(), Band)
-        assert storage_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].band_name]
+        assert storage_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].title]
         assert storage_filter.item_filter is None
 
     def test_to_storage_filter(self):
-        storage_filter = storage_filter_from_dataclass(BandFilter(sort=['year_formed', 'band_name']), Band)
-        assert storage_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].band_name]
+        storage_filter = storage_filter_from_dataclass(BandFilter(sort=['year_formed', 'title']), Band)
+        assert storage_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].title]
         assert storage_filter.item_filter is None
 
     def test_to_storage_filter_invalid(self):
@@ -77,4 +77,3 @@ class TestEdit(TestCase):
         assert not filter_.match(Band('imaginary', 'Air Guitarists'))
         filter_ = AttrFilter('year_formed', AttrFilterOp.gt, None)
         assert not filter_.match(Band('imaginary', 'Air Guitarists', 2021))
-

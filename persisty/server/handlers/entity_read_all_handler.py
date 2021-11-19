@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Optional, List
 
-from persisty.obj_graph.old_entity_abc import EntityABC
+from persisty.entity.entity_abc import EntityABC
 from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response

@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
+from persisty.attr.attr_mode import AttrMode
 from persisty.key_config.key_config_abc import KeyConfigABC, T
-from persisty.key_config.key_generation import KeyGeneration
 
 
 @dataclass(frozen=True)
 class AttrKeyConfig(KeyConfigABC[T]):
-    key_generation: KeyGeneration = KeyGeneration.GENERATED
+    key_generation: AttrMode = AttrMode.OPTIONAL
     attr: str = 'id'
 
     def get_key(self, item: T) -> str:

@@ -5,6 +5,7 @@ from persisty.access_control.access_control_abc import AccessControlABC
 
 @dataclass(frozen=True)
 class AccessControl(AccessControlABC):
+    is_meta_accessible: bool = False
     is_creatable: bool = False
     is_readable: bool = False
     is_updatable: bool = False
@@ -54,5 +55,5 @@ class AccessControl(AccessControlABC):
 
 
 ALL_ACCESS = AccessControl(**{f.name: True for f in fields(AccessControl)})
-READ_ONLY = AccessControl(is_readable=True, is_searchable=True)
+READ_ONLY = AccessControl(is_meta_accessible=True, is_readable=True, is_searchable=True)
 NO_ACCESS = AccessControl()

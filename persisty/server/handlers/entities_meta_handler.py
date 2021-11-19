@@ -1,11 +1,10 @@
 from http import HTTPStatus
 from typing import List
 
-from old.persisty.capabilities import NO_CAPABILITIES
-from old.persisty.persisty_meta import PersistyMeta
 from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response
+from persisty.storage.storage_meta import StorageMeta
 
 
 class EntitiesMetaHandler(EntityHandlerABC):
@@ -15,8 +14,7 @@ class EntitiesMetaHandler(EntityHandlerABC):
         return matched
 
     def handle_request(self, request: Request) -> Response:
-        entity_meta = [e.get_meta()
-                       for e in self.persisty_context.get_entities()
-                       if e.get_storage().capabilities != NO_CAPABILITIES]
-        content = self.marshaller_context.dump(entity_meta, List[PersistyMeta])
+        entity_meta = (e.get_meta() for e in self.entity_context.get_entities())
+        accessible_meta = [m for m in entity_meta if m.access_control.is_meta_accessible]
+        content = self.marshaller_context.dump(accessible_meta, List[StorageMeta])
         return Response(HTTPStatus.OK, content=content)

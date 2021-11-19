@@ -6,7 +6,7 @@ from schemey.schema_abc import SchemaABC
 from persisty.attr.attr_access_control_abc import AttrAccessControlABC
 from persisty.cache_header import CacheHeader
 from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
-from persisty.obj_graph.selections import Selections
+from persisty.entity.selections import Selections
 
 A = TypeVar('A')
 B = TypeVar('B')

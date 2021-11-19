@@ -6,7 +6,7 @@ from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.item_filter.and_filter import AndFilter
 from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.item_filter.not_filter import NotFilter
-from persisty.item_filter import OrFilter
+from persisty.item_filter.or_filter import OrFilter
 from persisty.item_filter.query_filter import QueryFilter
 from persisty.storage.sql.sql_table import SqlTable
 
@@ -62,7 +62,7 @@ def _filter_query(item_filter: QueryFilter, sql_table: SqlTable):
         return Where('', tuple(), False)
     # noinspection PyUnusedLocal
     return Where(
-        sql=f"({' OR '.join(f'{c.name} like ?' for c in columns)})",
+        sql=f"({' OR '.join(f'{c} like ?' for c in columns)})",
         params=[item_filter.query for c in columns],
         pure_sql=True
     )

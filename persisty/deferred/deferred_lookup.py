@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import TypeVar, Generic, Dict, List, Callable, Type
 
 from persisty.deferred.deferred_resolution_abc import DeferredResolutionABC
-from persisty.obj_graph.old_entity_abc import EntityABC
+from persisty.entity.old_entity_abc import EntityABC
 
 T = TypeVar('T', bound=EntityABC)
 

@@ -3,12 +3,12 @@ from http import HTTPStatus
 from typing import Optional, Type
 
 from persisty.cache_header import CacheHeader
-from persisty.obj_graph.old_entity_abc import EntityABC
+from persisty.entity.entity_abc import EntityABC
 from persisty.page import Page
-from old.persisty2.storage_filter import StorageFilter, storage_filter_from_dataclass
 from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response
+from persisty.storage.storage_filter import StorageFilter, storage_filter_from_dataclass
 
 
 @dataclass(frozen=True)

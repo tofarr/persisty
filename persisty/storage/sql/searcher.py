@@ -5,11 +5,11 @@ from typing import TypeVar, Generic, Type, List, Optional, Iterator
 from marshy import get_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
 
-from old.persisty import PersistyError
+from persisty.errors import PersistyError
 from persisty.item_comparator import ItemComparatorABC, MultiComparator, AttrComparator
 from persisty.item_filter.item_filter_abc import ItemFilterABC
 from persisty.page import Page
-from old.persisty2.storage_filter import StorageFilter
+from persisty.storage.storage_filter import StorageFilter
 from persisty.storage.sql.sql_table import SqlTable
 from persisty.storage.sql.where import build_where, Where
 

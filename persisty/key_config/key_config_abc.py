@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from persisty.key_config.key_generation import KeyGeneration
+from persisty.attr.attr_mode import AttrMode
 
 T = TypeVar('T')
 
 
 class KeyConfigABC(ABC, Generic[T]):
 
-    @abstractmethod
     @property
-    def key_generation(self) -> KeyGeneration:
+    @abstractmethod
+    def key_generation(self) -> AttrMode:
         """ Get the type of key generation """
 
     @abstractmethod

@@ -2,11 +2,11 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Optional, Type
 
-from persisty.obj_graph.old_entity_abc import EntityABC
-from old.persisty2.storage_filter import StorageFilter, storage_filter_from_dataclass
+from persisty.entity.entity_abc import EntityABC
 from persisty.server.handlers.entity_handler_abc import EntityHandlerABC
 from persisty.server.request import Request
 from persisty.server.response import Response
+from persisty.storage.storage_filter import StorageFilter
 
 
 @dataclass(frozen=True)
