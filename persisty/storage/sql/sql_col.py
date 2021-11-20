@@ -7,7 +7,7 @@ from schemey.datetime_schema import DatetimeSchema
 from persisty.attr.attr import Attr
 from persisty.attr.attr_access_control import REQUIRED, OPTIONAL
 from persisty.errors import PersistyError
-from schemey.any_of_schema import strip_optional
+from schemey.any_of_schema import strip_optional, optional_schema
 from schemey.boolean_schema import BooleanSchema
 from schemey.number_schema import NumberSchema
 from schemey.object_schema import ObjectSchema
@@ -35,13 +35,32 @@ class SqlCol:
             sql += ' AUTOINCREMENT'
         return sql
 
+    def to_attr(self):
+        if self.sql_type.startswith('VARCHAR('):
+            schema = StringSchema(max_length=int(''.join(s for s in self.sql_type.split() if s.isdigit())))
+        elif self.sql_type == 'INTEGER':
+            schema = NumberSchema(int)
+        elif self.sql_type == 'FLOAT':
+            schema = NumberSchema(float)
+        elif self.sql_type == 'BOOLEAN':
+            schema = BooleanSchema()
+        elif self.sql_type == 'DATETIME':
+            schema = DatetimeSchema()
+        elif self.sql_type == 'TEXT':
+            schema = StringSchema()
+        else:
+            raise ValueError(f'unsuported_type:{self.sql_type}')
+        if not self.not_null:
+            schema = optional_schema(schema)
+        return Attr(name=self.name, schema=schema)
+
 
 def col_for_property(name: str, schema: SchemaABC):
     stripped_schema = strip_optional(schema)
     not_null = stripped_schema is schema
     if isinstance(stripped_schema, NumberSchema):
         if stripped_schema.item_type == int:
-            return SqlCol(name, not_null, 'INT')
+            return SqlCol(name, not_null, 'INTEGER')
         elif stripped_schema.item_type == datetime:
             return SqlCol(name, not_null, 'DATETIME')
         return SqlCol(name, not_null, 'FLOAT')

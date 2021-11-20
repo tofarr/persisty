@@ -7,7 +7,7 @@ from persisty.page import Page
 
 from persisty.storage.sql.destroyer import Destroyer, destroyer
 from persisty.storage.sql.inserter import Inserter, inserter
-from persisty.storage.sql.searcher import Searcher, searcher
+from persisty.storage.sql.searcher import Searcher, table_searcher
 from persisty.storage.sql.sql_table import SqlTable, sql_table_from_type
 from persisty.storage.sql.updater import Updater, updater
 from persisty.storage.storage_abc import StorageABC, T
@@ -53,13 +53,8 @@ class TableStorage(StorageABC[T]):
             return self.destroyer.destroy(cursor, key)
 
     def search(self, storage_filter: Optional[StorageFilter[T]] = None) -> Iterator[T]:
-        cursor = self.get_cursor()
-        try:
-            items = self.searcher.search(cursor, storage_filter)
-            for item in items:
-                yield item
-        finally:
-            self.get_cursor()
+        with self.get_cursor() as cursor:
+            yield from self.searcher.search(cursor, storage_filter)
 
     def count(self, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
         with self.get_cursor() as cursor:
@@ -73,8 +68,13 @@ class TableStorage(StorageABC[T]):
             return page
 
 
-def table_storage(get_cursor: Callable[[], Any], item_type: Type[T]):
-    storage_meta = storage_meta_from_dataclass(item_type)
+def table_storage(get_cursor: Callable[[], Any],
+                  item_type: Optional[Type[T]] = None,
+                  storage_meta: Optional[StorageMeta] = None):
+    if storage_meta is None:
+        storage_meta = storage_meta_from_dataclass(item_type)
+    if item_type is None:
+        item_type = storage_meta.to_dataclass()
     sql_table = sql_table_from_type(item_type)
     return TableStorage(get_cursor=get_cursor,
                         item_meta=storage_meta,
@@ -82,4 +82,4 @@ def table_storage(get_cursor: Callable[[], Any], item_type: Type[T]):
                         inserter=inserter(sql_table, item_type),
                         updater=updater(sql_table, item_type),
                         destroyer=destroyer(sql_table),
-                        searcher=searcher(sql_table, item_type))
+                        searcher=table_searcher(sql_table, item_type))

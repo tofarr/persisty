@@ -1,5 +1,5 @@
 import itertools
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, MISSING
 from typing import Optional, Iterator, Type, Dict
 from uuid import uuid4
 
@@ -60,16 +60,18 @@ class InMemStorage(StorageABC[T]):
     def destroy(self, key: str) -> bool:
         if key not in self.storage:
             return False
-        del self.storage[key]
-        return True
+        result = self.storage.pop(key, MISSING)
+        return result is not MISSING
 
     def search(self, storage_filter: Optional[StorageFilter] = None) -> Iterator[T]:
-        items = [self.marshaller.load(item) for item in self.storage.values()]
+        items = (self.marshaller.load(item) for item in self.storage.values())
         if storage_filter:
             items = storage_filter.filter_items(items)
         return iter(items)
 
     def count(self, item_filter: Optional[ItemFilterABC[T]] = None) -> int:
+        if not item_filter:
+            return len(self.storage)
         items = self.search(StorageFilter(item_filter))
         count = sum(1 for _ in items)
         return count

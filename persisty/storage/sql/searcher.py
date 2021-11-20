@@ -44,7 +44,7 @@ class Searcher(Generic[T]):
         sql = f"{where.sql} LIMIT {limit}"
         if page_key:
             page_key = int(page_key)
-            sql = f"{sql} OFFSET {int(page_key)}"
+            sql = f"{sql} OFFSET {page_key}"
         else:
             page_key = 0
         try:
@@ -99,7 +99,7 @@ class Searcher(Generic[T]):
         return []
 
 
-def searcher(sql_table: SqlTable, item_type: Type[T]):
+def table_searcher(sql_table: SqlTable, item_type: Type[T]):
     return Searcher(
         _sql=f"SELECT {','.join(c.name for c in sql_table.cols)} FROM {sql_table.name}",
         _count_sql=f'SELECT COUNT(*) FROM {sql_table.name}',
