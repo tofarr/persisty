@@ -1,16 +1,8 @@
 from unittest import TestCase
 
-from old.persisty import READ_ONLY, ALL_CAPABILITIES
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.security.current_user import set_current_user
-from old.persisty.secure import RoleCheck
-from old.persisty.secure.role_secured_storage import role_secured_storage
-from old.persisty.secure.role_storage_filter import RoleStorageFilter
-from old.persisty.storage.in_mem_storage import in_mem_storage
-from tests.old.fixtures.data import setup_bands
-from tests.old.fixtures.items import Band
-from tests.old.secure.test_current_user import User
 
 ADMIN = User('admin', ('admin',))
 USER = User('user', ('user',))

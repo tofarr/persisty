@@ -1,6 +1,7 @@
 from marshy.marshaller.union_marshaller import implementation_marshaller
 from marshy.marshaller_context import MarshallerContext
 
+from marshy_config_persisty.access_control_marshaller import AccessControlMarshaller
 from marshy_config_persisty.edit_marshaller_factory import EditMarshallerFactory
 from marshy_config_persisty.page_marshaller_factory import PageMarshallerFactory
 from persisty.access_control.access_control import AccessControl
@@ -21,6 +22,7 @@ def configure(context: MarshallerContext):
     context.register_factory(EditMarshallerFactory())
     # Polymorphic types require that we specify implementations up front
     context.register_marshaller(implementation_marshaller(AccessControlABC, (AccessControl,), context))
+    context.register_marshaller(AccessControlMarshaller())
     context.register_marshaller(
         implementation_marshaller(CacheControlABC, (
             SecureHashCacheControl, TimestampCacheControl, TTLCacheControl

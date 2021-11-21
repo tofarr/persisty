@@ -1,6 +1,9 @@
+import json
 from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Optional, Type
+
+from marshy.marshaller_context import MarshallerContext
 
 from persisty.cache_header import CacheHeader
 from persisty.entity.entity_abc import EntityABC
@@ -37,12 +40,6 @@ class EntityPagedSearchHandler(EntityHandlerABC):
         content = self.marshaller_context.dump(page, Page[entity_type])
         return Response(HTTPStatus.OK, response_headers, content)
 
-    def get_storage_filter(self, request: Request, entity_type: Type[EntityABC]) -> Optional[StorageFilter]:
-        if entity_type.__filter_class__ is not None:
-            filter_obj = self.marshaller_context.load(entity_type.__filter_class__, request.params)
-            storage_filter = storage_filter_from_dataclass(filter_obj, entity_type.get_storage().item_type)
-            return storage_filter
-
     def get_limit(self, request: Request):
         limit_str = request.params.get('limit')
         if limit_str:
@@ -50,3 +47,13 @@ class EntityPagedSearchHandler(EntityHandlerABC):
             if limit < 0 or limit > self.max_limit:
                 raise ValueError(f'invalid_limit:{limit}')
             return limit
+
+    def get_storage_filter(self, request: Request, entity_type: Type[EntityABC]) -> Optional[StorageFilter]:
+        if 'storage_filter_json' in request.params:
+            json_data = json.loads(request.params['storage_filter_json'][0])
+            storage_filter = self.marshaller_context.load(StorageFilter, json_data)
+            return storage_filter
+        if entity_type.__filter_class__ is not None:
+            filter_obj = self.marshaller_context.load(entity_type.__filter_class__, request.params)
+            storage_filter = storage_filter_from_dataclass(filter_obj, entity_type.get_storage().item_type)
+            return storage_filter

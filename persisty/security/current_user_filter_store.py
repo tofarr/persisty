@@ -6,9 +6,9 @@ from persisty.edit_type import EditType
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.security.current_user import get_current_user
-from old.persisty.storage.storage_filter_storage import StorageFilterStorage
-from old.persisty.storage.storage_abc import StorageABC
-from old.persisty.storage.wrapper_storage_abc import WrapperStorageABC, T
+from persisty.storage.storage_abc import StorageABC, T
+from persisty.storage.wrappers.filtered_storage import FilteredStorage
+from persisty.storage.wrappers.wrapper_storage_abc import WrapperStorageABC
 
 
 @dataclass(frozen=True)
@@ -31,7 +31,7 @@ class CurrentUserFilterStorage(WrapperStorageABC[T]):
     @property
     def storage(self) -> StorageABC[T]:
         item_filter = AttrFilter(self.filter_attr, AttrFilterOp.eq, self._current_user_key)
-        return StorageFilterStorage(self.wrapped_storage, item_filter)
+        return FilteredStorage(self.wrapped_storage, item_filter)
 
     def create(self, item: T) -> str:
         setattr(item, self.filter_attr, self._current_user_key)

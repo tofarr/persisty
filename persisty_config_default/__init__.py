@@ -16,19 +16,18 @@ from persisty.server.handlers.entity_read_all_handler import EntityReadAllHandle
 from persisty.server.handlers.entity_read_handler import EntityReadHandler
 from persisty.server.handlers.entity_update_handler import EntityUpdateHandler
 from persisty.server.handlers.handler_abc import HandlerABC
-from persisty.storage.dynamic_storage_abc import DynamicStorageABC
-from persisty.storage.in_mem.in_mem_dynamic_storage import InMemDynamicStorage
-from persisty.storage.storage_context import StorageContext
+from persisty.storage.in_mem.in_mem_storage_context import InMemStorageContext
+from persisty.storage.storage_context_abc import StorageContextABC
 
 priority = 0
 E = TypeVar('E', bound=EntityABC)
 
 
-def create_dynamic_storage() -> DynamicStorageABC:
-    return InMemDynamicStorage()
+def create_storage_context() -> StorageContextABC:
+    return InMemStorageContext()
 
 
-def configure_storage_context(storage_context: StorageContext):
+def configure_storage_context(storage_context: StorageContextABC):
     pass
 
 

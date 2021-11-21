@@ -1,5 +1,5 @@
 from dataclasses import field, dataclass, MISSING
-from typing import Optional, Iterator, Dict
+from typing import Optional, Iterator, Dict, Union, Type
 
 from marshy import get_default_context
 from marshy.marshaller_context import MarshallerContext
@@ -31,7 +31,9 @@ class InMemStorageContext(StorageContextABC):
         is_searchable=True
     )
 
-    def get_storage(self, key: str) -> Optional[StorageABC]:
+    def get_storage(self, key: Union[str, Type]) -> Optional[StorageABC]:
+        if not isinstance(key, str):
+            key = key.__name__
         storage = self.storage.get(key)
         return storage
 

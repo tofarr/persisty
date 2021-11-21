@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 import re
 from sqlite3 import OperationalError
-from typing import Optional, Iterator, Callable, Any, Dict
+from typing import Optional, Iterator, Callable, Any, Dict, Type, Union
 
 from persisty.access_control.access_control import AccessControl
 from persisty.access_control.access_control_abc import AccessControlABC
@@ -45,7 +45,9 @@ class SqliteStorageContext(StorageContextABC):
     def register_storage(self, storage: StorageABC):
         self.storage[storage.item_type.__name__] = storage
 
-    def get_storage(self, name: str) -> Optional[StorageABC]:
+    def get_storage(self, name: Union[str, Type]) -> Optional[StorageABC]:
+        if not isinstance(name, str):
+            name = name.__name__
         storage = self.storage.get(name)
         if storage:
             return storage

@@ -1,4 +1,4 @@
-from persisty.storage.storage_context import StorageContext
+from persisty.storage.storage_context_abc import StorageContextABC
 from tests.fixtures.item_types import Band, Member, Tag, Node, NodeTag
 
 BANDS = [
@@ -40,7 +40,7 @@ NODE_TAGS = [
 ]
 
 
-def populate_data(context: StorageContext):
+def populate_data(context: StorageContextABC):
     for band in BANDS:
         context.get_storage(Band).create(band)
     for member in MEMBERS:

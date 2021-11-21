@@ -98,8 +98,9 @@ class AccessFilteredStorage(WrapperStorageABC[T]):
             yield edit
 
 
-def with_access_filtered(storage: StorageABC):
-    meta = storage.meta
-    if meta.access_control != ALL_ACCESS:
-        storage = AccessFilteredStorage(storage, meta.access_control)
+def with_access_filtered(storage: StorageABC, access_control: Optional[AccessControlABC] = None):
+    if access_control is None:
+        access_control = storage.meta.access_control
+    if access_control != ALL_ACCESS:
+        storage = AccessFilteredStorage(storage, access_control)
     return storage

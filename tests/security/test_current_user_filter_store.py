@@ -4,15 +4,15 @@ from unittest import TestCase
 from uuid import uuid4
 
 from persisty.edit import Edit
-from old.persisty import EditType
+from persisty.edit_type import EditType
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilterOp, AttrFilter
-from old.persisty import Page
-from old.persisty2.storage_filter import StorageFilter
+from persisty.page import Page
 from persisty.security.current_user import set_current_user
-from old.persisty.secure.current_user_filter_storage import CurrentUserFilterStorage
-from old.persisty.storage.in_mem_storage import in_mem_storage
-from tests.old.secure.test_current_user import User
+from persisty.security.current_user_filter_store import CurrentUserFilterStorage
+from persisty.storage.in_mem.in_mem_storage import in_mem_storage
+from persisty.storage.storage_filter import StorageFilter
+from tests.security.test_current_user import User
 
 
 @dataclass(unsafe_hash=True)
