@@ -3,19 +3,19 @@ from persisty.edit_type import EditType
 from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.storage.in_mem.in_mem_storage import in_mem_storage
-from persisty.storage.storage_context import StorageContext
+from persisty.storage.in_mem.in_mem_storage_context import InMemStorageContext
 from persisty.storage.wrappers.filtered_storage import FilteredStorage
 from persisty.storage.wrappers.timestamped_storage import with_timestamps
 
 from tests.fixtures.item_types import Member, Tag, Node, NodeTag, Band
 from tests.fixtures.storage_data import populate_data
-from tests.storage.tst_storage_abc import TstStorageABC
+from tests.storage.in_mem.test_in_mem_storage import TestInMemStorage
 
 
-class TestFilteredStorage(TstStorageABC):
+class TestFilteredStorage(TestInMemStorage):
 
     def create_storage_context(self):
-        storage_context = StorageContext()
+        storage_context = InMemStorageContext()
         filter_ = AttrFilter('year_formed', AttrFilterOp.gte, 1900)
         storage_context.register_storage(FilteredStorage(in_mem_storage(Band), filter_))
         storage_context.register_storage(in_mem_storage(Member))

@@ -34,7 +34,7 @@ class RoleSecuredStorage(WrapperStorageABC[T]):
 def role_secured_storage(storage: StorageABC[T],
                          role_storage_filters: List[RoleStorageFilter[T]],
                          default_storage: StorageABC[T] = None):
-    role_storage_filters.sort(key=lambda f: f.capabilities)
+    role_storage_filters.sort(key=lambda f: f.access_control)
     role_storages = tuple(StorageByRole(f.role_check, f.filter_storage(storage)) for f in role_storage_filters)
     if default_storage is None:
         default_storage = AccessFilteredStorage(storage, NO_ACCESS)

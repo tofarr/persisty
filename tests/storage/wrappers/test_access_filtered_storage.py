@@ -34,9 +34,9 @@ class TestAccessFilteredStorage(TestCase):
 
     def test_allow_read_all(self):
         storage = self.get_band_storage(AccessControl(is_readable=True))
-        expected_band_names = ['The Beatles', 'The Rolling Stones']
-        band_names = [b.title for b in storage.read_all(['beatles', 'rolling_stones'])]
-        assert band_names == expected_band_names
+        expected_titles = ['The Beatles', 'The Rolling Stones']
+        titles = [b.title for b in storage.read_all(['beatles', 'rolling_stones'])]
+        assert titles == expected_titles
 
     def test_block_read_all(self):
         storage = self.get_band_storage(NO_ACCESS)
@@ -59,14 +59,14 @@ class TestAccessFilteredStorage(TestCase):
     def test_allow_update(self):
         storage = self.get_band_storage(AccessControl(is_updatable=True))
         band = storage.storage.read('rolling_stones')
-        band.band_name = 'The Blues Boys'
+        band.title = 'The Blues Boys'
         storage.update(band)
         assert storage.storage.read('rolling_stones').title == 'The Blues Boys'
 
     def test_block_update(self):
         storage = self.get_band_storage(NO_ACCESS)
         band = storage.storage.read('rolling_stones')
-        band.band_name = 'The Blues Boys'
+        band.title = 'The Blues Boys'
         with self.assertRaises(PersistyError):
             storage.update(band)
         assert storage.storage.read('rolling_stones').title == 'The Rolling Stones'
@@ -84,9 +84,9 @@ class TestAccessFilteredStorage(TestCase):
 
     def test_allow_search(self):
         storage = self.get_band_storage(AccessControl(is_searchable=True))
-        bands = list(storage.search(storage_filter_from_dataclass(BandFilter(query='The', sort=['band_name']), Band)))
+        bands = list(storage.search(storage_filter_from_dataclass(BandFilter(query='The', sort=['title']), Band)))
         expected = [b for b in BANDS if b.id in ('beatles', 'rolling_stones')]
-        expected.sort(key=lambda b: b.band_name)
+        expected.sort(key=lambda b: b.title)
         assert expected == bands
 
     def test_block_search(self):
@@ -132,7 +132,7 @@ class TestAccessFilteredStorage(TestCase):
     def _edit_all(self, access_control: AccessControlABC):
         storage = self.get_band_storage(access_control)
         beatles, rolling_stones, led_zeppelin = storage.read_all(('beatles', 'rolling_stones', 'led_zeppelin'))
-        updated_stones = Band(**{**rolling_stones.__dict__, 'band_name': 'The Blues Boys'})
+        updated_stones = Band(**{**rolling_stones.__dict__, 'title': 'The Blues Boys'})
         jefferson = Band('jefferson_airplane', 'Jefferson Airplane')
         edits = [
             Edit(EditType.CREATE, item=jefferson),

@@ -1,19 +1,20 @@
+from unittest import TestCase
+
+from persisty.storage.in_mem.in_mem_storage_context import InMemStorageContext
 from persisty.storage.sql.table_storage import table_storage
 
 import sqlite3
 
 from persisty.storage.sql.close_wrapper import CloseWrapper
 from persisty.storage.sql.sql_table import sql_table_from_type
-from persisty.storage.storage_context import StorageContext
 from persisty.storage.wrappers.timestamped_storage import with_timestamps
 from tests.fixtures.item_types import Band, Member, Node, NodeTag, Tag
-from tests.storage.tst_storage_abc import TstStorageABC
 
 
-class TestTableStorage(TstStorageABC):
+class TestTableStorage(TestCase):
 
     def create_storage_context(self):
-        storage_context = StorageContext()
+        storage_context = InMemStorageContext()
         connection = sqlite3.connect(':memory:')
         setattr(self, 'connection', connection)
         cursor = connection.cursor()

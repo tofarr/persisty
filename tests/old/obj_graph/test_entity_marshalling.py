@@ -32,7 +32,7 @@ class TestEntity(TestCase):
             'date_of_birth': '1940-10-09',
             'band': {
                 'id': 'beatles',
-                'band_name': 'The Beatles',
+                'title': 'The Beatles',
                 'year_formed': 1960
             }
         }
@@ -46,7 +46,7 @@ class TestEntity(TestCase):
             'date_of_birth': '1940-10-09',
             'band': {
                 'id': 'beatles',
-                'band_name': 'The Beatles',
+                'title': 'The Beatles',
                 'year_formed': 1960
             }
         }

@@ -1,15 +1,15 @@
 from persisty.storage.in_mem.in_mem_storage import in_mem_storage
-from persisty.storage.storage_context import StorageContext
+from persisty.storage.in_mem.in_mem_storage_context import InMemStorageContext
 from persisty.storage.wrappers.timestamped_storage import with_timestamps
 from persisty.storage.wrappers.ttl_cache_storage import TTLCacheStorage
 from tests.fixtures.item_types import Band, Member, Tag, Node, NodeTag
-from tests.storage.tst_storage_abc import TstStorageABC
+from tests.storage.in_mem.test_in_mem_storage import TestInMemStorage
 
 
-class TestTTLCacheStorage(TstStorageABC):
+class TestTTLCacheStorage(TestInMemStorage):
 
     def create_storage_context(self):
-        storage_context = StorageContext()
+        storage_context = InMemStorageContext()
         storage_context.register_storage(TTLCacheStorage(in_mem_storage(Band)))
         storage_context.register_storage(TTLCacheStorage(in_mem_storage(Member)))
         storage_context.register_storage(TTLCacheStorage(with_timestamps(in_mem_storage(Tag))))

@@ -16,19 +16,19 @@ from schemey.string_schema import StringSchema
 
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.storage.in_mem.in_mem_storage import InMemStorage, in_mem_storage
-from persisty.storage.storage_context import StorageContext
+from persisty.storage.in_mem.in_mem_storage_context import InMemStorageContext
 from persisty.storage.storage_meta import StorageMeta
 from persisty.storage.wrappers.schema_validated_storage import schema_validated_storage
 from persisty.storage.wrappers.timestamped_storage import with_timestamps
 from tests.fixtures.item_types import Node, Band, Member, Tag, NodeTag
 from tests.fixtures.storage_data import populate_data
-from tests.storage.tst_storage_abc import TstStorageABC
+from tests.storage.in_mem.test_in_mem_storage import TestInMemStorage
 
 
-class TestSchemaValidatedStorage(TstStorageABC):
+class TestSchemaValidatedStorage(TestInMemStorage):
 
     def create_storage_context(self):
-        storage_context = StorageContext()
+        storage_context = InMemStorageContext()
         storage_context.register_storage(schema_validated_storage(in_mem_storage(Band)))
         storage_context.register_storage(schema_validated_storage(in_mem_storage(Member)))
         storage_context.register_storage(schema_validated_storage(with_timestamps(in_mem_storage(Tag))))

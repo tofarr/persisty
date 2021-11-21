@@ -46,7 +46,7 @@ class TestEntity(TestCase):
         assert band is None
 
     def test_create(self):
-        band = BandEntity(band_name='Jefferson Airplane', year_formed=1965)
+        band = BandEntity(title='Jefferson Airplane', year_formed=1965)
         band.create()
         assert band.id is not None
         assert band.is_save_required is False
@@ -55,7 +55,7 @@ class TestEntity(TestCase):
 
     def test_update(self):
         band = BandEntity.read('rolling_stones')
-        band.band_name = 'The Blues Boys'
+        band.title = 'The Blues Boys'
         assert band.is_save_required
         band.save()
         loaded = BandEntity.read(band.id)
@@ -77,7 +77,7 @@ class TestEntity(TestCase):
         assert member_ids == {'john', 'paul', 'george', 'ringo'}
 
     def test_existing(self):
-        band = BandEntity(band_name='Bon Jovi')
+        band = BandEntity(title='Bon Jovi')
         assert not band.is_existing
         band.id = 'bon_jovi'
         assert not band.is_existing

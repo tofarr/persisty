@@ -3,10 +3,10 @@ from unittest import TestCase
 
 from marshy import get_default_context
 
-from persisty.access_control import AccessControl, ALL_ACCESS, NO_ACCESS, CapabilitiesMarshaller
+from persisty.access_control.access_control import AccessControl, ALL_ACCESS, NO_ACCESS
 
-A = Capabilities(**{f.name: (i & 1 == 1) for i, f in enumerate(dataclasses.fields(Capabilities))})
-B = Capabilities(**{f.name: (i & 1 == 0) for i, f in enumerate(dataclasses.fields(Capabilities))})
+A = AccessControl(**{f.name: (i & 1 == 1) for i, f in enumerate(dataclasses.fields(AccessControl))})
+B = AccessControl(**{f.name: (i & 1 == 0) for i, f in enumerate(dataclasses.fields(AccessControl))})
 
 
 class TestEdit(TestCase):
