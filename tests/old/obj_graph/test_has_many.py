@@ -11,7 +11,7 @@ from old.persisty import Page
 from old.persisty2.storage_filter import StorageFilter
 from old.persisty.storage.in_mem_storage import in_mem_storage
 from tests.old.fixtures.data import setup_bands, setup_members
-from tests.old.fixtures.entities import BandEntity, MEMBER_ENTITY_CLASS, MemberEntity
+from tests.fixtures.entities import BandEntity, MEMBER_ENTITY_CLASS, MemberEntity
 from tests.old.fixtures.items import Band, Member
 
 BEATLES_MEMBER_IDS = {'john', 'paul', 'george', 'ringo'}

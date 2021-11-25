@@ -8,7 +8,7 @@ from persisty.obj_graph import OnDestroy
 from persisty.obj_graph import Count
 from old.persisty.storage.in_mem_storage import in_mem_storage
 from tests.old.fixtures.data import setup_bands, setup_members
-from tests.old.fixtures.entities import MemberEntity
+from tests.fixtures.entities import MemberEntity
 from tests.old.fixtures.items import Band, Member
 
 BEATLES_MEMBER_IDS = {'john', 'paul', 'george', 'ringo'}

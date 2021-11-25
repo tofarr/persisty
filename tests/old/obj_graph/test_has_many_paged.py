@@ -5,7 +5,7 @@ from persisty.obj_graph import OnDestroy
 from persisty.obj_graph import HasManyPaged
 from old.persisty import Page
 from tests.old.fixtures.data import BANDS
-from tests.old.fixtures.entities import MEMBER_ENTITY_CLASS
+from tests.fixtures.entities import MEMBER_ENTITY_CLASS
 from tests.old.fixtures.items import Band, Member
 from tests.old.obj_graph.test_has_many import TestHasMany
 

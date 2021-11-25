@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Generic, Type, Iterable, Iterator, TypeVar, Optional
 
+from schemey.object_schema import ObjectSchema
+
 from persisty.attr.attr import Attr
 from persisty.attr.attr_abc import AttrABC
 from persisty.storage.storage_abc import StorageABC
@@ -13,7 +15,6 @@ class EntityConfig(Generic[T]):
     item_class: Type[T]
     item_attrs: Iterable[Attr]
     relational_attrs: Iterable[AttrABC]
-    storage: StorageABC[T]
     filter_class: Optional[Type] = None
     filter_attrs: Iterable[Attr] = field(default_factory=tuple)
 

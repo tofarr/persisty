@@ -3,6 +3,8 @@ from abc import ABC
 from typing import TypeVar, Generic, Iterator, Optional, ForwardRef, Union, Type
 
 from marshy.utils import resolve_forward_refs
+from schemey.object_schema import ObjectSchema
+from schemey.property_schema import PropertySchema
 
 from persisty.attr.attr import attrs_from_class
 from persisty.attr.attr_abc import AttrABC
@@ -28,31 +30,37 @@ class EntityABC(ABC, Generic[T]):
 
     def __init_subclass__(cls, **kwargs):
         if getattr(cls, '__entity_config__', None) is None:
-            item_class = next(c for c in cls.mro() if c != EntityABC)
+            item_class = next(c for c in cls.mro() if c not in (EntityABC, ABC, Generic, cls))
             # noinspection PyUnresolvedReferences
             if not dataclasses.is_dataclass(item_class) or item_class.__dataclass_params__.frozen:
                 raise ValueError(f'non_frozen_dataclass_required:{item_class}')
             item_attrs = attrs_from_class(item_class)
-            relational_attrs = tuple(a for a in (c.__dict__.values() for c in cls.mro()) if isinstance(a, AttrABC))
-            storage_context = get_default_storage_context()
-            storage = storage_context.get_storage(item_class)
+            relational_attrs = tuple(cls._get_relational_attrs())
             filter_class = getattr(cls, '__filter_class__', None)
             filter_attrs = tuple()
             if filter_class:
                 filter_class = resolve_forward_refs(filter_class)
                 filter_attrs = attrs_from_class(filter_class)
             # noinspection PyTypeChecker
-            cls.__entity_config__ = EntityConfig(item_class, item_attrs, relational_attrs, storage, filter_class,
-                                                 filter_attrs)
+            cls.__entity_config__ = EntityConfig(item_class, item_attrs, relational_attrs, filter_class, filter_attrs)
             for attr in item_attrs:
                 setattr(cls, attr.name, attr)
+            # We force the __init__ method to be the one from entity abc - this means that code completion usually
+            # thinks it is the one from the dataclass, but we have some secret sauce under the hood
+            # noinspection PyTypeChecker
+            cls.__init__ = EntityABC.__init__
 
-    def __init__(self, **kwargs):
-        self.__local_values__ = kwargs.get('__local_values__') or self.__entity_config__.item_class()
+    @classmethod
+    def _get_relational_attrs(cls):
+        for c in cls.mro():
+            dict_ = c.__dict__
+            for a in dict_.values():
+                if isinstance(a, AttrABC):
+                    yield a
+
+    def __init__(self, *args, **kwargs):
+        self.__local_values__ = kwargs.get('__local_values__') or self.__entity_config__.item_class(*args, **kwargs)
         self.__remote_values__ = kwargs.get('__remote_values__') or dataclasses.MISSING
-        for k, v in kwargs.items():
-            if not k.startswith('__'):
-                setattr(self, k, v)
 
     @classmethod
     def get_entity_config(cls):
@@ -60,7 +68,13 @@ class EntityABC(ABC, Generic[T]):
 
     @classmethod
     def get_storage(cls):
-        return cls.get_entity_config().storage
+        """ Get storage for this entity from the default context - Override this to provide your own storage object."""
+        storage = getattr(cls, '__storage__', None)
+        if storage is not None:
+            return storage
+        context = get_default_storage_context()
+        storage = context.get_storage(cls.get_entity_config().item_class)
+        return storage
 
     def get_key(self):
         key = self.get_storage().meta.key_config.get_key(self.__local_values__)
@@ -191,7 +205,7 @@ class EntityABC(ABC, Generic[T]):
             attr.before_create(self)
         storage = self.get_storage()
         key = storage.create(self.__local_values__)
-        self.get_entity_config().storage.meta.key_config.set_key(self.__local_values__, key)
+        storage.meta.key_config.set_key(self.__local_values__, key)
         self.__remote_values__ = dataclasses.replace(self.__local_values__)
         for attr in self.get_entity_config().relational_attrs:
             attr.after_create(self)
@@ -253,3 +267,17 @@ class EntityABC(ABC, Generic[T]):
         for attr in self.get_entity_config().relational_attrs:
             sub_selections = selections.get_selections(attr.name)
             yield from attr.get_cache_headers(self, sub_selections)
+
+    @classmethod
+    def get_schema(cls) -> ObjectSchema:
+        attr_schemas = tuple(PropertySchema(a.name, a.schema) for a in cls.get_entity_config().attrs)
+        schema = ObjectSchema(cls, attr_schemas)
+        return schema
+
+    def to_item(self) -> T:
+        item = dataclasses.replace(self.__local_values__)
+        for field in dataclasses.fields(self.get_entity_config().item_class):
+            if not field.init:
+                value = getattr(self.__local_values__, field.name)
+                setattr(item, field.name, value)
+        return item

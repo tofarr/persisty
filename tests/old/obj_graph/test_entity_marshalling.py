@@ -6,7 +6,7 @@ from old.persisty.persisty_context import get_default_persisty_context
 from persisty.obj_graph import from_selection_set_list
 from old.persisty.storage.in_mem_storage import in_mem_storage
 from tests.old.fixtures.data import setup_bands, setup_members
-from tests.old.fixtures.entities import MemberEntity
+from tests.fixtures.entities import MemberEntity
 from tests.old.fixtures.items import Band, Member
 
 

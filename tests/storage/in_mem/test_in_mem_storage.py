@@ -3,11 +3,10 @@ from unittest import TestCase
 
 from persisty.edit import Edit
 from persisty.errors import PersistyError
-from persisty.storage.in_mem.in_mem_storage import in_mem_storage
 from persisty.storage.in_mem.in_mem_storage_context import InMemStorageContext
 from persisty.storage.storage_filter import storage_filter_from_dataclass
-from persisty.storage.wrappers.timestamped_storage import with_timestamps
-from tests.fixtures.item_types import Band, Member, Tag, Node, NodeTag, BandFilter
+from tests.fixtures.item_types import Band, BandFilter
+from tests.fixtures.storage import setup_in_mem_storage
 from tests.fixtures.storage_data import populate_data, BANDS
 
 
@@ -15,11 +14,7 @@ class TestInMemStorage(TestCase):
 
     def create_storage_context(self):
         storage_context = InMemStorageContext()
-        storage_context.register_storage(in_mem_storage(Band))
-        storage_context.register_storage(in_mem_storage(Member))
-        storage_context.register_storage(with_timestamps(in_mem_storage(Tag)))
-        storage_context.register_storage(with_timestamps(in_mem_storage(Node)))
-        storage_context.register_storage(with_timestamps(in_mem_storage(NodeTag)))
+        setup_in_mem_storage(storage_context)
         return storage_context
 
     def setUp(self):

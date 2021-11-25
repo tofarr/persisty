@@ -3,19 +3,23 @@ from typing import Type, Optional, Callable
 
 from marshy.factory.optional_marshaller_factory import get_optional_type
 from marshy.utils import resolve_forward_refs
+from schemey.any_of_schema import optional_schema
+from schemey.schema_abc import SchemaABC
 
 from persisty.attr.attr_abc import AttrABC, A, B
 from persisty.attr.attr_access_control import AttrAccessControl, OPTIONAL
 from persisty.deferred.deferred_lookup import DeferredLookup
 from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
+from persisty.entity.entity_abc import EntityABC
 from persisty.entity.selections import Selections
+from persisty.errors import PersistyError
 
 
 @dataclass
 class BelongsToAttr(AttrABC[A, B]):
-    name: str
-    type: Type[B]
-    key_attr: str
+    name: str = None
+    type: Type[B] = None
+    key_attr: str = None
     attr_access_control: AttrAccessControl = OPTIONAL
 
     def __set_name__(self, owner, name):
@@ -60,8 +64,7 @@ class BelongsToAttr(AttrABC[A, B]):
                 deferred_resolutions: Optional[DeferredResolutionSet] = None):
         local_deferred_resolutions = deferred_resolutions or DeferredResolutionSet()
         self._resolve_value(owner_instance,
-                            lambda v: self._callback(owner_instance, v, sub_selections, deferred_resolutions),
-                            sub_selections,
+                            lambda v: self._callback(owner_instance, v, sub_selections, local_deferred_resolutions),
                             local_deferred_resolutions)
         if not deferred_resolutions:
             local_deferred_resolutions.resolve()
@@ -102,11 +105,14 @@ class BelongsToAttr(AttrABC[A, B]):
                 return deferred_resolution
 
     def _get_entity_type(self) -> Type[B]:
-        if self._entity_type:
+        entity_type = getattr(self, '_entity_type', None)
+        if entity_type:
             # noinspection PyTypeChecker
-            return self._entity_type
+            return entity_type
         resolved_type = resolve_forward_refs(self.type)
         entity_type = get_optional_type(resolved_type) or resolved_type
+        if not issubclass(entity_type, EntityABC):
+            raise PersistyError(f'not_an_entity:{self.name}:{entity_type}')
         self._entity_type = entity_type
         return entity_type
 
@@ -118,3 +124,8 @@ class BelongsToAttr(AttrABC[A, B]):
             callbacks = []
             deferred_lookup.to_resolve[key] = callbacks
         callbacks.append(callback)
+
+    @property
+    def schema(self) -> SchemaABC[B]:
+        schema = optional_schema(self._get_entity_type().get_schema())
+        return schema

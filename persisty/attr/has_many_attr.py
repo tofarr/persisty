@@ -1,27 +1,33 @@
+from collections import Iterable
 from dataclasses import dataclass, MISSING
-from typing import Type, Optional, Callable
+from typing import Type, Optional, Callable, List
 
-from marshy.factory.optional_marshaller_factory import get_optional_type
+import typing_inspect
 from marshy.utils import resolve_forward_refs
+from schemey.any_of_schema import optional_schema
+from schemey.array_schema import ArraySchema
+from schemey.schema_abc import SchemaABC
 
 from persisty.attr.attr_abc import AttrABC, A, B
 from persisty.attr.attr_access_control import AttrAccessControl, OPTIONAL
-from persisty.deferred.deferred_lookup import DeferredLookup
 from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
+from persisty.entity.entity_abc import EntityABC
 from persisty.entity.selections import Selections
+from persisty.errors import PersistyError
+from persisty.item_filter import AttrFilterOp, AttrFilter
+from persisty.storage.storage_filter import StorageFilter
+from persisty.util import to_snake_case
 
 
 @dataclass
-class HasManyAttr(AttrABC[A, B]):
-    name: str
-    type: Type[B]
-    foreign_key_attr: str
+class HasManyAttr(AttrABC[A, List[B]]):
+    name: str = None
+    type: Type[B] = None
+    foreign_key_attr: str = None
     attr_access_control: AttrAccessControl = OPTIONAL
 
     def __set_name__(self, owner, name):
         self.name = name
-        if self.foreign_key_attr is None:
-            self.foreign_key_attr = f'{name}_id'
         if self.type is None:
             self.type = owner.__annotations__.get(self.name)
             if not self.type:
@@ -60,61 +66,45 @@ class HasManyAttr(AttrABC[A, B]):
                 deferred_resolutions: Optional[DeferredResolutionSet] = None):
         local_deferred_resolutions = deferred_resolutions or DeferredResolutionSet()
         self._resolve_value(owner_instance,
-                            lambda v: self._callback(owner_instance, v, sub_selections, deferred_resolutions),
-                            sub_selections,
-                            local_deferred_resolutions)
+                            lambda v: self._callback(owner_instance, v, sub_selections, local_deferred_resolutions))
         if not deferred_resolutions:
             local_deferred_resolutions.resolve()
 
     def _callback(self,
                   owner_instance: A,
-                  value: B,
+                  value: List[B],
                   sub_selections: Selections,
                   deferred_resolutions: DeferredResolutionSet):
-        value.resolve_all(sub_selections, deferred_resolutions)
+        for v in value:
+            v.resolve_all(sub_selections, deferred_resolutions)
         setattr(owner_instance, f'_{self.name}', value)
         setattr(owner_instance, f'_{self.name}_is_save_required', False)
 
     def _resolve_value(self,
                        owner_instance: A,
-                       callback: Callable[[B], None],
-                       deferred_resolutions: DeferredResolutionSet):
-        key = getattr(owner_instance, self.key_attr)
-        if not key:
-            callback(None)
-            return
-
-        deferred_lookup = self._find_deferred_lookup(deferred_resolutions)
-        if deferred_lookup:
-            entity = deferred_lookup.resolved.get(key)
-            if entity:
-                callback(entity)
-                return
-        else:
-            deferred_lookup = DeferredLookup(self._get_entity_type())
-            deferred_resolutions.deferred_resolutions.append(deferred_lookup)
-        self._add_callback_to_deferred_lookup(key, callback, deferred_lookup)
-
-    def _find_deferred_lookup(self, deferred_resolutions: DeferredResolutionSet) -> Optional[DeferredLookup[A]]:
+                       callback: Callable[[B], None]):
+        key = owner_instance.get_storage().meta.key_config.get_key(owner_instance)
+        foreign_key_attr = self.foreign_key_attr
+        if foreign_key_attr is None:
+            foreign_key_attr = f'{to_snake_case(owner_instance.get_entity_config().item_class.__name__)}_id'
+        storage_filter = StorageFilter(AttrFilter(foreign_key_attr, AttrFilterOp.eq, key))
         entity_type = self._get_entity_type()
-        for deferred_resolution in deferred_resolutions.deferred_resolutions:
-            if isinstance(deferred_resolution, DeferredLookup) and deferred_resolution.entity_type == entity_type:
-                return deferred_resolution
+        entities = list(entity_type.search(storage_filter))
+        callback(entities)
 
-    def _get_entity_type(self) -> Type[B]:
-        if self._entity_type:
-            # noinspection PyTypeChecker
-            return self._entity_type
+    def _get_entity_type(self):
+        entity_type = getattr(self, '_entity_type', None)
+        if entity_type:
+            return entity_type
         resolved_type = resolve_forward_refs(self.type)
-        entity_type = get_optional_type(resolved_type) or resolved_type
-        self._entity_type = entity_type
+        if typing_inspect.get_origin(resolved_type) not in [list, Iterable]:
+            raise PersistyError(f'type_should_be_list:{self.name}')
+        entity_type = typing_inspect.get_args(resolved_type)[0]
+        if not issubclass(entity_type, EntityABC):
+            raise PersistyError(f'not_an_entity:{self.name}:{entity_type}')
         return entity_type
 
-    @staticmethod
-    def _add_callback_to_deferred_lookup(key: str, callback: Callable[[B], None],
-                                         deferred_lookup: DeferredLookup[A]):
-        callbacks = deferred_lookup.to_resolve.get(key)
-        if not callbacks:
-            callbacks = []
-            deferred_lookup.to_resolve[key] = callbacks
-        callbacks.append(callback)
+    @property
+    def schema(self) -> SchemaABC[B]:
+        schema = optional_schema(ArraySchema(self._get_entity_type().get_schema()))
+        return schema

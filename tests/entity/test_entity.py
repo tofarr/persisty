@@ -1,38 +1,34 @@
-from dataclasses import dataclass, FrozenInstanceError, field
+from dataclasses import dataclass, field
 from typing import Optional
 from unittest import TestCase
 
-from marshy.default_context import new_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 
-from old.persisty.persisty_context import get_default_persisty_context, PersistyContext
+from persisty.attr.has_many_attr import HasManyAttr
+from persisty.entity.entity_abc import EntityABC
+from persisty.entity.selections import from_selection_set_list
 from persisty.errors import PersistyError
-from persisty.obj_graph import EntityABC
-from persisty.obj_graph import EntityMarshallerFactory
-from persisty.obj_graph import HasMany
-from persisty.obj_graph import from_selection_set_list
-from old.persisty.storage.in_mem_storage import in_mem_storage
-from tests.old.fixtures.data import setup_bands, setup_members, BANDS
-from tests.old.fixtures.entities import BandEntity, MemberEntity
-from tests.old.fixtures.items import Band, Member
+from persisty.storage.in_mem.in_mem_storage import in_mem_storage, InMemStorage
+from persisty.storage.storage_context_abc import get_default_storage_context
+from persisty.storage.storage_meta import storage_meta_from_dataclass
+from tests.fixtures.item_types import Band
+from tests.fixtures.storage import setup_in_mem_storage
+from tests.fixtures.storage_data import populate_data, BANDS
+from tests.fixtures.entities import BandEntity, MemberEntity
 
 
 class TestEntity(TestCase):
 
     def setUp(self):
-        persisty_context = get_default_persisty_context()
-        band_storage = in_mem_storage(Band)
-        setup_bands(band_storage)
-        persisty_context.register_storage(band_storage)
-        member_storage = in_mem_storage(Member)
-        setup_members(member_storage)
-        persisty_context.register_storage(member_storage)
+        storage_context = get_default_storage_context()
+        setup_in_mem_storage(storage_context)
+        populate_data(storage_context)
 
     def test_invalid_entity(self):
         with self.assertRaises(RuntimeError):
             class InvalidBandEntity(EntityABC, Band):
-                members = HasMany(foreign_key_attr='band_id')
+                members = HasManyAttr()
 
             InvalidBandEntity()
 
@@ -107,17 +103,10 @@ class TestEntity(TestCase):
             id: Optional[str]
             length: float
 
-        persisty_context = PersistyContext()
-        persisty_context.register_storage(in_mem_storage(Cube))
-
-        class CubeEntity(EntityABC[Cube], Cube):
-            __persisty_context__ = persisty_context
-
-        cube = CubeEntity('from_tray', 3)
-        assert cube == Cube('from_tray', 3)
-        cube.save()
-        with self.assertRaises(FrozenInstanceError):
-            setattr(cube, 'length', 4)
+        with self.assertRaises(ValueError):
+            class CubeEntity(Cube, EntityABC[Cube]):
+                __storage__: in_mem_storage(Cube)  # Defining explicitly rather than deferring to the context
+            CubeEntity('from_tray', 3)
 
     def test_non_init_fields(self):
         """ Test a weird situation where we have a field that is not part of init """
@@ -138,23 +127,19 @@ class TestEntity(TestCase):
                 return cube_
 
             def dump(self, item: Cube) -> ExternalItemType:
-                return {**item.__dict__}
+                return dict(id=item.id, length=item.length)
 
-        marshaller_context = new_default_context()
-        marshaller_context.register_marshaller(CubeMarshaller())
-        marshaller_context.register_factory(EntityMarshallerFactory(200))
+        marshaller = CubeMarshaller()
+        storage_meta = storage_meta_from_dataclass(Cube)
 
-        persisty_context = PersistyContext()
-        persisty_context.register_storage(in_mem_storage(Cube, marshaller_context=marshaller_context))
-
-        class CubeEntity(EntityABC[Cube], Cube):
-            __persisty_context__ = persisty_context
+        class CubeEntity(Cube, EntityABC[Cube]):
+            __storage__ = InMemStorage(storage_meta, marshaller)
 
         cube = CubeEntity('from_tray')
-        assert cube == Cube('from_tray')
+        assert cube.to_item() == Cube('from_tray')
         cube.length = 3
         cube.save()
         assert CubeEntity.read('from_tray').length == 3
 
-        assert marshaller_context.dump(cube) == dict(id='from_tray', length=3)
-        assert marshaller_context.load(CubeEntity, dict(id='from_tray', length=3)) == cube
+        assert marshaller.dump(cube) == dict(id='from_tray', length=3)
+        assert marshaller.load(dict(id='from_tray', length=3)) == cube.to_item()

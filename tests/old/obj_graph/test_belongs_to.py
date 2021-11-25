@@ -5,7 +5,7 @@ from persisty.deferred.deferred_resolution_set import DeferredResolutionSet
 from persisty.obj_graph import from_selection_set_list
 from old.persisty.storage.in_mem_storage import in_mem_storage
 from tests.old.fixtures.data import setup_bands, setup_members
-from tests.old.fixtures.entities import BandEntity, MemberEntity
+from tests.fixtures.entities import BandEntity, MemberEntity
 from tests.old.fixtures.items import Band, Member
 
 

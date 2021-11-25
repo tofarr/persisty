@@ -3,9 +3,12 @@ import hashlib
 import json
 import logging
 import os
+import re
 import sys
 
 from marshy.types import ExternalType, ExternalItemType
+
+_PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
 
 
 def to_base64(item: ExternalType) -> str:
@@ -52,3 +55,8 @@ def get_logger(name: str):
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(LEVEL)
     return logger
+
+
+def to_snake_case(camel_case_value: str) -> str:
+    snake_case_value = _PATTERN.sub('_', camel_case_value).lower()
+    return snake_case_value
