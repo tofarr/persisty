@@ -2,19 +2,18 @@ from abc import ABC, abstractmethod
 from itertools import islice
 from typing import Optional, List, Iterator, Any, Generic, TypeVar
 
-from persisty.batch_edit import BatchEditABC, Create, Update, Delete
-from persisty.result_set import ResultSet
-from persisty.search_filter.all_items import ALL_ITEMS
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order_abc import SearchOrderABC
+from persisty.storage.batch_edit import Create, Update, Delete, BatchEditABC
+from persisty.storage.result_set import ResultSet
 from persisty.storage.storage_meta import StorageMeta
 
 T = TypeVar('T')
 F = TypeVar('F', bound=SearchFilterABC)
-C = TypeVar('C', bound=SearchOrderABC)
+S = TypeVar('S', bound=SearchOrderABC)
 
 
-class StorageABC(ABC, Generic[T, F, C]):
+class StorageABC(ABC, Generic[T, F, S]):
 
     @abstractmethod
     @property
@@ -45,24 +44,24 @@ class StorageABC(ABC, Generic[T, F, C]):
 
     @abstractmethod
     def update(self, item: T) -> Optional[T]:
-        """ Create an item in the data store. By convention any field with a value of UNDEFINED is left alone. """
+        """ Create an item in the data store. By convention any item with a value of UNDEFINED is left alone. """
 
     @abstractmethod
     def delete(self, key: str) -> bool:
-        """ Create an item in the data store. By convention any field with a value of UNDEFINED is left alone. """
+        """ Create an item in the data store. By convention any item with a value of UNDEFINED is left alone. """
 
     @abstractmethod
     def search(self,
-               search_filter: SearchFilterABC = ALL_ITEMS,
-               search_order: Optional[SearchOrderABC] = None,
+               search_filter: Optional[F] = None,
+               search_order: Optional[S] = None,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[T]:
         """ Create an item in the data store. """
 
     def search_all(self,
-                   search_filter: SearchFilterABC = ALL_ITEMS,
-                   search_order: Optional[SearchOrderABC] = None
+                   search_filter: Optional[F] = None,
+                   search_order: Optional[S] = None
                    ) -> Iterator[Any]:
         page_key = None
         while True:
@@ -73,7 +72,7 @@ class StorageABC(ABC, Generic[T, F, C]):
                 return
 
     @abstractmethod
-    def count(self, search_filter: SearchFilterABC = ALL_ITEMS) -> int:
+    def count(self, search_filter: Optional[F] = None) -> int:
         """ Create an item in the data store """
 
     async def edit_batch(self, edits: List[BatchEditABC]):

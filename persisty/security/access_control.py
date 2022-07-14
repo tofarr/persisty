@@ -1,22 +1,35 @@
 from dataclasses import dataclass, fields
 
-from persisty.access_control.access_control_abc import AccessControlABC
+from persisty.security.access_control_abc import AccessControlABC
+from persisty.security.authorization import Authorization
 
 
 @dataclass(frozen=True)
 class AccessControl(AccessControlABC):
-    is_meta_accessible: bool = False
-    is_creatable: bool = False
-    is_readable: bool = False
-    is_updatable: bool = False
-    is_destroyable: bool = False
-    is_searchable: bool = False
+    meta_accessible: bool = False
+    creatable: bool = False
+    readable: bool = False
+    updatable: bool = False
+    deletable: bool = False
+    searchable: bool = False
 
-    def __eq__(self, other):
-        if not isinstance(other, AccessControl):
-            return False
-        different_fields = (f for f in fields(AccessControl) if getattr(self, f.name) != getattr(other, f.name))
-        return next(different_fields, None) is None
+    def is_meta_accessible(self, authorization: Authorization):
+        return self.meta_accessible
+
+    def is_creatable(self, authorization: Authorization) -> bool:
+        return self.creatable
+
+    def is_readable(self, authorization: Authorization) -> bool:
+        return self.readable
+
+    def is_updatable(self, authorization: Authorization) -> bool:
+        return self.updatable
+
+    def is_deletable(self, authorization: Authorization) -> bool:
+        return self.deletable
+
+    def is_searchable(self, authorization: Authorization) -> bool:
+        return self.searchable
 
     def __and__(self, other):
         if self == other:
@@ -55,5 +68,5 @@ class AccessControl(AccessControlABC):
 
 
 ALL_ACCESS = AccessControl(**{f.name: True for f in fields(AccessControl)})
-READ_ONLY = AccessControl(is_meta_accessible=True, is_readable=True, is_searchable=True)
+READ_ONLY = AccessControl(meta_accessible=True, readable=True, searchable=True)
 NO_ACCESS = AccessControl()

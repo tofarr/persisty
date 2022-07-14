@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from persisty.access_control.authorization import Authorization
+from persisty.security.authorization import Authorization
 
 
 class AccessControlABC(ABC):
