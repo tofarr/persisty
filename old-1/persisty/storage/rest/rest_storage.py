@@ -8,7 +8,7 @@ from marshy import get_default_context
 from marshy.marshaller_context import MarshallerContext
 
 from persisty.item_filter.item_filter_abc import ItemFilterABC
-from persisty.key_config.attr_key_config import AttrKeyConfig
+from persisty.key_config.attr_key_config import UuidKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.page import Page
 from persisty.storage.storage_abc import StorageABC, T
@@ -21,7 +21,7 @@ class RestStorageABC(StorageABC):
     root_url: str
     item_type: Type[T]
     marshaller_context: MarshallerContext = field(default_factory=get_default_context)
-    key_config: KeyConfigABC = AttrKeyConfig()
+    key_config: KeyConfigABC = UuidKeyConfig()
     page_size: int = 20
 
     @property
@@ -44,8 +44,7 @@ class RestStorageABC(StorageABC):
 
     def create(self, item: T) -> str:
         req = request.Request(self.root_url, data=self._encode_item(item))
-        with request.urlopen(req) as url:
-            response = request.urlopen(req)
+        with request.urlopen(req) as response:
             return self._decode_item(response)
 
     def read(self, key: str) -> Optional[T]:

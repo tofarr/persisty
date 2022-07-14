@@ -1,34 +1,30 @@
 from abc import ABC, abstractmethod
 
+from persisty.access_control.authorization import Authorization
+
 
 class AccessControlABC(ABC):
 
-    @property
     @abstractmethod
-    def is_meta_accessible(self):
+    def is_meta_accessible(self, authorization: Authorization):
         """ Determine if information about this resource is available """
 
-    @property
     @abstractmethod
-    def is_creatable(self) -> bool:
+    def is_creatable(self, authorization: Authorization) -> bool:
         """ Determine if resource is creatable """
 
-    @property
     @abstractmethod
-    def is_readable(self) -> bool:
+    def is_readable(self, authorization: Authorization) -> bool:
         """ Determine if resource is readable """
 
-    @property
     @abstractmethod
-    def is_updatable(self) -> bool:
+    def is_updatable(self, authorization: Authorization) -> bool:
         """ Determine if resource is updatable """
 
-    @property
     @abstractmethod
-    def is_destroyable(self) -> bool:
+    def is_deletable(self, authorization: Authorization) -> bool:
         """ Determine if resource is destroyable """
 
-    @property
     @abstractmethod
-    def is_searchable(self) -> bool:
+    def is_searchable(self, authorization: Authorization) -> bool:
         """ Determine if resource is searchable """

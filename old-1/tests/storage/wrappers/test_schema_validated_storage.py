@@ -14,7 +14,7 @@ from schemey.property_schema import PropertySchema
 from schemey.schema_error import SchemaError
 from schemey.string_schema import StringSchema
 
-from persisty.key_config.attr_key_config import AttrKeyConfig
+from persisty.key_config.attr_key_config import UuidKeyConfig
 from persisty.storage.in_mem.in_mem_storage import InMemStorage, in_mem_storage
 from persisty.storage.in_mem.in_mem_storage_context import InMemStorageContext
 from persisty.storage.storage_meta import StorageMeta
@@ -39,7 +39,7 @@ class TestSchemaValidatedStorage(TestInMemStorage):
     def setUp(self):
         meta = StorageMeta(
             name=Node.__name__,
-            key_config=AttrKeyConfig(key_generation=AttrMode.EXCLUDED),
+            key_config=UuidKeyConfig(key_generation=AttrMode.EXCLUDED),
             attrs=tuple(attr_from_field(f) for f in fields(Node))
         )
         marshaller = get_default_context().get_marshaller(Node)

@@ -10,7 +10,7 @@ from persisty.errors import PersistyError
 from persisty.item_filter import AttrFilter, AttrFilterOp
 from persisty.item_filter.and_filter import AndFilter
 from persisty.item_filter.item_filter_abc import ItemFilterABC
-from persisty.key_config.attr_key_config import AttrKeyConfig
+from persisty.key_config.attr_key_config import UuidKeyConfig
 from persisty.key_config.multi_key_config import MultiKeyConfig
 from persisty.page import Page
 from persisty.storage.sql.searcher import table_searcher
@@ -91,7 +91,7 @@ class SqliteStorageContext(StorageContextABC):
                 except OperationalError:
                     is_auto_increment = False
                 key_generation = AttrMode.EXCLUDED if is_auto_increment else AttrMode.REQUIRED
-                key_config = AttrKeyConfig(attr=key_cols[0], key_generation=key_generation)
+                key_config = UuidKeyConfig(attr=key_cols[0], key_generation=key_generation)
             else:
                 key_config = MultiKeyConfig(key_cols)
             attrs = tuple(c.to_attr() for c in sql_cols)

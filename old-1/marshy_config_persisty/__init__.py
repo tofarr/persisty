@@ -10,7 +10,7 @@ from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from persisty.cache_control.timestamp_cache_control import TimestampCacheControl
 from persisty.cache_control.ttl_cache_control import TTLCacheControl
-from persisty.key_config.attr_key_config import AttrKeyConfig
+from persisty.key_config.attr_key_config import UuidKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
 
 priority = 100
@@ -28,4 +28,4 @@ def configure(context: MarshallerContext):
             SecureHashCacheControl, TimestampCacheControl, TTLCacheControl
         ), context)
     )
-    context.register_marshaller(implementation_marshaller(KeyConfigABC, (AttrKeyConfig,), context))
+    context.register_marshaller(implementation_marshaller(KeyConfigABC, (UuidKeyConfig,), context))

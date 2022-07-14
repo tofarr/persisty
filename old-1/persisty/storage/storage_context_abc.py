@@ -7,7 +7,7 @@ from typing import Optional, Type, Union
 from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.attr.attr import attr_from_field
 from persisty.errors import PersistyError
-from persisty.key_config.attr_key_config import AttrKeyConfig
+from persisty.key_config.attr_key_config import UuidKeyConfig
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 
@@ -24,7 +24,7 @@ class StorageContextABC(StorageABC[StorageMeta], ABC):
         meta = StorageMeta(
             name=StorageMeta.name,
             attrs=tuple(attr_from_field(f) for f in fields(StorageMeta)),
-            key_config=AttrKeyConfig(attr='name'),
+            key_config=UuidKeyConfig(attr='name'),
             access_control=self.access_control
         )
         return meta

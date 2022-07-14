@@ -132,7 +132,7 @@ class HasManyAttr(AttrABC[A, List[B]]):
     def after_save(self, owner_instance: A):
         # TODO: It may be possible to batch this operation for greater efficiency...
         value = getattr(owner_instance, f'_{self.name}', MISSING)
-        if value is None:
+        if value is MISSING:
             return
         key = owner_instance.get_storage().meta.key_config.get_key(owner_instance)
         for v in value:

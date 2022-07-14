@@ -11,7 +11,7 @@ from persisty.attr.attr_access_control import OPTIONAL, REQUIRED
 from persisty.attr.attr_mode import AttrMode
 from persisty.edit import Edit
 from persisty.edit_type import EditType
-from persisty.key_config.attr_key_config import AttrKeyConfig
+from persisty.key_config.attr_key_config import UuidKeyConfig
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.wrappers.wrapper_storage_abc import WrapperStorageABC, T
 
@@ -56,7 +56,7 @@ def schema_validated_storage(storage: StorageABC[T]) -> SchemaValidatedStorage[T
     meta = storage.meta
     create_attrs = meta.attrs
     update_attrs = meta.attrs
-    if isinstance(meta.key_config, AttrKeyConfig):
+    if isinstance(meta.key_config, UuidKeyConfig):
         non_key_attrs = tuple(a for a in update_attrs if a.name != meta.key_config.attr)
         key_schema = strip_optional(next(a for a in update_attrs if a.name == meta.key_config.attr).schema)
         key_attr = Attr(meta.key_config.attr, key_schema, REQUIRED)
