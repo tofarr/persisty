@@ -7,8 +7,8 @@ class FieldAccessControlABC:
 
     @abstractmethod
     def is_readable(self, authorization: Authorization):
-        """ Determine if information about this resource is available """
+        """ Determine if the field is readable """
 
     @abstractmethod
     def is_writable(self, authorization: Authorization) -> bool:
-        """ Determine if resource is creatable """
+        """ Determine if the field is writable """

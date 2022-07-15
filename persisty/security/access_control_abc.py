@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 
-from persisty.security.authorization import Authorization
+from persisty.security.authorization import Authorization, AuthorizationError
 
 
 class AccessControlABC(ABC):
 
     @abstractmethod
-    def is_meta_accessible(self, authorization: Authorization):
+    def is_meta_accessible(self, authorization: Authorization) -> bool:
         """ Determine if information about this resource is available """
 
     @abstractmethod

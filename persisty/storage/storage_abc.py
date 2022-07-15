@@ -50,19 +50,35 @@ class StorageABC(ABC, Generic[T, F, S]):
     def delete(self, key: str) -> bool:
         """ Create an item in the data store. By convention any item with a value of UNDEFINED is left alone. """
 
-    @abstractmethod
     def search(self,
                search_filter: Optional[F] = None,
                search_order: Optional[S] = None,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[T]:
-        """ Create an item in the data store. """
+        if limit is None:
+            limit = self.storage_meta.batch_size
+        assert(limit <= self.storage_meta.batch_size)
+        items = self.search_all(search_filter, search_order)
 
-    def search_all(self,
-                   search_filter: Optional[F] = None,
-                   search_order: Optional[S] = None
-                   ) -> Iterator[Any]:
+        if page_key:
+            while True:
+                next_result = next(items, None)
+                if next_result is None:
+                    return ResultSet([])
+                key = self.storage_meta.key_config.get_key(next_result)
+                if key == page_key:
+                    break
+
+        items = list(islice(items, limit))
+
+        page_key = None
+        if len(items) == limit:
+            page_key = self.storage_meta.key_config.get_key(items[-1])
+
+        return ResultSet(items, page_key)
+
+    def search_all(self, search_filter: Optional[F] = None, search_order: Optional[S] = None) -> Iterator[T]:
         page_key = None
         while True:
             result_set = self.search(search_filter, search_order, page_key)
@@ -79,9 +95,9 @@ class StorageABC(ABC, Generic[T, F, S]):
         assert(len(edits) <= self.storage_meta.batch_size)
         for edit in edits:
             if isinstance(edit, Create):
-                self.create(edit.entity)
+                self.create(edit.item)
             elif isinstance(edit, Update):
-                self.update(edit.entity)
+                self.update(edit.item)
             elif isinstance(edit, Delete):
                 self.delete(edit.key)
             else:

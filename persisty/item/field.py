@@ -13,7 +13,7 @@ from persisty.item.generator.default_value_generator import DefaultValueGenerato
 from persisty.item.generator.generator_abc import GeneratorABC
 from persisty.item.generator.null_generator import NULL_GENERATOR
 from persisty.item.generator.timestamp_generator import CREATED_AT_GENERATOR, UPDATED_AT_GENERATOR
-from persisty.item.generator.uuid_generator import UUID_GENERATOR
+from persisty.item.generator.uuid_generator import UUID_ALWAYS_ON_CREATE
 from persisty.item.security.field_access_control import ALL_ACCESS, READ_ONLY
 from persisty.item.security.field_access_control_abc import FieldAccessControlABC
 from persisty.util.undefined import Undefined, UNDEFINED
@@ -24,10 +24,12 @@ T = TypeVar('T')
 @dataclasses.dataclass(frozen=True)
 class Field(Generic[T]):
     name: str = None
+    description: str = None
     type: Type[T] = None
     schema: SchemaABC[T] = None
     generator: Optional[GeneratorABC[T]] = None
     access_control: FieldAccessControlABC = ALL_ACCESS
+    indexed: bool = False  # This is a hint only - depending on the impl the field may not actually be indexed
 
     def __post_init__(self):
         if get_optional_type(self.type) and self.generator is None:
@@ -64,19 +66,22 @@ def fields_for_type(type_: Type) -> Tuple[Field, ...]:
 
 def uuid_field(
     name: Optional[str] = 'id',
+    description: Optional[str] = None,
     access_control: FieldAccessControlABC = READ_ONLY,  # uuids are usually used for immutable ids
     generator: Union[Undefined, type(None), GeneratorABC[T]] = UNDEFINED,
 ) -> Field[T, UUID]:
     if generator is UNDEFINED:
         if name == 'id':
-            generator = UUID_GENERATOR
+            generator = UUID_ALWAYS_ON_CREATE
         else:
             generator = None
     return Field(
         name=name,
+        description=description,
         type=UUID,
         access_control=access_control,
         generator=generator,
+        indexed=True
     )
 
 
@@ -89,6 +94,7 @@ def created_at_field(
         type=datetime,
         access_control=access_control,
         generator=CREATED_AT_GENERATOR,
+        indexed=True
     )
 
 
@@ -100,18 +106,21 @@ def updated_at_field(
         name=name,
         type=datetime,
         access_control=access_control,
-        generator=UPDATED_AT_GENERATOR
+        generator=UPDATED_AT_GENERATOR,
+        indexed=True
     )
 
 
 # noinspection PyShadowingBuiltins
 def str_field(
     name: str = None,
+    description: Optional[str] = None,
     access_control: FieldAccessControlABC = ALL_ACCESS,
     max_length: Optional[int] = 255,
     format: Optional[StringFormat] = None,
     pattern: Optional[str] = None,
-    default_value: Union[Undefined, type(None), str] = None
+    default_value: Union[Undefined, type(None), str] = None,
+    indexed: bool = False
 ) -> Field:
     schema = StringSchema(max_length=max_length, format=format, pattern=pattern)
     generator = None
@@ -122,8 +131,10 @@ def str_field(
             type_ = Optional[str]
     return Field(
         name=name,
+        description=description,
         type=type_,
         access_control=access_control,
         schema=schema,
-        generator=generator
+        generator=generator,
+        indexed=indexed
     )

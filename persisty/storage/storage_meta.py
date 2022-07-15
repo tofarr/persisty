@@ -1,4 +1,4 @@
-from typing import TypeVar, Type, Tuple
+from typing import TypeVar, Type, Tuple, Optional
 from dataclasses import dataclass
 
 from persisty.item.field import Field, fields_for_type
@@ -22,6 +22,7 @@ class StorageMeta:
     search_filter_type: Type[F]
     search_order_type: Type[C]
     cache_control: CacheControlABC[T]
+    description: Optional[str] = None
     fields: Tuple[Field] = None
     key_config: KeyConfigABC[T] = ATTR_KEY_CONFIG
     access_control: AccessControlABC = ALL_ACCESS

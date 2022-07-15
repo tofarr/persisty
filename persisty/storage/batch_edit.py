@@ -11,12 +11,12 @@ class BatchEditABC(ABC):
 
 @dataclass
 class Create(BatchEditABC, Generic[T]):
-    entity: T
+    item: T
 
 
 @dataclass
 class Update(BatchEditABC, Generic[T]):
-    entity: T
+    item: T
 
 
 @dataclass

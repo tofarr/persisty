@@ -49,3 +49,20 @@ class ItemSearchFilterABC(ABC, SearchFilterABC[T]):
         if not item_filter.match(item):
             return False
         return True
+
+
+def generate_item_search_filter_type(item_type: type) -> Type:
+    fields = fields_for_type(item_type)
+    annotations = {}
+    attrs = dict(__annotations__=annotations)
+    for field in fields:
+        if field.type is str:
+            attrs['query'] = UNDEFINED
+            annotations['query'] = Optional[str]
+        name = field.name
+        for op in 'eq', 'ne':
+            filter_name = f"{name}__{op}"
+            attrs[filter_name] = UNDEFINED
+            annotations[filter_name] = field.type
+    filter_type = type(f"{name}SearchFilter", (ItemSearchFilterABC,), attrs)
+    return filter_type
