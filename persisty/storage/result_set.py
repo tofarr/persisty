@@ -7,5 +7,5 @@ T = TypeVar('T')
 
 @dataclass
 class ResultSet(Generic[T]):
-    results: List[T]
+    results: List[T] = None
     next_page_key: str = None

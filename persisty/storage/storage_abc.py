@@ -58,7 +58,7 @@ class StorageABC(ABC):
                search_order: SearchOrder = NO_ORDER,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
-               ) -> ResultSet:
+               ) -> ResultSet[ExternalItemType]:
         if limit is None:
             limit = self.storage_meta.batch_size
         assert(limit <= self.storage_meta.batch_size)

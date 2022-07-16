@@ -61,6 +61,8 @@ class MemStorage(StorageABC):
                    search_filter: SearchFilterABC = INCLUDE_ALL,
                    search_order: SearchOrder = NO_ORDER
                    ) -> Iterator[ExternalItemType]:
+        search_filter.validate_for_fields(self.storage_meta.fields)
+        search_order.validate_for_fields(self.storage_meta.fields)
         items = iter(self.storage.values())
         if search_filter is not INCLUDE_ALL:
             items = (item for item in items if search_filter.match(item, self.storage_meta.fields))
@@ -70,6 +72,7 @@ class MemStorage(StorageABC):
         return items
 
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
+        search_filter.validate_for_fields(self.storage_meta.fields)
         if search_filter is None:
             return len(self.storage)
         count = sum(1 for _ in self.search_all(search_filter))

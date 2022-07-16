@@ -99,7 +99,7 @@ class TTLCacheStorage(StorageABC):
                search_order: SearchOrder = NO_ORDER,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
-               ) -> ResultSet:
+               ) -> ResultSet[ExternalItemType]:
         result_set_key = [deepcopy(i) for i in (search_filter, search_order, page_key, limit)]
         result_set_key = secure_hash(result_set_key)
         now = int(time())

@@ -1,13 +1,15 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TypeVar, Generic, Type
 
 from persisty.storage.batch_edit import BatchEditABC
 
+T = TypeVar('T')
+
 
 @dataclass
-class BatchEditResult:
-    edit: BatchEditABC
+class BatchEditResult(Generic[T]):
+    edit: BatchEditABC[T]
     success: bool = False
     code: Optional[str] = None
     details: Optional[str] = None
