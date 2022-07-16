@@ -29,7 +29,7 @@ class StorageABC(ABC):
 
     @abstractmethod
     def read(self, key: str) -> Optional[ExternalItemType]:
-        """ Create an item in the data store """
+        """ Read an item from the data store """
 
     async def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
         assert(len(keys) <= self.storage_meta.batch_size)
@@ -51,7 +51,7 @@ class StorageABC(ABC):
 
     @abstractmethod
     def delete(self, key: str) -> bool:
-        """ Create an item in the data store. By convention any item with a value of UNDEFINED is left alone. """
+        """ Delete an item from the data store. """
 
     def search(self,
                search_filter: SearchFilterABC = INCLUDE_ALL,
@@ -121,10 +121,11 @@ class StorageABC(ABC):
                 results.append(BatchEditResult(edit, False, 'exception', str(e)))
         return results
 
-    def edit_all(self, edits: Iterator[BatchEditABC]):
+    def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
         edits = iter(edits)
         while True:
             page = list(islice(edits, self.storage_meta.batch_size))
             if not page:
                 break
-            self.edit_batch(page)
+            results = self.edit_batch(page)
+            yield from results

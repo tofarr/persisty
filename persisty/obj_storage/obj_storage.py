@@ -1,11 +1,11 @@
-from abc import abstractmethod
-from typing import Optional, List, Iterator, TypeVar, Generic
+from typing import Optional, List, Iterator, Type
 
 from dataclasses import dataclass
 
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 
+from persisty.obj_storage.obj_storage_abc import ObjStorageABC, T, F, S, C, U
 from persisty.storage.batch_edit import BatchEditABC, Create, Update
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
@@ -14,30 +14,46 @@ from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
 from persisty.storage.search_order import SearchOrder, NO_ORDER
 from persisty.storage.storage_abc import StorageABC
 
-T = TypeVar('T')
-C = TypeVar('C')
-U = TypeVar('U')
-F = TypeVar('F')
-S = TypeVar('S')
-
 
 @dataclass(frozen=True)
-class ObjStorage(Generic[T, F, S]):
+class ObjStorage(ObjStorageABC[T, F, S, C, U]):
     storage: StorageABC
     item_marshaller: MarshallerABC[T]
-    create_input_marshaller: MarshallerABC[C]
-    update_input_marshaller: MarshallerABC[U]
     search_filter_marshaller: MarshallerABC[F]
     search_order_marshaller: MarshallerABC[S]
+    create_input_marshaller: MarshallerABC[C]
+    update_input_marshaller: MarshallerABC[U]
 
-    @abstractmethod
+    @property
+    def item_type(self) -> Type[T]:
+        return self.item_marshaller.marshalled_type
+
+    @property
+    def search_filter_type(self) -> Type[F]:
+        return self.search_filter_marshaller.marshalled_type
+
+    @property
+    def search_order_type(self) -> Type[S]:
+        return self.search_order_marshaller.marshalled_type
+
+    @property
+    def create_input_type(self) -> Type[C]:
+        return self.create_input_marshaller.marshalled_type
+
+    @property
+    def update_input_type(self) -> Type[U]:
+        return self.update_input_marshaller.marshalled_type
+
+    @property
+    def batch_size(self) -> int:
+        return self.storage.storage_meta.batch_size
+
     def create(self, item: C) -> T:
         dumped = self.create_input_marshaller.dump(item)
         created = self.storage.create(dumped)
         loaded = self.item_marshaller.load(created)
         return loaded
 
-    @abstractmethod
     def read(self, key: str) -> Optional[ExternalItemType]:
         read = self.storage.read(key)
         if read:

@@ -8,8 +8,8 @@ T = TypeVar('T')
 
 
 @dataclass
-class BatchEditResult(Generic[T]):
-    edit: BatchEditABC[T]
+class BatchEditResult:
+    edit: BatchEditABC
     success: bool = False
     code: Optional[str] = None
     details: Optional[str] = None
