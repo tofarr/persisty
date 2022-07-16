@@ -19,7 +19,7 @@ from persisty.storage.wrappers.wrapper_storage_abc import WrapperStorageABC, T
 @dataclass(frozen=True)
 class SchemaValidatedStorage(WrapperStorageABC[T]):
     """
-    Wrapper which covers another and includes a search filter. Creates or update not matching the search filter
+    Wrapper which covers another and includes a search search_filter. Creates or update not matching the search search_filter
     fail outright. Effectively creates a partial view of another storage (Useful for enforcing security constraints)
     """
     wrapped_storage: StorageABC[T]

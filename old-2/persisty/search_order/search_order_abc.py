@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Any
+from typing import Generic, Any, TypeVar
 
 T = TypeVar('T')
 
 
-class ItemComparatorABC(ABC, Generic[T]):
-    """ Object for filtering items """
+class SearchOrderABC(ABC, Generic[T]):
+    """ General object for sorting items """
 
     @abstractmethod
     def key(self, item: T) -> Any:

@@ -1,19 +1,19 @@
 from abc import ABC, abstractmethod
 from itertools import islice
-from typing import Optional, List, Iterator, Any, Generic, TypeVar
+from typing import Optional, List, Iterator
 
-from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.search_order.search_order_abc import SearchOrderABC
-from persisty.storage.batch_edit import Create, Update, Delete, BatchEditABC
+from marshy.types import ExternalItemType
+
+from persisty.storage.batch_edit import BatchEditABC, Create, Update, Delete
+from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
+from persisty.storage.search_filter.include_all import INCLUDE_ALL
+from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
+from persisty.storage.search_order import SearchOrder, NO_ORDER
 from persisty.storage.storage_meta import StorageMeta
 
-T = TypeVar('T')
-F = TypeVar('F', bound=SearchFilterABC)
-S = TypeVar('S', bound=SearchOrderABC)
 
-
-class StorageABC(ABC, Generic[T, F, S]):
+class StorageABC(ABC):
 
     @abstractmethod
     @property
@@ -21,19 +21,19 @@ class StorageABC(ABC, Generic[T, F, S]):
         """ Get the meta for this storage """
 
     @abstractmethod
-    def create(self, item: T) -> T:
+    def create(self, item: ExternalItemType) -> ExternalItemType:
         """ Create an item in the data store """
 
     @abstractmethod
-    def read(self, key: str) -> Optional[T]:
+    def read(self, key: str) -> Optional[ExternalItemType]:
         """ Create an item in the data store """
 
-    async def read_batch(self, keys: List[str]) -> List[Optional[T]]:
+    async def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
         assert(len(keys) <= self.storage_meta.batch_size)
         items = [self.read(key) for key in keys]
         return items
 
-    def read_all(self, keys: Iterator[str]) -> Iterator[Optional[T]]:
+    def read_all(self, keys: Iterator[str]) -> Iterator[Optional[ExternalItemType]]:
         keys = iter(keys)
         while True:
             batch_keys = list(islice(keys, self.storage_meta.batch_size))
@@ -43,7 +43,7 @@ class StorageABC(ABC, Generic[T, F, S]):
             yield from items
 
     @abstractmethod
-    def update(self, item: T) -> Optional[T]:
+    def update(self, updates: ExternalItemType) -> Optional[ExternalItemType]:
         """ Create an item in the data store. By convention any item with a value of UNDEFINED is left alone. """
 
     @abstractmethod
@@ -51,11 +51,11 @@ class StorageABC(ABC, Generic[T, F, S]):
         """ Create an item in the data store. By convention any item with a value of UNDEFINED is left alone. """
 
     def search(self,
-               search_filter: Optional[F] = None,
-               search_order: Optional[S] = None,
+               search_filter: SearchFilterABC = INCLUDE_ALL,
+               search_order: SearchOrder = NO_ORDER,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
-               ) -> ResultSet[T]:
+               ) -> ResultSet:
         if limit is None:
             limit = self.storage_meta.batch_size
         assert(limit <= self.storage_meta.batch_size)
@@ -78,7 +78,10 @@ class StorageABC(ABC, Generic[T, F, S]):
 
         return ResultSet(items, page_key)
 
-    def search_all(self, search_filter: Optional[F] = None, search_order: Optional[S] = None) -> Iterator[T]:
+    def search_all(self,
+                   search_filter: SearchFilterABC = INCLUDE_ALL,
+                   search_order: SearchOrder = NO_ORDER
+                   ) -> Iterator[ExternalItemType]:
         page_key = None
         while True:
             result_set = self.search(search_filter, search_order, page_key)
@@ -88,20 +91,32 @@ class StorageABC(ABC, Generic[T, F, S]):
                 return
 
     @abstractmethod
-    def count(self, search_filter: Optional[F] = None) -> int:
+    def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         """ Create an item in the data store """
 
-    async def edit_batch(self, edits: List[BatchEditABC]):
+    async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
+        """
+        Do a batch edit and return a list of results. The results should contain all the same edits in the same
+        order
+        """
         assert(len(edits) <= self.storage_meta.batch_size)
+        results = []
         for edit in edits:
-            if isinstance(edit, Create):
-                self.create(edit.item)
-            elif isinstance(edit, Update):
-                self.update(edit.item)
-            elif isinstance(edit, Delete):
-                self.delete(edit.key)
-            else:
-                raise TypeError(f'unknown_type:{edit}')
+            try:
+                if isinstance(edit, Create):
+                    item = self.create(edit.item)
+                    results.append(BatchEditResult(edit, bool(item)))
+                elif isinstance(edit, Update):
+                    item = self.update(edit.updates)
+                    results.append(BatchEditResult(edit, bool(item)))
+                elif isinstance(edit, Delete):
+                    deleted = self.delete(edit.key)
+                    results.append(BatchEditResult(edit, bool(deleted)))
+                else:
+                    results.append(BatchEditResult(edit, False, 'unsupported_edit_type', edit.__class__.__name__))
+            except Exception as e:
+                results.append(BatchEditResult(edit, False, 'exception', str(e)))
+        return results
 
     def edit_all(self, edits: Iterator[BatchEditABC]):
         edits = iter(edits)
