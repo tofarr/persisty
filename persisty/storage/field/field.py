@@ -3,9 +3,9 @@ from typing import Optional, Tuple
 
 from schemey.schema_abc import SchemaABC
 
-from persisty.field.field_filter import FieldFilterOp
-from persisty.field.field_type import FieldType
-from persisty.field.write_transform.write_transform_abc import WriteTransformABC
+from persisty.storage.field.field_filter import FieldFilterOp
+from persisty.storage.field.field_type import FieldType
+from persisty.storage.field.write_transform.write_transform_abc import WriteTransformABC
 
 
 @dataclass(frozen=True)

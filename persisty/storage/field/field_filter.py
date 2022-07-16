@@ -65,7 +65,7 @@ class FieldFilter(SearchFilterABC):
         except (StopIteration, AssertionError):
             raise ValueError('field_filter_invalid_for_fields')
 
-    def match(self, item: ExternalItemType, fields: Tuple[Field, ...]) -> bool:
+    def match(self, item: ExternalItemType, fields: Tuple[Field, ...] = None) -> bool:
         value = item.get(self.name)
         try:
             result = self.op.value(value, self.value)

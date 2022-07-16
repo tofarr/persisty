@@ -3,6 +3,7 @@ from typing import Tuple
 
 from marshy import ExternalType
 
+from persisty.storage.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.storage.search_filter.include_all import INCLUDE_ALL
 from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
 
@@ -17,10 +18,18 @@ class And(SearchFilterABC):
             return INCLUDE_ALL
         flatten = next((True for f in item_filters if isinstance(f, And)), False)
         if flatten:
+            existing = set()
             flattened = []
             for f in item_filters:
+                if f in existing:
+                    continue
+                existing.add(f)
                 if isinstance(f, And):
                     flattened.extend(f.item_filters)
+                elif f is INCLUDE_ALL:
+                    continue
+                elif f is EXCLUDE_ALL:
+                    return EXCLUDE_ALL
                 else:
                     flattened.append(f)
             if len(flattened) == 1:

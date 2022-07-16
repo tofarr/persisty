@@ -14,6 +14,9 @@ from persisty.storage.storage_meta import StorageMeta
 
 
 class StorageABC(ABC):
+    """
+    General contract for storage object, allowing CRUD, search, and batch updates for objects
+    """
 
     @abstractmethod
     @property

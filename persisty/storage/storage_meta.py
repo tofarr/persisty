@@ -1,10 +1,10 @@
 from typing import Tuple
 
-from persisty.field.field import Field
 from persisty.storage.access_control.access_control_abc import AccessControlABC
 from persisty.storage.access_control.access_control import ALL_ACCESS
 from persisty.storage.cache_control.cache_control_abc import CacheControlABC
 from persisty.storage.cache_control.secure_hash_cache_control import SecureHashCacheControl
+from persisty.storage.field.field import Field
 from persisty.storage.key_config.field_key_config import ATTR_KEY_CONFIG
 from persisty.storage.key_config.key_config_abc import KeyConfigABC
 
