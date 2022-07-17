@@ -19,10 +19,7 @@ class DynamodbKeyConfig(KeyConfigABC):
             key = item.get(self.pk_field.name)
             key = str(key)
             return key
-        return encrypt({
-            self.dynamo_index.pk: item[self.dynamo_index.pk],
-            self.dynamo_index.sk: item[self.dynamo_index.sk]
-        })
+        return encrypt([item[self.dynamo_index.pk], item[self.dynamo_index.sk]])
 
     def set_key(self, key: str, item: ExternalItemType):
         if not self.dynamo_index.sk:
@@ -30,5 +27,7 @@ class DynamodbKeyConfig(KeyConfigABC):
                 key = int(key)
             elif self.pk_field.type == FieldType.BOOL:
                 key = float(key)
-            return {self.dynamo_index.pk: key}
-        return decrypt(key)
+            item[self.dynamo_index.pk] = key
+        key = decrypt(key)
+        item[self.dynamo_index.pk] = key[0]
+        item[self.dynamo_index.sk] = key[1]
