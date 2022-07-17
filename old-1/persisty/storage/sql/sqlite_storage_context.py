@@ -144,7 +144,7 @@ class SqliteStorageContext(StorageContextABC):
         if storage_filter:
             return StorageFilter(self._create_item_filter())
         else:
-            return StorageFilter(self._create_item_filter(storage_filter.item_filter), storage_filter.item_comparator)
+            return StorageFilter(self._create_item_filter(storage_filter.search_filter), storage_filter.item_comparator)
 
     @staticmethod
     def _create_item_filter(item_filter: Optional[ItemFilterABC] = None):

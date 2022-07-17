@@ -1,6 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Optional, Any
 
 from marshy import ExternalType
 
@@ -32,3 +32,9 @@ class SearchFilterABC(ABC):
     def __invert__(self) -> SearchFilterABC:
         from persisty.storage.search_filter.not_filter import Not
         return Not(self)
+
+    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+        """
+        Build a dynamodb filter expression from this search filter if possible, and return it. Return True if this
+        filter was completely represented by the condition, False otherwise """
+        return None, False

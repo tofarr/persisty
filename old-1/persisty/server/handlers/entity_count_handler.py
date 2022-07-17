@@ -36,4 +36,4 @@ class EntityCountHandler(EntityHandlerABC):
         if entity_type.__filter_class__ is not None:
             filter_obj = self.marshaller_context.load(entity_type.__filter_class__, request.params)
             storage_filter = storage_filter_from_dataclass(filter_obj, entity_type.get_storage().item_type)
-            return storage_filter.item_filter
+            return storage_filter.search_filter

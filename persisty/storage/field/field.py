@@ -18,5 +18,6 @@ class Field:
     is_updatable: bool = True
     write_transform: Optional[WriteTransformABC] = None
     permitted_filter_ops: Tuple[FieldFilterOp, ...] = FieldFilterOp.eq, FieldFilterOp.ne
+    is_sortable: bool = True  # Note: dynamodb is not generally sortable!
     description: Optional[str] = None
     indexed: bool = False

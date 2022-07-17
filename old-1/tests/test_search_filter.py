@@ -26,12 +26,12 @@ class TestEdit(TestCase):
     def test_to_storage_filter_custom(self):
         storage_filter = storage_filter_from_dataclass(CustomStorageFilter(), Band)
         assert storage_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].title]
-        assert storage_filter.item_filter is None
+        assert storage_filter.search_filter is None
 
     def test_to_storage_filter(self):
         storage_filter = storage_filter_from_dataclass(BandFilter(sort=['year_formed', 'title']), Band)
         assert storage_filter.item_comparator.key(BANDS[0]) == [BANDS[0].year_formed, BANDS[0].title]
-        assert storage_filter.item_filter is None
+        assert storage_filter.search_filter is None
 
     def test_to_storage_filter_invalid(self):
         with self.assertRaises(ValueError):

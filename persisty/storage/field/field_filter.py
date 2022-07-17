@@ -2,12 +2,12 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import partial
 import operator
-from typing import Tuple
+from typing import Tuple, Optional, Any
 
 from marshy import ExternalType
 from marshy.types import ExternalItemType
 
-from persisty.field.field import Field
+from persisty.storage.field.field import Field
 from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
 
 
@@ -72,3 +72,14 @@ class FieldFilter(SearchFilterABC):
             return result
         except TypeError:
             return False  # Comparison failed
+
+    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+        from boto3.dynamodb.conditions import Attr
+        attr = Attr(self.name)
+        if self.op in {'contains', 'eq', 'gt', 'gte', 'lt', 'lte', 'ne'}:
+            condition = getattr(attr, self.op.name)(self.value)
+            return condition, True
+        elif self.op == FieldFilterOp.startswith:
+            return attr.begins_with(self.value), True
+        else:
+            return None, False

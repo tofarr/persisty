@@ -99,7 +99,7 @@ class TestInMemStorage(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(storage.search(filter_))
         assert expected_bands == bands
-        assert storage.count(filter_.item_filter) == len(expected_bands)
+        assert storage.count(filter_.search_filter) == len(expected_bands)
 
     def test_gte_filter(self):
         storage = self.storage_context.get_storage(Band)
@@ -108,7 +108,7 @@ class TestInMemStorage(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(storage.search(filter_))
         assert expected_bands == bands
-        assert storage.count(filter_.item_filter) == len(expected_bands)
+        assert storage.count(filter_.search_filter) == len(expected_bands)
 
     def test_lt_filter(self):
         storage = self.storage_context.get_storage(Band)
@@ -117,7 +117,7 @@ class TestInMemStorage(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(storage.search(filter_))
         assert expected_bands == bands
-        assert storage.count(filter_.item_filter) == len(expected_bands)
+        assert storage.count(filter_.search_filter) == len(expected_bands)
 
     def test_lte_filter(self):
         storage = self.storage_context.get_storage(Band)
@@ -126,7 +126,7 @@ class TestInMemStorage(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(storage.search(filter_))
         assert expected_bands == bands
-        assert storage.count(filter_.item_filter) == len(expected_bands)
+        assert storage.count(filter_.search_filter) == len(expected_bands)
 
     def test_eq_filter(self):
         storage = self.storage_context.get_storage(Band)
@@ -135,7 +135,7 @@ class TestInMemStorage(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(storage.search(filter_))
         assert expected_bands == bands
-        assert storage.count(filter_.item_filter) == len(expected_bands)
+        assert storage.count(filter_.search_filter) == len(expected_bands)
 
     def test_ne_filter(self):
         storage = self.storage_context.get_storage(Band)
@@ -144,7 +144,7 @@ class TestInMemStorage(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.id))
         bands = list(storage.search(filter_))
         assert expected_bands == bands
-        assert storage.count(filter_.item_filter) == len(expected_bands)
+        assert storage.count(filter_.search_filter) == len(expected_bands)
 
     def test_startswith_filter(self):
         storage = self.storage_context.get_storage(Band)
@@ -153,7 +153,7 @@ class TestInMemStorage(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.title))
         bands = list(storage.search(filter_))
         assert expected_bands == bands
-        assert storage.count(filter_.item_filter) == len(expected_bands)
+        assert storage.count(filter_.search_filter) == len(expected_bands)
 
     def test_contains_filter(self):
         storage = self.storage_context.get_storage(Band)
@@ -162,7 +162,7 @@ class TestInMemStorage(TestCase):
         expected_bands = list(sorted(expected_bands, key=lambda b: b.title))
         bands = list(storage.search(filter_))
         assert expected_bands == bands
-        assert storage.count(filter_.item_filter) == len(expected_bands)
+        assert storage.count(filter_.search_filter) == len(expected_bands)
 
     def test_multi_filter(self):
         storage = self.storage_context.get_storage(Band)

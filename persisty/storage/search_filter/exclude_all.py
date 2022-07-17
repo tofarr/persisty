@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, Optional, Any
+from uuid import uuid4
 
 from marshy import ExternalType
 
@@ -16,6 +17,11 @@ class ExcludeAll(SearchFilterABC, SingletonABC):
 
     def match(self, value: ExternalType, fields: Tuple[Field, ...]) -> bool:
         return False
+
+    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+        """ This should be caught as it means no query should run """
+        from boto3.dynamodb.conditions import Attr
+        return Attr(str(uuid4())).eq(1), True
 
 
 EXCLUDE_ALL = ExcludeAll()

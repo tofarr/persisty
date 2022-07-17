@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, Optional, Any
 
 from marshy import ExternalType
 
@@ -16,6 +16,9 @@ class IncludeAll(SearchFilterABC, SingletonABC):
 
     def match(self, item: ExternalType, fields: Tuple[Field, ...]) -> bool:
         return True
+
+    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+        return None, True
 
 
 INCLUDE_ALL = IncludeAll()

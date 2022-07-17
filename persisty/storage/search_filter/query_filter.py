@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Optional, Any
 
 from dataclasses import dataclass
 
@@ -31,3 +31,19 @@ class QueryFilter(SearchFilterABC):
                 if self.query in field_value.lower():
                     return True
         return False
+
+    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+        conditions = []
+        for field in fields:
+            if not field.is_readable or field.type is not FieldType.STR:
+                continue
+            from boto3.dynamodb.conditions import Attr
+            conditions.append(Attr(field.name).contains(self.query))
+        if not conditions:
+            return None, False
+        if len(conditions) == 1:
+            condition = conditions[0]
+        else:
+            from boto3.dynamodb.conditions import Or as DynOr
+            condition = DynOr(*conditions)
+        return condition, True
