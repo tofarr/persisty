@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from itertools import islice
-from typing import Optional, List, Iterator
+from typing import Optional, List, Iterator, TypeVar
 
 from marshy.types import ExternalItemType
 
@@ -9,7 +9,7 @@ from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
 from persisty.storage.search_filter.include_all import INCLUDE_ALL
 from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.search_order import SearchOrder, NO_ORDER
+from persisty.storage.search_order import SearchOrderABC
 from persisty.storage.storage_meta import StorageMeta
 
 
@@ -25,11 +25,11 @@ class StorageABC(ABC):
 
     @abstractmethod
     def create(self, item: ExternalItemType) -> ExternalItemType:
-        """ Create an item in the data store """
+        """ Create an stored in the data store """
 
     @abstractmethod
     def read(self, key: str) -> Optional[ExternalItemType]:
-        """ Read an item from the data store """
+        """ Read an stored from the data store """
 
     async def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
         assert(len(keys) <= self.storage_meta.batch_size)
@@ -47,15 +47,15 @@ class StorageABC(ABC):
 
     @abstractmethod
     def update(self, updates: ExternalItemType) -> Optional[ExternalItemType]:
-        """ Create an item in the data store. By convention any item with a value of UNDEFINED is left alone. """
+        """ Create an stored in the data store. By convention any stored with a value of UNDEFINED is left alone. """
 
     @abstractmethod
     def delete(self, key: str) -> bool:
-        """ Delete an item from the data store. """
+        """ Delete an stored from the data store. """
 
     def search(self,
                search_filter: SearchFilterABC = INCLUDE_ALL,
-               search_order: SearchOrder = NO_ORDER,
+               search_order: Optional[SearchOrderABC] = None,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[ExternalItemType]:
@@ -63,27 +63,16 @@ class StorageABC(ABC):
             limit = self.storage_meta.batch_size
         assert(limit <= self.storage_meta.batch_size)
         items = self.search_all(search_filter, search_order)
-
-        if page_key:
-            while True:
-                next_result = next(items, None)
-                if next_result is None:
-                    return ResultSet([])
-                key = self.storage_meta.key_config.get_key(next_result)
-                if key == page_key:
-                    break
-
+        skip_to_page(page_key, items, self.storage_meta.key_config)
         items = list(islice(items, limit))
-
         page_key = None
         if len(items) == limit:
             page_key = self.storage_meta.key_config.get_key(items[-1])
-
         return ResultSet(items, page_key)
 
     def search_all(self,
                    search_filter: SearchFilterABC = INCLUDE_ALL,
-                   search_order: SearchOrder = NO_ORDER
+                   search_order: Optional[SearchOrderABC] = None
                    ) -> Iterator[ExternalItemType]:
         page_key = None
         while True:
@@ -95,7 +84,7 @@ class StorageABC(ABC):
 
     @abstractmethod
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
-        """ Create an item in the data store """
+        """ Create an stored in the data store """
 
     async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
         """
@@ -129,3 +118,14 @@ class StorageABC(ABC):
                 break
             results = self.edit_batch(page)
             yield from results
+
+
+def skip_to_page(page_key: str, items, key_config):
+    if page_key:
+        while True:
+            next_result = next(items, None)
+            if next_result is None:
+                return ResultSet([])
+            key = key_config.get_key(next_result)
+            if key == page_key:
+                return

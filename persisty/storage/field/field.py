@@ -20,4 +20,5 @@ class Field:
     permitted_filter_ops: Tuple[FieldFilterOp, ...] = FieldFilterOp.eq, FieldFilterOp.ne
     is_sortable: bool = True  # Note: dynamodb is not generally sortable!
     description: Optional[str] = None
-    indexed: bool = False
+    is_indexed: bool = False
+    is_nullable: bool = True

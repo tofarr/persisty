@@ -1,31 +1,39 @@
-from dataclasses import dataclass, Field
+from abc import abstractmethod, ABC
 from typing import Any, Tuple
 
-from marshy.types import ExternalItemType
+from dataclasses import dataclass
+from marshy.types import ExternalItemType, ExternalType
 
+from persisty.storage.field.field import Field
 from persisty.util.undefined import UNDEFINED
 
 
-@dataclass(frozen=True)
-class SearchOrder:
-    field_names: Tuple[str, ...]
+class SearchOrderABC(ABC):
+    @abstractmethod
+    @property
+    def field(self) -> str:
+        """ Get the field """
+
+    @abstractmethod
+    @property
+    def desc(self) -> bool:
+        """ Get the field """
 
     def validate_for_fields(self, fields: Tuple[Field, ...]):
-        missing_field_names = set(self.field_names) - set(f.name for f in fields)
-        if missing_field_names:
-            raise ValueError(f'query_filter_invalid_for_fields:{missing_field_names}')
+        for f in fields:
+            if f.name == self.field:
+                return
+        raise ValueError(f'search_order_invalid:{self.field}')
 
     def key(self, item: ExternalItemType) -> Any:
-        key = []
-        for f in self.field_names:
-            value = item.get(f, UNDEFINED)
-            if value in (None, UNDEFINED):
-                key.append(True)
-                key.append('')
-            else:
-                key.append(False)  # Positive values are sorted before negative ones
-                key.append(value)
-        return key
+        value: ExternalType = item.get(self.field, UNDEFINED)
+        if value in (None, UNDEFINED):
+            return not self.desc, ''
+        else:
+            return self.desc, value
 
 
-NO_ORDER = SearchOrder(tuple())
+@dataclass(frozen=True)
+class SearchOrder(SearchOrderABC):
+    field: str
+    desc: bool = False

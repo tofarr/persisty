@@ -3,28 +3,30 @@ from typing import Optional, List, Tuple
 
 from marshy.types import ExternalItemType
 
-from persisty.storage.access_control.access_control import NO_ACCESS
-from persisty.storage.batch_edit import Update, Create, Delete, BatchEditABC
-from persisty.storage.filtered_storage import FilteredStorage
-from persisty.storage.result_set import ResultSet
-from persisty.storage.search_filter.include_all import INCLUDE_ALL
+from persisty.access_control.access_control import NO_ACCESS
+from persisty.errors import PersistyError
+from persisty.storage.filtered_storage_abc import FilteredStorageABC
 from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.search_order import SearchOrder, NO_ORDER
+from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 
 
-class SecurityError(Exception):
-    pass
+@dataclass(frozen=True)
+class SecuredStorage(FilteredStorageABC):
+    storage: StorageABC
+    storage_meta: StorageMeta = None
 
-
-class SecuredStorage(FilteredStorage):
+    def __post_init__(self):
+        if not self.storage_meta:
+            object.__setattr__(self, 'storage_meta', self.storage.storage_meta)
 
     def filter_create(self, item: ExternalItemType) -> ExternalItemType:
-        if self.storage_meta.access_control.is_creatable(item):
-            return item
+        if not self.storage_meta.access_control.is_creatable(item):
+            raise PersistyError('create_forbidden')
+        return item
 
     def filter_update(self, item: ExternalItemType, updates: ExternalItemType) -> ExternalItemType:
-        if self.storage_meta.access_control.is_updatable(item):
+        if self.storage_meta.access_control.is_creatable(item):
             return item
 
     def filter_read(self, item: ExternalItemType) -> Optional[ExternalItemType]:

@@ -14,7 +14,7 @@ def logify(obj: T, methods: Optional[FrozenSet[str]] = None, logger: Optional[Lo
     attrs = {**cls.__dict__}
     for name, attr in attrs.items():
         if methods:
-            if name in methods:
+            if name not in methods:
                 continue
         elif name.startswith('__'):
             continue

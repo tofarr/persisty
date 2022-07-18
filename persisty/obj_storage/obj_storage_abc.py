@@ -1,61 +1,30 @@
 from abc import abstractmethod
-from dataclasses import dataclass
 from itertools import islice
-from typing import Optional, List, Iterator, TypeVar, Generic, Type
+from typing import Optional, List, Iterator, Generic
 
 from marshy.types import ExternalItemType
 
-from persisty.storage.batch_edit import BatchEditABC
+from persisty.obj_storage.obj_storage_meta import ObjStorageMeta, T, F, S, C, U
+from persisty.storage.batch_edit import BatchEditABC, Create, Update, Delete
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
-
-T = TypeVar('T')
-F = TypeVar('F')
-S = TypeVar('S')
-C = TypeVar('C')
-U = TypeVar('U')
+from persisty.storage.storage_abc import skip_to_page
 
 
-@dataclass(frozen=True)
 class ObjStorageABC(Generic[T, F, S, C, U]):
 
     @abstractmethod
     @property
-    def item_type(self) -> Type[T]:
+    def obj_storage_meta(self) -> ObjStorageMeta[T, F, S, C, U]:
         """ Get the type for items returned """
-
-    @abstractmethod
-    @property
-    def search_filter_type(self) -> Type[F]:
-        """ Get the type for items returned """
-
-    @abstractmethod
-    @property
-    def search_order_type(self) -> Type[S]:
-        """ Get the type for items returned """
-
-    @abstractmethod
-    @property
-    def create_input_type(self) -> Type[C]:
-        """ Get the type for items returned """
-
-    @abstractmethod
-    @property
-    def update_input_type(self) -> Type[U]:
-        """ Get the type for items returned """
-
-    @abstractmethod
-    @property
-    def batch_size(self) -> int:
-        """ Get the batch size for reads / edits """
 
     @abstractmethod
     def create(self, item: C) -> T:
-        """ Create an item """
+        """ Create an stored """
 
     @abstractmethod
     def read(self, key: str) -> Optional[ExternalItemType]:
-        """ Read an item from the data store """
+        """ Read an stored from the data store """
 
     async def read_batch(self, keys: List[str]) -> List[Optional[T]]:
         items = [self.read(key) for key in keys]
@@ -64,7 +33,7 @@ class ObjStorageABC(Generic[T, F, S, C, U]):
     def read_all(self, keys: Iterator[str]) -> Iterator[Optional[T]]:
         keys = iter(keys)
         while True:
-            batch_keys = list(islice(keys, self.batch_size))
+            batch_keys = list(islice(keys, self.obj_storage_meta.batch_size))
             if not batch_keys:
                 return
             items = self.read_batch(batch_keys)
@@ -72,44 +41,69 @@ class ObjStorageABC(Generic[T, F, S, C, U]):
 
     @abstractmethod
     def update(self, updates: U) -> Optional[T]:
-        """ Create an item in the data store """
+        """ Create an stored in the data store """
 
     @abstractmethod
     def delete(self, key: str) -> bool:
-        """ Delete an item from the data store. """
+        """ Delete an stored from the data store. """
 
-    @abstractmethod
     def search(self,
-               search_filter: Optional[F] = None,
-               search_order: Optional[S] = None,
+               search_filter_factory: Optional[F] = None,
+               search_order_factory: Optional[S] = None,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[T]:
-        """ Search this storage """
+        if limit is None:
+            limit = self.obj_storage_meta.batch_size
+        assert(limit <= self.obj_storage_meta.batch_size)
+        items = self.search_all(search_filter_factory, search_order_factory)
+        skip_to_page(page_key, items, self.obj_storage_meta.key_config)
+        items = list(islice(items, limit))
+        page_key = None
+        if len(items) == limit:
+            page_key = self.obj_storage_meta.key_config.get_key(items[-1])
+        return ResultSet(items, page_key)
 
-    @abstractmethod
     def search_all(self,
-                   search_filter: Optional[F] = None,
-                   search_order: Optional[S] = None
+                   search_filter_factory: Optional[F] = None,
+                   search_order_factory: Optional[S] = None
                    ) -> Iterator[ExternalItemType]:
-        """ Stream all matching items """
+        page_key = None
+        while True:
+            result_set = self.search(search_filter_factory, search_order_factory, page_key)
+            yield from result_set.results
+            page_key = result_set.next_page_key
+            if not page_key:
+                return
 
     @abstractmethod
-    def count(self, search_filter: Optional[S] = None) -> int:
+    def count(self, search_filter_factory: Optional[F] = None) -> int:
         """ Get a count of all matching items """
 
-    @abstractmethod
     async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
-        """
-        Do a batch edit and return a list of results. The results should contain all the same edits in the same
-        order
-        """
+        assert(len(edits) <= self.obj_storage_meta.batch_size)
+        results = []
+        for edit in edits:
+            try:
+                if isinstance(edit, Create):
+                    item = self.create(edit.item)
+                    results.append(BatchEditResult(edit, bool(item)))
+                elif isinstance(edit, Update):
+                    item = self.update(edit.updates)
+                    results.append(BatchEditResult(edit, bool(item)))
+                elif isinstance(edit, Delete):
+                    deleted = self.delete(edit.key)
+                    results.append(BatchEditResult(edit, bool(deleted)))
+                else:
+                    results.append(BatchEditResult(edit, False, 'unsupported_edit_type', edit.__class__.__name__))
+            except Exception as e:
+                results.append(BatchEditResult(edit, False, 'exception', str(e)))
+        return results
 
-    @abstractmethod
     def edit_all(self, edits: Iterator[BatchEditABC]):
         edits = iter(edits)
         while True:
-            page = list(islice(edits, self.batch_size))
+            page = list(islice(edits, self.obj_storage_meta.batch_size))
             if not page:
                 break
             results = self.edit_batch(page)

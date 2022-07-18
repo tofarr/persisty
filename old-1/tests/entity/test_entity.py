@@ -109,7 +109,7 @@ class TestEntity(TestCase):
             CubeEntity('from_tray', 3)
 
     def test_non_init_fields(self):
-        """ Test a weird situation where we have a item that is not part of init """
+        """ Test a weird situation where we have a stored that is not part of init """
 
         @dataclass
         class Cube:

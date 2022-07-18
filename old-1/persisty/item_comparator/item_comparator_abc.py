@@ -9,4 +9,4 @@ class ItemComparatorABC(ABC, Generic[T]):
 
     @abstractmethod
     def key(self, item: T) -> Any:
-        """ Determine if the item given matches this search_filter. """
+        """ Determine if the stored given matches this search_filter. """

@@ -4,7 +4,7 @@ from typing import Tuple, Optional, Iterator, Any
 from marshy.types import ExternalItemType
 
 from persisty.storage.search_filter import SearchFilterABC, INCLUDE_ALL
-from persisty.storage.search_order import SearchOrder, NO_ORDER
+from persisty.storage.search_order import SearchOrderABC
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.util.encrypt_at_rest import encrypt, decrypt
@@ -61,9 +61,9 @@ class CompositeStorage(StorageABC):
 
     def search_all(self,
                    search_filter: SearchFilterABC = INCLUDE_ALL,
-                   search_order: SearchOrder = NO_ORDER
+                   search_order: Optional[SearchOrderABC] = None
                    ) -> Iterator[ExternalItemType]:
-        if search_order == NO_ORDER:
+        if not search_order:
             for storage in self.storage:
                 yield from storage.search_all(search_filter)
             return
@@ -92,7 +92,7 @@ class SubIterator:
         if self.next_item is None:
             self.next_item = next(self.iterator, None)
 
-    def sort_key(self, search_order: SearchOrder) -> Tuple[bool, Any]:
+    def sort_key(self, search_order: SearchOrderABC) -> Tuple[bool, Any]:
         if not self.next_item:
             return True, ""
         return False, search_order.key(self.next_item)

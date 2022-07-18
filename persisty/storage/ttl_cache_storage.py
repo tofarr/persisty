@@ -1,25 +1,28 @@
 from copy import deepcopy
 from time import time
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Generic, TypeVar
 
 from dataclasses import dataclass, field
 
-from marshy.types import ExternalType, ExternalItemType
+from marshy import dump
+from marshy.types import ExternalItemType
 
 from persisty.storage.batch_edit import BatchEditABC, Delete, Update
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
 from persisty.storage.search_filter.include_all import INCLUDE_ALL
 from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.search_order import SearchOrder, NO_ORDER
+from persisty.storage.search_order import SearchOrderABC
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.util import secure_hash
 
+T = TypeVar('T')
+
 
 @dataclass(frozen=True)
-class TTLEntry:
-    value: ExternalType
+class TTLEntry(Generic[T]):
+    value: T
     expire_at: int
 
 
@@ -96,11 +99,11 @@ class TTLCacheStorage(StorageABC):
 
     def search(self,
                search_filter: SearchFilterABC = INCLUDE_ALL,
-               search_order: SearchOrder = NO_ORDER,
+               search_order: Optional[SearchOrderABC] = None,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[ExternalItemType]:
-        result_set_key = [deepcopy(i) for i in (search_filter, search_order, page_key, limit)]
+        result_set_key = [dump(search_filter, SearchFilterABC), dump(search_order, SearchOrderABC), page_key, limit]
         result_set_key = secure_hash(result_set_key)
         now = int(time())
         entry = self.cached_result_sets.get(result_set_key)

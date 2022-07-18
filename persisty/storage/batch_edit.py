@@ -16,7 +16,7 @@ class BatchEditABC(ABC):
 
     @abstractmethod
     def get_key(self, key_config: KeyConfigABC) -> str:
-        """ Get the key for the item being edited """
+        """ Get the key for the stored being edited """
 
 
 @dataclass

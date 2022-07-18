@@ -15,8 +15,8 @@ class KeyConfigABC(ABC, Generic[T]):
 
     @abstractmethod
     def get_key(self, item: T) -> str:
-        """ Get the key for the item given """
+        """ Get the key for the stored given """
 
     @abstractmethod
     def set_key(self, item: T, key: str):
-        """ Set the key for the item given """
+        """ Set the key for the stored given """

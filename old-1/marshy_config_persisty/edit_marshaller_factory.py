@@ -26,5 +26,5 @@ class EditMarshallerFactory(MarshallerFactoryABC):
             return ObjMarshaller(Page, (
                 AttrConfig('edit_type', 'edit_type', edit_type_marshaller, True, True),
                 AttrConfig('key', 'key', key_marshaller, True, True),
-                AttrConfig('item', 'item', item_marshaller, True, True)
+                AttrConfig('stored', 'stored', item_marshaller, True, True)
             ))

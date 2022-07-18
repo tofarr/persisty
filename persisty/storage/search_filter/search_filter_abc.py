@@ -15,7 +15,7 @@ class SearchFilterABC(ABC):
 
     @abstractmethod
     def match(self, item: ExternalType, fields: Tuple[Field, ...]) -> bool:
-        """ Determine if the item given matches this search_filter """
+        """ Determine if the stored given matches this search_filter """
 
     def __and__(self, obj_filter: SearchFilterABC) -> SearchFilterABC:
         if not isinstance(obj_filter, SearchFilterABC):

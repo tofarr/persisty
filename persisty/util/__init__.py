@@ -6,7 +6,10 @@ import os
 import re
 import sys
 
+from dataclasses import fields
 from marshy.types import ExternalType, ExternalItemType
+
+from persisty.util.undefined import UNDEFINED
 
 _PATTERN = re.compile(r'(?<!^)(?=[A-Z])')
 
@@ -55,3 +58,13 @@ def get_logger(name: str):
     logger.addHandler(logging.StreamHandler(sys.stdout))
     logger.setLevel(LEVEL)
     return logger
+
+
+def dataclass_to_params(dataclass):
+    """ Convert a dataclass to a dict, skipping any values which are UNDEFINED """
+    items = {
+        field.name: getattr(dataclass, field.name)
+        for field in fields(dataclass)
+        if getattr(dataclass, field.name) is not UNDEFINED
+    }
+    return items
