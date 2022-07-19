@@ -4,10 +4,12 @@ from typing import Callable, Optional, TypeVar, FrozenSet
 
 from persisty.util import get_logger
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
-def logify(obj: T, methods: Optional[FrozenSet[str]] = None, logger: Optional[Logger] = None) -> T:
+def logify(
+    obj: T, methods: Optional[FrozenSet[str]] = None, logger: Optional[Logger] = None
+) -> T:
     cls = obj.__class__
     if logger is None:
         logger = get_logger(cls.__name__)
@@ -16,7 +18,7 @@ def logify(obj: T, methods: Optional[FrozenSet[str]] = None, logger: Optional[Lo
         if methods:
             if name not in methods:
                 continue
-        elif name.startswith('__'):
+        elif name.startswith("__"):
             continue
         if callable(attr):
             attrs[name] = logify_callable(name, attr, logger)

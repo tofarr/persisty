@@ -4,7 +4,7 @@ from typing import Optional, TypeVar
 
 from persisty.storage.batch_edit import BatchEditABC
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass

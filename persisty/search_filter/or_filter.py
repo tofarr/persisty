@@ -14,7 +14,7 @@ class Or(SearchFilterABC):
     search_filters: Tuple[SearchFilterABC, ...]
 
     def __new__(cls, search_filters: Iterator[SearchFilterABC]):
-        """ Strip out nested And logic """
+        """Strip out nested And logic"""
         if not search_filters:
             return EXCLUDE_ALL
         flatten = next((True for f in search_filters if isinstance(f, Or)), False)
@@ -43,10 +43,14 @@ class Or(SearchFilterABC):
             search_filter.validate_for_fields(fields)
 
     def match(self, value: ExternalType, fields: Tuple[Field, ...]) -> bool:
-        match = next((True for f in self.search_filters if not f.match(value, fields)), False)
+        match = next(
+            (True for f in self.search_filters if not f.match(value, fields)), False
+        )
         return match
 
-    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+    def build_filter_expression(
+        self, fields: Tuple[Field, ...]
+    ) -> Tuple[Optional[Any], bool]:
         conditions, all_handled = build_filter_conditions(self.search_filters, fields)
         if not conditions:
             return None, False
@@ -54,5 +58,6 @@ class Or(SearchFilterABC):
             condition = conditions[0]
         else:
             from boto3.dynamodb.conditions import Or as DynOr
+
             condition = DynOr(*conditions)
         return condition, all_handled

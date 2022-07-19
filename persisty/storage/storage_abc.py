@@ -17,20 +17,21 @@ class StorageABC(ABC):
     """
     General contract for storage object, allowing CRUD, search, and batch updates for objects
     """
+
     @abstractmethod
     def get_storage_meta(self) -> StorageMeta:
-        """ Get the meta for this storage """
+        """Get the meta for this storage"""
 
     @abstractmethod
     def create(self, item: ExternalItemType) -> ExternalItemType:
-        """ Create an stored in the data store """
+        """Create an stored in the data store"""
 
     @abstractmethod
     def read(self, key: str) -> Optional[ExternalItemType]:
-        """ Read an stored from the data store """
+        """Read an stored from the data store"""
 
-    async def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
-        assert(len(keys) <= self.get_storage_meta().batch_size)
+    def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
+        assert len(keys) <= self.get_storage_meta().batch_size
         items = [self.read(key) for key in keys]
         return items
 
@@ -44,10 +45,9 @@ class StorageABC(ABC):
             yield from items
 
     @abstractmethod
-    def update(self,
-               updates: ExternalItemType,
-               search_filter: SearchFilterABC = INCLUDE_ALL
-               ) -> Optional[ExternalItemType]:
+    def update(
+        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    ) -> Optional[ExternalItemType]:
         """
         Update (a partial set of values from) an item based upon its key and the constraint given. By convention
         any UNDEFINED value is ignored. Return the full new version of the item if an update occurred
@@ -55,17 +55,18 @@ class StorageABC(ABC):
 
     @abstractmethod
     def delete(self, key: str) -> bool:
-        """ Delete an stored from the data store. """
+        """Delete an stored from the data store."""
 
-    def search(self,
-               search_filter: SearchFilterABC = INCLUDE_ALL,
-               search_order: Optional[SearchOrder] = None,
-               page_key: Optional[str] = None,
-               limit: Optional[int] = None
-               ) -> ResultSet[ExternalItemType]:
+    def search(
+        self,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
+        search_order: Optional[SearchOrder] = None,
+        page_key: Optional[str] = None,
+        limit: Optional[int] = None,
+    ) -> ResultSet[ExternalItemType]:
         if limit is None:
             limit = self.get_storage_meta().batch_size
-        assert(limit <= self.get_storage_meta().batch_size)
+        assert limit <= self.get_storage_meta().batch_size
         items = self.search_all(search_filter, search_order)
         skip_to_page(page_key, items, self.get_storage_meta().key_config)
         items = list(islice(items, limit))
@@ -74,10 +75,11 @@ class StorageABC(ABC):
             page_key = self.get_storage_meta().key_config.get_key(items[-1])
         return ResultSet(items, page_key)
 
-    def search_all(self,
-                   search_filter: SearchFilterABC = INCLUDE_ALL,
-                   search_order: Optional[SearchOrder] = None
-                   ) -> Iterator[ExternalItemType]:
+    def search_all(
+        self,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
+        search_order: Optional[SearchOrder] = None,
+    ) -> Iterator[ExternalItemType]:
         page_key = None
         while True:
             result_set = self.search(search_filter, search_order, page_key)
@@ -88,14 +90,14 @@ class StorageABC(ABC):
 
     @abstractmethod
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
-        """ Create an stored in the data store """
+        """Create an stored in the data store"""
 
-    async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
+    def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
         """
         Do a batch edit and return a list of results. The results should contain all the same edits in the same
         order
         """
-        assert(len(edits) <= self.get_storage_meta().batch_size)
+        assert len(edits) <= self.get_storage_meta().batch_size
         return edit_batch(self, edits)
 
     def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
@@ -137,16 +139,20 @@ def edit_batch(storage, edits: List[BatchEditABC]) -> List[BatchEditResult]:
                 deleted = storage.delete(edit.key)
                 results.append(BatchEditResult(edit, bool(deleted)))
             else:
-                results.append(BatchEditResult(edit, False, 'unsupported_edit_type', edit.__class__.__name__))
+                results.append(
+                    BatchEditResult(
+                        edit, False, "unsupported_edit_type", edit.__class__.__name__
+                    )
+                )
         except Exception as e:
-            results.append(BatchEditResult(edit, False, 'exception', str(e)))
+            results.append(BatchEditResult(edit, False, "exception", str(e)))
     return results
 
 
 def search(storage, storage_meta, search_filter, search_order, page_key, limit):
     if limit is None:
         limit = storage_meta.batch_size
-    assert (limit <= storage_meta.batch_size)
+    assert limit <= storage_meta.batch_size
     items = storage.search_all(search_filter, search_order)
     skip_to_page(page_key, items, storage_meta.key_config)
     items = list(islice(items, limit))

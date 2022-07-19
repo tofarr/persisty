@@ -2,13 +2,13 @@ from abc import ABC
 
 
 class SingletonABC(ABC):
-    """ Abstract singleton implementation """
+    """Abstract singleton implementation"""
 
     def __new__(cls):
-        instance = getattr(cls, '__instance', None)
+        instance = getattr(cls, "__instance", None)
         if instance is None:
             instance = object.__new__(cls)
-            setattr(cls, '__instance', instance)
+            setattr(cls, "__instance", instance)
         return instance
 
     def __repr__(self):

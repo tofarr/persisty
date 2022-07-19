@@ -8,17 +8,20 @@ from persisty.storage.storage_abc import StorageABC
 
 
 class PersistyContextABC(ABC):
-
     @abstractmethod
-    def get_storage(self, name: str, authorization: Authorization) -> Optional[StorageABC]:
-        """ Get the storage with the name given """
+    def get_storage(
+        self, name: str, authorization: Authorization
+    ) -> Optional[StorageABC]:
+        """Get the storage with the name given"""
 
     @abstractmethod
     def get_meta_storage(self, authorization: Authorization) -> MetaStorageABC:
-        """ Get the storage for meta. Used to grab info about this context. """
+        """Get the storage for meta. Used to grab info about this context."""
 
     # noinspection PyMethodMayBeStatic, PyUnusedLocal
-    def get_timestamp_storage(self, authorization: Authorization) -> Optional[TimestampStorageABC]:
+    def get_timestamp_storage(
+        self, authorization: Authorization
+    ) -> Optional[TimestampStorageABC]:
         """
         Get a read only storage object which contains timestamp info for other storage objects.
         Useful for caching.

@@ -17,7 +17,7 @@ from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.util import secure_hash
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -38,9 +38,11 @@ class TTLCacheStorage(StorageABC):
         self.cached_result_sets.clear()
 
     def get_storage_meta(self) -> StorageMeta:
-        return self.get_storage().get_storage_meta()
+        return self.storage.get_storage_meta()
 
-    def store_item_in_cache(self, key: str, item: ExternalItemType, expire_at: Optional[int] = None):
+    def store_item_in_cache(
+        self, key: str, item: ExternalItemType, expire_at: Optional[int] = None
+    ):
         if expire_at is None:
             expire_at = int(time()) + self.ttl
         self.cache[key] = TTLEntry(deepcopy(item), expire_at)
@@ -53,7 +55,7 @@ class TTLCacheStorage(StorageABC):
             return deepcopy(entry.value)
 
     def create(self, item: ExternalItemType) -> ExternalItemType:
-        item = self.get_storage().create(item)
+        item = self.storage.create(item)
         key = self.get_storage_meta().key_config.get_key(item)
         self.store_item_in_cache(key, item)
         return item
@@ -61,7 +63,7 @@ class TTLCacheStorage(StorageABC):
     def read(self, key: str) -> Optional[ExternalItemType]:
         item = self.load_item_from_cache(key)
         if item is None:
-            item = self.get_storage().read(key)
+            item = self.storage.read(key)
             if item:
                 self.store_item_in_cache(key, item)
         return item
@@ -71,7 +73,7 @@ class TTLCacheStorage(StorageABC):
         items_by_key = {key: self.load_item_from_cache(key, now) for key in keys}
         keys_to_load = [key for key, item in items_by_key.values() if item is None]
         if keys_to_load:
-            items = await self.get_storage().read_batch(keys_to_load)
+            items = self.storage.read_batch(keys_to_load)
             key_config = self.get_storage_meta().key_config
             for item in items:
                 if item:
@@ -81,39 +83,46 @@ class TTLCacheStorage(StorageABC):
         items = [items_by_key.get(key) for key in keys]
         return items
 
-    def update(self,
-               updates: ExternalItemType,
-               search_filter: SearchFilterABC = INCLUDE_ALL
-               ) -> Optional[ExternalItemType]:
-        item = self.get_storage().update(updates, search_filter)
+    def update(
+        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    ) -> Optional[ExternalItemType]:
+        item = self.storage.update(updates, search_filter)
         if item:
             key = self.get_storage_meta().key_config.get_key(item)
             self.store_item_in_cache(key, item)
         return item
 
     def delete(self, key: str) -> bool:
-        destroyed = self.get_storage().delete(key)
+        destroyed = self.storage.delete(key)
         if key in self.cache:
             del self.cache[key]
         return destroyed
 
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
-        return self.get_storage().count(search_filter)
+        return self.storage.count(search_filter)
 
-    def search(self,
-               search_filter: SearchFilterABC = INCLUDE_ALL,
-               search_order: Optional[SearchOrder] = None,
-               page_key: Optional[str] = None,
-               limit: Optional[int] = None
-               ) -> ResultSet[ExternalItemType]:
-        result_set_key = [dump(search_filter, SearchFilterABC), dump(search_order, SearchOrder), page_key, limit]
+    def search(
+        self,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
+        search_order: Optional[SearchOrder] = None,
+        page_key: Optional[str] = None,
+        limit: Optional[int] = None,
+    ) -> ResultSet[ExternalItemType]:
+        result_set_key = [
+            dump(search_filter, SearchFilterABC),
+            dump(search_order, SearchOrder),
+            page_key,
+            limit,
+        ]
         result_set_key = secure_hash(result_set_key)
         now = int(time())
         entry = self.cached_result_sets.get(result_set_key)
         if entry and entry.expire_at > now:
-            results = [self.load_item_from_cache(key, now) for key in entry.value['keys']]
-            return ResultSet(results, entry.value['next_page_key'])
-        result_set = self.get_storage().search(search_filter, search_order, page_key, limit)
+            results = [
+                self.load_item_from_cache(key, now) for key in entry.value["keys"]
+            ]
+            return ResultSet(results, entry.value["next_page_key"])
+        result_set = self.storage.search(search_filter, search_order, page_key, limit)
         key_config = self.get_storage_meta().key_config
         expire_at = int(time()) + self.ttl
         keys = []
@@ -125,8 +134,8 @@ class TTLCacheStorage(StorageABC):
         self.cached_result_sets[result_set_key] = TTLEntry(entry, expire_at)
         return result_set
 
-    async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
-        results = await self.get_storage().edit_batch(edits)
+    def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
+        results = self.storage.edit_batch(edits)
         for result in results:
             if not result.success:
                 continue

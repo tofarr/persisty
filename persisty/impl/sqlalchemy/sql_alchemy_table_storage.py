@@ -65,7 +65,7 @@ class SqlAlchemyTableStorage(StorageABC):
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         stmt = select([func.count()]).select_from(self.table)
 
-    async def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
+    def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
         pass
 
     def search(self,

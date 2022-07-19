@@ -4,3 +4,4 @@ validators
 pyaes
 sqlalchemy
 boto3
+black

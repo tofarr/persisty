@@ -18,7 +18,9 @@ class SecuredStorage(WrapperStorageABC):
 
     def __post_init__(self):
         if not self.storage_meta:
-            object.__setattr__(self, 'storage_meta', self.get_storage().get_storage_meta())
+            object.__setattr__(
+                self, "storage_meta", self.get_storage().get_storage_meta()
+            )
 
     def get_storage(self) -> StorageABC:
         return self.storage
@@ -28,10 +30,12 @@ class SecuredStorage(WrapperStorageABC):
 
     def filter_create(self, item: ExternalItemType) -> ExternalItemType:
         if not self.get_storage_meta().access_control.is_creatable(item):
-            raise PersistyError('create_forbidden')
+            raise PersistyError("create_forbidden")
         return item
 
-    def filter_update(self, old_item: ExternalItemType, updates: ExternalItemType) -> ExternalItemType:
+    def filter_update(
+        self, old_item: ExternalItemType, updates: ExternalItemType
+    ) -> ExternalItemType:
         if self.get_storage_meta().access_control.is_updatable(old_item, updates):
             return updates
 
@@ -42,7 +46,9 @@ class SecuredStorage(WrapperStorageABC):
     def allow_delete(self, item: ExternalItemType) -> bool:
         return self.get_storage_meta().access_control.is_deletable(item)
 
-    def filter_search_filter(self, search_filter: SearchFilterABC) -> Tuple[SearchFilterABC, bool]:
+    def filter_search_filter(
+        self, search_filter: SearchFilterABC
+    ) -> Tuple[SearchFilterABC, bool]:
         access_control = self.get_storage_meta().access_control
         if not access_control.is_searchable():
             return NO_ACCESS, True

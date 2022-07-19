@@ -25,7 +25,7 @@ class StorageMetaSearchFilter(SearchFilterFactoryABC):
 
 
 class StorageMetaSearchOrderField(Enum):
-    NAME = 'name'
+    NAME = "name"
     # Future search fields to be added here...
 
 
@@ -41,25 +41,39 @@ class StorageMetaSearchOrder(SearchOrderFactoryABC):
         return storage.name
 
 
-META_KEY_CONFIG = FieldKeyConfig('name')
-CreateStorageMetaInput = with_undefined_state(StorageMeta, 'CreateStorageMetaInput')
-UpdateStorageMetaInput = with_undefined_state(StorageMeta, 'UpdateStorageMetaInput')
+META_KEY_CONFIG = FieldKeyConfig("name")
+CreateStorageMetaInput = with_undefined_state(StorageMeta, "CreateStorageMetaInput")
+UpdateStorageMetaInput = with_undefined_state(StorageMeta, "UpdateStorageMetaInput")
 STORAGE_META_MARSHALLER = get_default_context().get_marshaller(StorageMeta)
 
 
-class MetaStorageABC(ObjStorageABC[StorageMeta, StorageMetaSearchFilter, StorageMetaSearchOrder, CreateStorageMetaInput,
-                                   UpdateStorageMetaInput], ABC):
-
+class MetaStorageABC(
+    ObjStorageABC[
+        StorageMeta,
+        StorageMetaSearchFilter,
+        StorageMetaSearchOrder,
+        CreateStorageMetaInput,
+        UpdateStorageMetaInput,
+    ],
+    ABC,
+):
     @property
     @abstractmethod
     def access_control(self) -> ObjAccessControlABC[StorageMeta]:
-        """ Get the access control for this storage """
+        """Get the access control for this storage"""
 
     @property
-    def obj_storage_meta(self) -> ObjStorageMeta[StorageMeta, StorageMetaSearchFilter, StorageMetaSearchOrder,
-                                                 CreateStorageMetaInput, UpdateStorageMetaInput]:
+    def obj_storage_meta(
+        self,
+    ) -> ObjStorageMeta[
+        StorageMeta,
+        StorageMetaSearchFilter,
+        StorageMetaSearchOrder,
+        CreateStorageMetaInput,
+        UpdateStorageMetaInput,
+    ]:
         return ObjStorageMeta(
-            name='meta',
+            name="meta",
             item_type=StorageMeta,
             search_filter_factory_type=StorageMetaSearchFilter,
             search_order_factory_type=StorageMetaSearchOrder,
@@ -67,8 +81,10 @@ class MetaStorageABC(ObjStorageABC[StorageMeta, StorageMetaSearchFilter, Storage
             update_input_type=UpdateStorageMetaInput,
             key_config=META_KEY_CONFIG,
             access_control=self.access_control,
-            cache_control=ObjCacheControl(SecureHashCacheControl(), STORAGE_META_MARSHALLER),
-            batch_size=100
+            cache_control=ObjCacheControl(
+                SecureHashCacheControl(), STORAGE_META_MARSHALLER
+            ),
+            batch_size=100,
         )
 
     @property

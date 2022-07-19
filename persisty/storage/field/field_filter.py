@@ -43,6 +43,7 @@ class FieldFilterOp(Enum):
     Operations which attr search_filter supports. Provides a definitive set of limited attributes that storage
     implementations may implement. (e.g.: sql, dynamodb)
     """
+
     contains = partial(_contains)
     endswith = partial(_endswith)
     eq = operator.eq
@@ -66,7 +67,7 @@ class FieldFilter(SearchFilterABC):
             field = next(field for field in fields if field.name == self.name)
             assert field.is_readable and self.op in field.permitted_filter_ops
         except (StopIteration, AssertionError):
-            raise ValueError('field_filter_invalid_for_fields')
+            raise ValueError("field_filter_invalid_for_fields")
 
     def match(self, item: ExternalItemType, fields: Tuple[Field, ...] = None) -> bool:
         value = item.get(self.name)
@@ -76,10 +77,13 @@ class FieldFilter(SearchFilterABC):
         except TypeError:
             return False  # Comparison failed
 
-    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+    def build_filter_expression(
+        self, fields: Tuple[Field, ...]
+    ) -> Tuple[Optional[Any], bool]:
         from boto3.dynamodb.conditions import Attr
+
         attr = Attr(self.name)
-        if self.op in {'contains', 'eq', 'gt', 'gte', 'lt', 'lte', 'ne'}:
+        if self.op in {"contains", "eq", "gt", "gte", "lt", "lte", "ne"}:
             condition = getattr(attr, self.op.name)(self.value)
             return condition, True
         elif self.op == FieldFilterOp.startswith:

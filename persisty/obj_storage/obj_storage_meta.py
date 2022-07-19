@@ -12,16 +12,17 @@ from persisty.key_config.obj_key_config_abc import ObjKeyConfigABC
 from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
 from persisty.search_order.search_order_factory_abc import SearchOrderFactoryABC
 
-T = TypeVar('T')
-F = TypeVar('F', bound=SearchFilterFactoryABC)
-S = TypeVar('S', bound=SearchOrderFactoryABC)
-C = TypeVar('C')
-U = TypeVar('U')
+T = TypeVar("T")
+F = TypeVar("F", bound=SearchFilterFactoryABC)
+S = TypeVar("S", bound=SearchOrderFactoryABC)
+C = TypeVar("C")
+U = TypeVar("U")
 
 
 @dataclass(frozen=True)
 class ObjStorageMeta(Generic[T]):
-    """ Storage meta for object storage """
+    """Storage meta for object storage"""
+
     name: str
     item_type: Type[T]
     search_filter_factory_type: Type[F]

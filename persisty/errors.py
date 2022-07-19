@@ -1,4 +1,2 @@
-
-
 class PersistyError(Exception):
     pass

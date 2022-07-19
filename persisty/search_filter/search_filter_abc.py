@@ -11,35 +11,39 @@ if TYPE_CHECKING:
 
 
 class SearchFilterABC(SearchFilterFactoryABC, ABC):
-
     @abstractmethod
     def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
-        """ Validate that this search_filter is applicable for the fields given """
+        """Validate that this search_filter is applicable for the fields given"""
 
     @abstractmethod
     def match(self, item: ExternalType, fields: Tuple[Field, ...]) -> bool:
-        """ Determine if the stored given matches this search_filter """
+        """Determine if the stored given matches this search_filter"""
 
     def __and__(self, obj_filter: SearchFilterABC) -> SearchFilterABC:
         if not isinstance(obj_filter, SearchFilterABC):
-            raise TypeError(f'SearchFilterABC:{obj_filter}')
+            raise TypeError(f"SearchFilterABC:{obj_filter}")
         from persisty.search_filter.and_filter import And
+
         return And((self, obj_filter))
 
     def __or__(self, obj_filter: SearchFilterABC) -> SearchFilterABC:
         if not isinstance(obj_filter, SearchFilterABC):
-            raise TypeError(f'SearchFilterABC:{obj_filter}')
+            raise TypeError(f"SearchFilterABC:{obj_filter}")
         from persisty.search_filter.or_filter import Or
+
         return Or((self, obj_filter))
 
     def __invert__(self) -> SearchFilterABC:
         from persisty.search_filter.not_filter import Not
+
         return Not(self)
 
-    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+    def build_filter_expression(
+        self, fields: Tuple[Field, ...]
+    ) -> Tuple[Optional[Any], bool]:
         """
         Build a dynamodb filter expression from this search filter if possible, and return it. Return True if this
-        filter was completely represented by the condition, False otherwise """
+        filter was completely represented by the condition, False otherwise"""
         return None, False
 
     def to_search_filter(self) -> SearchFilterABC:

@@ -16,7 +16,7 @@ class SearchOrderField:
         for f in fields:
             if f.name == self.field:
                 return
-        raise ValueError(f'search_order_invalid:{self.field}')
+        raise ValueError(f"search_order_invalid:{self.field}")
 
     def sort(self, items: Iterator[ExternalItemType]) -> Iterator[ExternalItemType]:
         items = sorted(items, key=self.key)
@@ -25,7 +25,7 @@ class SearchOrderField:
     def key(self, item: ExternalItemType) -> Any:
         value: ExternalType = item.get(self.field, UNDEFINED)
         if value in (None, UNDEFINED):
-            return not self.desc, ''
+            return not self.desc, ""
         else:
             return self.desc, value
 

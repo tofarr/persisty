@@ -14,7 +14,7 @@ class Not(SearchFilterABC):
     search_filter: SearchFilterABC
 
     def __new__(cls, search_filter: SearchFilterABC):
-        """ Strip out direct nested Not """
+        """Strip out direct nested Not"""
         if isinstance(search_filter, Not):
             return search_filter.search_filter
         elif isinstance(search_filter, EXCLUDE_ALL):

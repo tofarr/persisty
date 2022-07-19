@@ -34,10 +34,10 @@ class TimestampSearchFilter(SearchFilterFactoryABC):
 
 
 class TimestampSearchField(Enum):
-    NAME = 'name'
-    CREATED_AT = 'created_at'
-    UPDATED_AT = 'updated_at'
-    ITEMS_UPDATED_AT = 'items_updated_at'
+    NAME = "name"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+    ITEMS_UPDATED_AT = "items_updated_at"
 
 
 @dataclass
@@ -57,11 +57,18 @@ class TimestampUpdateInput:
     content_updated_at: str
 
 
-TimestampStorageABC = ObjStorageABC[StorageTimestamp, TimestampSearchFilter, TimestampSearchOrder, TimestampCreateInput,
-                                    TimestampUpdateInput]
+TimestampStorageABC = ObjStorageABC[
+    StorageTimestamp,
+    TimestampSearchFilter,
+    TimestampSearchOrder,
+    TimestampCreateInput,
+    TimestampUpdateInput,
+]
 
 
-def timestamp_storage(storage: StorageABC, marshaller_context: MarshallerContext) -> TimestampStorageABC:
+def timestamp_storage(
+    storage: StorageABC, marshaller_context: MarshallerContext
+) -> TimestampStorageABC:
     return ObjStorage(
         storage=storage,
         item_marshaller=marshaller_context.get_marshaller(StorageTimestamp),
@@ -69,7 +76,7 @@ def timestamp_storage(storage: StorageABC, marshaller_context: MarshallerContext
         search_filter_factory_type=TimestampSearchFilter,
         search_order_factory_type=TimestampSearchOrder,
         create_input_marshaller=marshaller_context.get_marshaller(TimestampCreateInput),
-        update_input_marshaller=marshaller_context.get_marshaller(TimestampUpdateInput)
+        update_input_marshaller=marshaller_context.get_marshaller(TimestampUpdateInput),
     )
 
 
@@ -83,10 +90,9 @@ class TimestampUpdateStorage(WrapperStorageABC):
         self.update_timestamp()
         return item
 
-    def update(self,
-               updates: ExternalItemType,
-               search_filter: SearchFilterABC = INCLUDE_ALL
-               ) -> Optional[ExternalItemType]:
+    def update(
+        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    ) -> Optional[ExternalItemType]:
         item = self.get_storage().update(updates)
         if item:
             self.update_timestamp()
@@ -98,8 +104,8 @@ class TimestampUpdateStorage(WrapperStorageABC):
             self.update_timestamp()
         return result
 
-    async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
-        result = await self.get_storage().edit_batch(edits)
+    def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
+        result = self.get_storage().edit_batch(edits)
         if next((True for r in result if r.success), False):
             self.update_timestamp()
         return result
@@ -113,7 +119,9 @@ class TimestampUpdateStorage(WrapperStorageABC):
             self.update_timestamp()
 
     def update_timestamp(self):
-        self.timestamp_storage.update(dict(
-            name=self.get_storage_meta().name,
-            content_updated_at=datetime.now().isoformat()
-        ))
+        self.timestamp_storage.update(
+            dict(
+                name=self.get_storage_meta().name,
+                content_updated_at=datetime.now().isoformat(),
+            )
+        )

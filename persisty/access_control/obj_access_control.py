@@ -36,8 +36,16 @@ class ObjAccessControl(ObjAccessControlABC[T]):
     def is_searchable(self) -> bool:
         return self.access_control.is_searchable()
 
-    def transform_search_filter(self, search_filter_factory: Optional[F]) -> Optional[F, bool]:
-        search_filter = search_filter_factory.to_search_filter() if search_filter_factory else INCLUDE_ALL
-        search_filter, handled = self.access_control.transform_search_filter(search_filter)
+    def transform_search_filter(
+        self, search_filter_factory: Optional[F]
+    ) -> Optional[F, bool]:
+        search_filter = (
+            search_filter_factory.to_search_filter()
+            if search_filter_factory
+            else INCLUDE_ALL
+        )
+        search_filter, handled = self.access_control.transform_search_filter(
+            search_filter
+        )
         # This works because all search filters are immutable search filter factories (returning self)
         return search_filter, handled

@@ -13,7 +13,7 @@ class And(SearchFilterABC):
     search_filters: Tuple[SearchFilterABC, ...]
 
     def __new__(cls, search_filters: Iterable[SearchFilterABC]):
-        """ Strip out nested And logic """
+        """Strip out nested And logic"""
         if not search_filters:
             return INCLUDE_ALL
         flatten = next((True for f in search_filters if isinstance(f, And)), False)
@@ -42,10 +42,14 @@ class And(SearchFilterABC):
             search_filter.validate_for_fields(fields)
 
     def match(self, value: ExternalType, fields: Tuple[Field, ...]) -> bool:
-        match = next((False for f in self.search_filters if not f.match(value, fields)), True)
+        match = next(
+            (False for f in self.search_filters if not f.match(value, fields)), True
+        )
         return match
 
-    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+    def build_filter_expression(
+        self, fields: Tuple[Field, ...]
+    ) -> Tuple[Optional[Any], bool]:
         conditions, all_handled = build_filter_conditions(self.search_filters, fields)
         if not conditions:
             return None, False
@@ -53,13 +57,14 @@ class And(SearchFilterABC):
             condition = conditions[0]
         else:
             from boto3.dynamodb.conditions import And as DynAnd
+
             condition = DynAnd(*conditions)
         return condition, all_handled
 
 
-def build_filter_conditions(search_filters: Tuple[SearchFilterABC, ...],
-                            fields: Tuple[Field, ...]
-                            ) -> Tuple[List[Any], bool]:
+def build_filter_conditions(
+    search_filters: Tuple[SearchFilterABC, ...], fields: Tuple[Field, ...]
+) -> Tuple[List[Any], bool]:
     conditions = []
     all_handled = True
     for search_filter in search_filters:

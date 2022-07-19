@@ -2,7 +2,7 @@ from typing import List, TypeVar, Generic
 
 from dataclasses import dataclass
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass

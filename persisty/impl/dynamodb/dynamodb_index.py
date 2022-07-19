@@ -11,9 +11,9 @@ class DynamodbIndex:
     sk: str
 
     def to_schema(self):
-        schema = [dict(AttributeName=self.pk, KeyType='HASH')]
+        schema = [dict(AttributeName=self.pk, KeyType="HASH")]
         if self.sk:
-            schema.append(dict(AttributeName=self.sk, KeyType='RANGE'))
+            schema.append(dict(AttributeName=self.sk, KeyType="RANGE"))
         return schema
 
     def to_condition_expression(self, item: ExternalItemType):
@@ -33,7 +33,7 @@ class DynamodbIndex:
 def from_schema(schema: List[Dict]):
     assert len(schema) == 1 or len(schema) == 2
     index = DynamodbIndex(
-        pk=next(a['AttributeName'] for a in schema if a['KeyType'] == 'HASH'),
-        sk=next((a['AttributeName'] for a in schema if a['KeyType'] == 'RANGE'), None)
+        pk=next(a["AttributeName"] for a in schema if a["KeyType"] == "HASH"),
+        sk=next((a["AttributeName"] for a in schema if a["KeyType"] == "RANGE"), None),
     )
     return index

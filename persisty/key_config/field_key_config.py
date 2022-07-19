@@ -11,7 +11,7 @@ class FieldKeyConfig(KeyConfigABC, ObjKeyConfigABC):
     field_type: FieldType = FieldType.UUID
 
     def get_key(self, item) -> str:
-        if hasattr(item, '__getitem__'):
+        if hasattr(item, "__getitem__"):
             value = item.__getitem__(self.field_name)
         else:
             value = getattr(item, self.field_name)
@@ -25,7 +25,7 @@ class FieldKeyConfig(KeyConfigABC, ObjKeyConfigABC):
                 key = int(key)
             elif self.field_type is FieldType.FLOAT:
                 key = float(key)
-        if hasattr(item, '__setitem__'):
+        if hasattr(item, "__setitem__"):
             item.__setitem__(self.field_name, key)
         else:
             setattr(item, self.field_name, key)

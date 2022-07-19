@@ -17,13 +17,13 @@ class QueryFilter(SearchFilterABC):
     query: str
 
     def __post_init__(self):
-        object.__setattr__(self, 'query', self.query.lower())
+        object.__setattr__(self, "query", self.query.lower())
 
     def validate_for_fields(self, fields: Tuple[Field, ...]):
         for field in fields:
             if field.is_readable and field.type is FieldType.STR:
                 return
-        raise ValueError('query_filter_invalid_for_fields')
+        raise ValueError("query_filter_invalid_for_fields")
 
     def match(self, item: ExternalItemType, fields: Tuple[Field, ...]) -> bool:
         for field in fields:
@@ -35,12 +35,15 @@ class QueryFilter(SearchFilterABC):
                     return True
         return False
 
-    def build_filter_expression(self, fields: Tuple[Field, ...]) -> Tuple[Optional[Any], bool]:
+    def build_filter_expression(
+        self, fields: Tuple[Field, ...]
+    ) -> Tuple[Optional[Any], bool]:
         conditions = []
         for field in fields:
             if not field.is_readable or field.type is not FieldType.STR:
                 continue
             from boto3.dynamodb.conditions import Attr
+
             conditions.append(Attr(field.name).contains(self.query))
         if not conditions:
             return None, False
@@ -48,5 +51,6 @@ class QueryFilter(SearchFilterABC):
             condition = conditions[0]
         else:
             from boto3.dynamodb.conditions import Or as DynOr
+
             condition = DynOr(*conditions)
         return condition, True

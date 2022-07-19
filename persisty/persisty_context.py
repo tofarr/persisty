@@ -13,7 +13,9 @@ from persisty.storage.storage_abc import StorageABC
 @dataclass
 class PersistyContext:
     root_storage: ObjStorageABC[StorageABC] = None  # Root storage
-    obj_storage: Dict[str, ObjStorage] = field(default_factory=dict)  # Programmatically defined storage
+    obj_storage: Dict[str, ObjStorage] = field(
+        default_factory=dict
+    )  # Programmatically defined storage
 
 
 _default_context = None
@@ -36,10 +38,12 @@ def new_default_persisty_context() -> PersistyContext:
     modules.sort(key=lambda m: m.priority, reverse=True)
     for module in modules:
         if hasattr(module, "create_context"):
-            context = PersistyContext(root_storage=getattr(module, "create_root_storage")())
+            context = PersistyContext(
+                root_storage=getattr(module, "create_root_storage")()
+            )
             _configure_context(context, modules)
             return context
-    raise PersistyError('no_context_config_found')
+    raise PersistyError("no_context_config_found")
 
 
 def _configure_context(context: PersistyContext, modules):

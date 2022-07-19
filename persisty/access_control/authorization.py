@@ -9,7 +9,9 @@ class AuthorizationError(Exception):
 
 @dataclass(frozen=True)
 class Authorization:
-    user_id: Optional[Any]  # Probably a UUID - none implies some sort of headless access
+    user_id: Optional[
+        Any
+    ]  # Probably a UUID - none implies some sort of headless access
     permissions: FrozenSet[str]
     activate_at: Optional[datetime]
     expire_at: Optional[datetime]
@@ -41,16 +43,18 @@ class Authorization:
 
     def check_valid_for_timestamp(self, ts: Optional[datetime] = None):
         if not self.is_valid_for_timestamp(ts):
-            raise AuthorizationError(f'authorization_expired')
+            raise AuthorizationError(f"authorization_expired")
 
     def check_permission(self, permission: str):
         if not self.has_permission(permission):
-            raise AuthorizationError(f'missing:{permission}')
+            raise AuthorizationError(f"missing:{permission}")
 
     def check_any_permission(self, permissions: Set[str]):
         if not self.has_any_permission(permissions):
-            raise AuthorizationError(f'missing_any:{permissions}')
+            raise AuthorizationError(f"missing_any:{permissions}")
 
     def check_all_permissions(self, permissions: Set[str]):
         if not self.has_all_permissions(permissions):
-            raise AuthorizationError(f'missing_all:{self.permissions.difference(permissions)}')
+            raise AuthorizationError(
+                f"missing_all:{self.permissions.difference(permissions)}"
+            )

@@ -10,5 +10,8 @@ from tests.storage_test_abc import StorageTestABC
 class TestMemBandStorage(StorageTestABC):
 
     def new_super_bowl_results_storage(self) -> StorageABC:
-        storage = mem_storage(get_storage_meta(SuperBowlResult), {r.code: dump(r) for r in SUPER_BOWL_RESULTS})
+        storage = mem_storage(
+            get_storage_meta(SuperBowlResult),
+            {r.code: dump(r) for r in SUPER_BOWL_RESULTS},
+        )
         return storage

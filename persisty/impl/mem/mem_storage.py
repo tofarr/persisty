@@ -21,6 +21,7 @@ class MemStorage(StorageABC):
     """
     In memory storage, used mostly for mocking and testing
     """
+
     storage_meta: StorageMeta = field()
     storage: Dict[str, ExternalItemType] = field(default_factory=dict)
 
@@ -31,9 +32,9 @@ class MemStorage(StorageABC):
         dumped = self._dump(item)
         key = self.storage_meta.key_config.get_key(item)
         if key is None:
-            raise PersistyError(f'missing_key:{item}')
+            raise PersistyError(f"missing_key:{item}")
         if key in self.storage:
-            raise PersistyError(f'existing_value:{item}')
+            raise PersistyError(f"existing_value:{item}")
         self.storage[key] = dumped
         return self._load(item)
 
@@ -43,13 +44,12 @@ class MemStorage(StorageABC):
             item = self._load(item)
         return item
 
-    def update(self,
-               item: ExternalItemType,
-               search_filter: SearchFilterABC = INCLUDE_ALL
-               ) -> Optional[ExternalItemType]:
+    def update(
+        self, item: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    ) -> Optional[ExternalItemType]:
         key = self.storage_meta.key_config.get_key(item)
         if key is None:
-            raise PersistyError(f'missing_key:{item}')
+            raise PersistyError(f"missing_key:{item}")
         stored = self.storage.get(key)
         if not stored or not search_filter.match(stored, self.storage_meta.fields):
             return None
@@ -64,16 +64,22 @@ class MemStorage(StorageABC):
         result = self.storage.pop(key, UNDEFINED)
         return result is not UNDEFINED
 
-    def search_all(self,
-                   search_filter: SearchFilterABC = INCLUDE_ALL,
-                   search_order: Optional[SearchOrder] = None
-                   ) -> Iterator[ExternalItemType]:
+    def search_all(
+        self,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
+        search_order: Optional[SearchOrder] = None,
+    ) -> Iterator[ExternalItemType]:
         search_filter.validate_for_fields(self.storage_meta.fields)
-        search_order.validate_for_fields(self.storage_meta.fields)
+        if search_order:
+            search_order.validate_for_fields(self.storage_meta.fields)
         items = iter(self.storage.values())
         if search_filter is not INCLUDE_ALL:
-            items = (item for item in items if search_filter.match(item, self.storage_meta.fields))
-        if search_order:
+            items = (
+                item
+                for item in items
+                if search_filter.match(item, self.storage_meta.fields)
+            )
+        if search_order and search_order.orders:
             items = search_order.sort(items)
         items = (self._load(item) for item in items)
         return items
@@ -93,7 +99,9 @@ class MemStorage(StorageABC):
             result[field_.name] = item.get(field_.name, UNDEFINED)
         return result
 
-    def _dump(self, item: ExternalItemType, is_update: bool = False) -> ExternalItemType:
+    def _dump(
+        self, item: ExternalItemType, is_update: bool = False
+    ) -> ExternalItemType:
         result = {}
         for field_ in self.storage_meta.fields:
             if is_update and not field_.is_updatable:
@@ -109,8 +117,10 @@ class MemStorage(StorageABC):
         return result
 
 
-def mem_storage(storage_meta: StorageMeta, storage: Optional[Dict[str, ExternalItemType]] = None):
-    """ Wraps a mem storage instance to provide additional checking """
+def mem_storage(
+    storage_meta: StorageMeta, storage: Optional[Dict[str, ExternalItemType]] = None
+):
+    """Wraps a mem storage instance to provide additional checking"""
     if storage is None:
         storage = {}
     storage = MemStorage(storage_meta, storage)
