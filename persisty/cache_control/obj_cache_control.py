@@ -1,6 +1,3 @@
-from abc import ABC, abstractmethod
-from typing import Generic
-
 from dataclasses import dataclass
 
 from marshy.marshaller.marshaller_abc import MarshallerABC

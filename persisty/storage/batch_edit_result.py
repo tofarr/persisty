@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, TypeVar, Generic, Type
+from typing import Optional, TypeVar
 
 from persisty.storage.batch_edit import BatchEditABC
 

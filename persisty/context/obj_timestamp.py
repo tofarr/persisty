@@ -1,20 +1,23 @@
-from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from typing import Optional, List, Iterator
 
 from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
 
+from persisty.context.obj_storage_meta import META_KEY_CONFIG
 from persisty.obj_storage.obj_storage import ObjStorage
 from persisty.obj_storage.obj_storage_abc import ObjStorageABC
-from persisty.obj_storage.search_filter_factory.search_filter_factory_abc import SearchFilterFactoryABC
-from persisty.obj_storage.search_order.search_order_factory_abc import SearchOrderFactoryABC
+from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
+from persisty.search_order.search_order_factory_abc import SearchOrderFactoryABC
+
+from persisty.search_filter import INCLUDE_ALL, SearchFilterABC
 from persisty.storage.batch_edit import BatchEditABC
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.wrapper_storage_abc import WrapperStorageABC
-from persisty.stored.stored import stored
+from persisty.obj_storage.stored import stored
 
 
 @stored
@@ -30,9 +33,17 @@ class TimestampSearchFilter(SearchFilterFactoryABC):
     pass
 
 
+class TimestampSearchField(Enum):
+    NAME = 'name'
+    CREATED_AT = 'created_at'
+    UPDATED_AT = 'updated_at'
+    ITEMS_UPDATED_AT = 'items_updated_at'
+
+
 @dataclass
 class TimestampSearchOrder(SearchOrderFactoryABC):
-    pass
+    field: TimestampSearchField = None
+    desc: bool = False
 
 
 @dataclass
@@ -54,6 +65,7 @@ def timestamp_storage(storage: StorageABC, marshaller_context: MarshallerContext
     return ObjStorage(
         storage=storage,
         item_marshaller=marshaller_context.get_marshaller(StorageTimestamp),
+        key_config=META_KEY_CONFIG,
         search_filter_factory_type=TimestampSearchFilter,
         search_order_factory_type=TimestampSearchOrder,
         create_input_marshaller=marshaller_context.get_marshaller(TimestampCreateInput),
@@ -71,7 +83,10 @@ class TimestampUpdateStorage(WrapperStorageABC):
         self.update_timestamp()
         return item
 
-    def update(self, updates: ExternalItemType) -> Optional[ExternalItemType]:
+    def update(self,
+               updates: ExternalItemType,
+               search_filter: SearchFilterABC = INCLUDE_ALL
+               ) -> Optional[ExternalItemType]:
         item = self.storage.update(updates)
         if item:
             self.update_timestamp()

@@ -8,7 +8,7 @@ from marshy import ExternalType
 from marshy.types import ExternalItemType
 
 from persisty.storage.field.field import Field
-from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 
 
 def _gte(a, b):
@@ -37,8 +37,8 @@ def _oneof(a, b):
 
 class FieldFilterOp(Enum):
     """
-    Operations which attr search_filter supports. Provides a definitive set of limited attributes that storage implementations
-    may implement. (e.g.: sql, dynamodb)
+    Operations which attr search_filter supports. Provides a definitive set of limited attributes that storage
+    implementations may implement. (e.g.: sql, dynamodb)
     """
     contains = partial(_contains)
     endswith = partial(_endswith)

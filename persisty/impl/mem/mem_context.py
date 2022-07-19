@@ -1,16 +1,17 @@
 import dataclasses
-from typing import Optional, List, Dict
+from typing import Optional, List
 
 from dataclasses import field, dataclass
 
 from marshy import get_default_context
 from marshy.marshaller_context import MarshallerContext
 
+from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.access_control.factory.access_control_factory import READ_ONLY_ACCESS_FACTORY
 from persisty.access_control.factory.access_control_factory_abc import AccessControlFactoryABC
-from persisty.access_control.obj_access_control_abc import ObjAccessControl
+from persisty.access_control.obj_access_control import ObjAccessControl
 from persisty.context.persisty_context_abc import PersistyContextABC
-from persisty.context.obj_storage_meta import MetaStorageABC
+from persisty.context.obj_storage_meta import MetaStorageABC, CreateStorageMetaInput, UpdateStorageMetaInput
 from persisty.context.obj_timestamp import TimestampStorageABC, TimestampUpdateStorage, timestamp_storage
 from persisty.access_control.authorization import Authorization
 from persisty.impl.mem.mem_meta_storage import MemMetaStorage
@@ -55,7 +56,11 @@ class MemContext(PersistyContextABC):
 
     def get_meta_storage(self, authorization: Authorization) -> MetaStorageABC:
         access_control = self.meta_access_control_factory.create_access_control('meta', authorization)
-        access_control = ObjAccessControl(access_control, self.marshaller_context.get_marshaller(StorageMeta))
+        access_control = ObjAccessControl(access_control,
+                                          self.marshaller_context.get_marshaller(StorageMeta),
+                                          self.marshaller_context.get_marshaller(CreateStorageMetaInput),
+                                          self.marshaller_context.get_marshaller(UpdateStorageMetaInput),
+                                          )
         storage = MemMetaStorage(access_control, self.storage.storage)
         return storage
 

@@ -1,11 +1,9 @@
-from typing import Union
-from uuid import uuid4, UUID
+from uuid import uuid4
 
 from dataclasses import dataclass
 
 from persisty.storage.field.write_transform.write_transform_abc import WriteTransformABC, T
 from persisty.storage.field.write_transform.write_transform_mode import WriteTransformMode
-from persisty.util.undefined import Undefined
 
 
 @dataclass

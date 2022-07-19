@@ -3,14 +3,14 @@ from typing import Generic, TypeVar, Type
 
 from dataclasses import dataclass
 
-from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.access_control.access_control import ALL_ACCESS
+from persisty.access_control.obj_access_control_abc import ObjAccessControlABC
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
-from persisty.key_config.field_key_config import ATTR_KEY_CONFIG
+from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.obj_key_config_abc import ObjKeyConfigABC
-from persisty.obj_storage.search_filter_factory.search_filter_factory_abc import SearchFilterFactoryABC
-from persisty.obj_storage.search_order.search_order_factory_abc import SearchOrderFactoryABC
+from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
+from persisty.search_order.search_order_factory_abc import SearchOrderFactoryABC
 
 T = TypeVar('T')
 F = TypeVar('F', bound=SearchFilterFactoryABC)
@@ -28,7 +28,7 @@ class ObjStorageMeta(Generic[T]):
     search_order_factory_type: Type[S]
     create_input_type: Type[C]
     update_input_type: Type[U]
-    key_config: ObjKeyConfigABC[T] = ATTR_KEY_CONFIG
-    access_control: AccessControlABC[T] = ALL_ACCESS
+    key_config: ObjKeyConfigABC[T] = FIELD_KEY_CONFIG
+    access_control: ObjAccessControlABC[T] = ALL_ACCESS
     cache_control: CacheControlABC[T] = SecureHashCacheControl()
     batch_size: int = 100

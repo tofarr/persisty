@@ -1,17 +1,16 @@
 from dataclasses import dataclass
-from typing import Optional, List, Tuple
 
 from marshy.types import ExternalItemType
 from schemey.object_schema import ObjectSchema
 from schemey.schema_abc import SchemaABC
 
-from persisty.storage.filtered_storage_abc import FilteredStorageABC
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
+from persisty.storage.wrapper_storage_abc import WrapperStorageABC
 
 
 @dataclass(frozen=True)
-class SchemaValidatingStorage(FilteredStorageABC):
+class SchemaValidatingStorage(WrapperStorageABC):
     storage: StorageABC
     schema: SchemaABC = None
 
@@ -32,6 +31,7 @@ class SchemaValidatingStorage(FilteredStorageABC):
         self.schema.validate(item)
         return item
 
-    def filter_update(self, item: ExternalItemType, updates: ExternalItemType) -> ExternalItemType:
-        if not next(self.schema.get_schema_errors(item), None):
-            return item
+    def filter_update(self, old_item: ExternalItemType, updates: ExternalItemType) -> ExternalItemType:
+        new_item = {**old_item, **updates}
+        if not next(self.schema.get_schema_errors(new_item), None):
+            return updates

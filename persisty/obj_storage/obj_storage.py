@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 
-from persisty.access_control.obj_access_control_abc import ObjAccessControl
+from persisty.access_control.obj_access_control import ObjAccessControl
 from persisty.cache_control.obj_cache_control import ObjCacheControl
 from persisty.key_config.obj_key_config_abc import ObjKeyConfigABC
 from persisty.obj_storage.obj_storage_abc import ObjStorageABC, T, F, S, C, U
@@ -13,7 +13,7 @@ from persisty.obj_storage.obj_storage_meta import ObjStorageMeta
 from persisty.storage.batch_edit import BatchEditABC, Create, Update
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
-from persisty.storage.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.storage.storage_abc import StorageABC
 
 
@@ -38,7 +38,10 @@ class ObjStorage(ObjStorageABC[T, F, S, C, U]):
             create_input_type=self.create_input_marshaller.marshalled_type,
             update_input_type=self.update_input_marshaller.marshalled_type,
             key_config=self.key_config,
-            access_control=ObjAccessControl(storage_meta.access_control, self.item_marshaller),
+            access_control=ObjAccessControl(storage_meta.access_control,
+                                            self.item_marshaller,
+                                            self.create_input_marshaller,
+                                            self.update_input_marshaller),
             cache_control=ObjCacheControl(storage_meta.cache_control, self.item_marshaller),
             batch_size=storage_meta.batch_size
         )

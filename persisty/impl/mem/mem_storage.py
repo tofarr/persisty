@@ -5,9 +5,9 @@ from dataclasses import dataclass, field
 from marshy.types import ExternalItemType
 
 from persisty.errors import PersistyError
-from persisty.storage.search_filter.include_all import INCLUDE_ALL
-from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.search_order import SearchOrderABC
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.search_order import SearchOrder
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 
@@ -38,12 +38,15 @@ class MemStorage(StorageABC):
             item = self._load(item)
         return item
 
-    def update(self, item: ExternalItemType) -> Optional[ExternalItemType]:
+    def update(self,
+               item: ExternalItemType,
+               search_filter: SearchFilterABC = INCLUDE_ALL
+               ) -> Optional[ExternalItemType]:
         key = self.storage_meta.key_config.get_key(item)
         if key is None:
             raise PersistyError(f'missing_key:{item}')
         stored = self.storage.get(key)
-        if not stored:
+        if not stored or not search_filter.match(stored, self.storage_meta.fields):
             return None
         dumped = self._dump(item, True)
         stored.update(dumped)
@@ -58,7 +61,7 @@ class MemStorage(StorageABC):
 
     def search_all(self,
                    search_filter: SearchFilterABC = INCLUDE_ALL,
-                   search_order: Optional[SearchOrderABC] = None
+                   search_order: Optional[SearchOrder] = None
                    ) -> Iterator[ExternalItemType]:
         search_filter.validate_for_fields(self.storage_meta.fields)
         search_order.validate_for_fields(self.storage_meta.fields)
@@ -66,7 +69,7 @@ class MemStorage(StorageABC):
         if search_filter is not INCLUDE_ALL:
             items = (item for item in items if search_filter.match(item, self.storage_meta.fields))
         if search_order:
-            items = sorted(items, key=search_order.key, reverse=search_order.desc)
+            items = search_order.sort(items)
         items = (self._load(item) for item in items)
         return items
 

@@ -9,7 +9,7 @@ from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.access_control.access_control import ALL_ACCESS
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
-from persisty.key_config.field_key_config import ATTR_KEY_CONFIG
+from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.storage.field.field import Field
 
@@ -18,7 +18,7 @@ from persisty.storage.field.field import Field
 class StorageMeta:
     name: str
     fields: Tuple[Field, ...] = None
-    key_config: KeyConfigABC[ExternalItemType] = ATTR_KEY_CONFIG
-    access_control: AccessControlABC[ExternalItemType] = ALL_ACCESS
+    key_config: KeyConfigABC = FIELD_KEY_CONFIG
+    access_control: AccessControlABC = ALL_ACCESS
     cache_control: CacheControlABC[ExternalItemType] = SecureHashCacheControl()
     batch_size: int = 100

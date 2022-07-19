@@ -1,15 +1,16 @@
-from abc import abstractmethod, ABC
-from typing import Optional, List, Tuple, Iterator
+from abc import ABC, abstractmethod
+from typing import Iterator, List, Optional, Tuple
 
 from marshy.types import ExternalItemType
 
-from persisty.storage.batch_edit import BatchEditABC, Create, Update, Delete
+from persisty.storage.batch_edit import BatchEditABC, Delete, Update, Create
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
-from persisty.storage.search_filter.include_all import INCLUDE_ALL
-from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.search_order import SearchOrderABC
+from persisty.search_filter import SearchFilterABC, INCLUDE_ALL
+from persisty.search_order.search_order import SearchOrder
 from persisty.storage.storage_abc import StorageABC
+from persisty.storage.storage_meta import StorageMeta
+from persisty.storage.wrapper_storage_abc import WrapperStorageABC
 from persisty.util import get_logger
 from persisty.util.encrypt_at_rest import decrypt, encrypt
 
@@ -17,12 +18,17 @@ logger = get_logger(__name__)
 
 
 # noinspection PyMethodMayBeStatic
-class FilteredStorageABC(StorageABC, ABC):
+class FilteredStorageABC(WrapperStorageABC, ABC):
+    """ Extension to wrapper storage which loads items before updates / deletes for the purpose of filtering """
 
     @abstractmethod
     @property
     def storage(self) -> StorageABC:
         """ Get wrapped storage """
+
+    @property
+    def storage_meta(self) -> StorageMeta:
+        return self.storage.storage_meta
 
     def filter_create(self, item: ExternalItemType) -> ExternalItemType:
         """ search_filter an stored before create """
@@ -64,10 +70,13 @@ class FilteredStorageABC(StorageABC, ABC):
         items = [self.filter_read(item) for item in items]
         return items
 
-    def update(self, updates: ExternalItemType) -> Optional[ExternalItemType]:
+    def update(self,
+               updates: ExternalItemType,
+               search_filter: SearchFilterABC = INCLUDE_ALL
+               ) -> Optional[ExternalItemType]:
         key = self.storage_meta.key_config.get_key(updates)
         old_item = self.read(key)
-        if not old_item:
+        if not old_item or not search_filter.match(old_item, self.storage_meta.fields):
             return None
         item = self.filter_update(old_item, updates)
         if not item:
@@ -82,7 +91,7 @@ class FilteredStorageABC(StorageABC, ABC):
 
     def search(self,
                search_filter: SearchFilterABC = INCLUDE_ALL,
-               search_order: Optional[SearchOrderABC] = None,
+               search_order: Optional[SearchOrder] = None,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[ExternalItemType]:
@@ -127,7 +136,7 @@ class FilteredStorageABC(StorageABC, ABC):
 
     def search_all(self,
                    search_filter: SearchFilterABC = INCLUDE_ALL,
-                   search_order: Optional[SearchOrderABC] = None
+                   search_order: Optional[SearchOrder] = None
                    ) -> Iterator[ExternalItemType]:
         search_filter, fully_handled = self.filter_search_filter(search_filter)
         items = self.storage.search_all(search_filter, search_order)

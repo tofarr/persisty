@@ -1,8 +1,8 @@
 from dataclasses import field, dataclass
-from itertools import islice
-from typing import Iterator, Optional, Dict
+from typing import Optional, Dict
 
 from persisty.access_control.obj_access_control_abc import ObjAccessControlABC
+from persisty.context.meta_storage import meta_result_set
 from persisty.context.obj_storage_meta import MetaStorageABC, CreateStorageMetaInput, UpdateStorageMetaInput, \
     StorageMetaSearchFilter, StorageMetaSearchOrder
 from persisty.errors import PersistyError
@@ -14,7 +14,8 @@ from persisty.util import dataclass_to_params
 
 @dataclass
 class MemMetaStorage(MetaStorageABC):
-    access_control: ObjAccessControlABC[StorageMeta, StorageMetaSearchFilter, CreateStorageMetaInput, UpdateStorageMetaInput]
+    access_control: ObjAccessControlABC[StorageMeta, StorageMetaSearchFilter, CreateStorageMetaInput,
+                                        UpdateStorageMetaInput]
     storage: Dict[str, MemStorage] = field(default_factory=dict)
 
     @property
@@ -57,24 +58,10 @@ class MemMetaStorage(MetaStorageABC):
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[StorageMeta]:
-        search_order_factory = self.access_control.transform_search_filter(search_filter_factory)
+        search_filter_factory = self.access_control.transform_search_filter(search_filter_factory)
         items = iter(self.storage.values())
         items = (i.storage_meta for i in items if self.access_control.is_readable(i.storage_meta))
-        if search_filter_factory and search_filter_factory.query:
-            items = (i for i in items if search_filter_factory.query.lower() in i.name.lower())
-        if search_order_factory and search_order_factory.field:
-            items = sorted(items,
-                           key=lambda i: getattr(i, search_order_factory.field.value),
-                           reverse=search_order_factory.desc)
-        if page_key:
-            while True:
-                if next(items).name == page_key:
-                    break
-        items = list(islice(items, limit))
-        page_key = None
-        if len(items) == limit:
-            page_key = items[-1].name
-        return ResultSet(items, page_key)
+        return meta_result_set(items, search_filter_factory, search_order_factory, page_key, limit)
 
     def count(self, search_filter: Optional[StorageMetaSearchFilter] = None) -> int:
         if not search_filter:

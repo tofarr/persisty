@@ -2,10 +2,10 @@ from dataclasses import dataclass
 
 from marshy.types import ExternalItemType
 
-from persisty.storage.dynamodb.dynamodb_index import DynamodbIndex
+from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex
 from persisty.storage.field.field import Field
 from persisty.storage.field.field_type import FieldType
-from persisty.storage.key_config.key_config_abc import KeyConfigABC
+from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.util.encrypt_at_rest import decrypt, encrypt
 
 

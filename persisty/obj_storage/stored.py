@@ -5,15 +5,15 @@ from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from persisty.storage.storage_meta import StorageMeta
-from persisty.stored.attr import Attr
-from persisty.key_config.field_key_config import ATTR_KEY_CONFIG
+from persisty.obj_storage.attr import Attr
+from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.storage.field.write_transform.default_value_transform import DefaultValueTransform
 from persisty.util import UNDEFINED
 
 
 def stored(cls,
-           key_config: KeyConfigABC = ATTR_KEY_CONFIG,
+           key_config: KeyConfigABC = FIELD_KEY_CONFIG,
            access_control: AccessControlABC = ALL_ACCESS,
            cache_control: CacheControlABC = SecureHashCacheControl(),
            batch_size: int = 100):
@@ -51,5 +51,5 @@ def stored(cls,
     return wrapper if cls is None else wrapper(cls)
 
 
-def get_storage_meta(stored) -> StorageMeta:
-    return stored.__persisty_storage_meta__
+def get_storage_meta(stored_) -> StorageMeta:
+    return stored_.__persisty_storage_meta__

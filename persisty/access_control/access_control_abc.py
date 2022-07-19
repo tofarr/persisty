@@ -3,7 +3,7 @@ from typing import Tuple
 
 from marshy.types import ExternalItemType
 
-from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 
 
 class AccessControlABC(ABC):
@@ -36,5 +36,5 @@ class AccessControlABC(ABC):
         this will do it)
 
         The flag passed back indicates whether or not this filter now fully encapsulates this access control constraint
-        (Or if fulter post processing will be required)
+        (Or if further post processing will be required)
         """

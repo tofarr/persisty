@@ -10,9 +10,9 @@ from marshy.types import ExternalItemType
 from persisty.storage.batch_edit import BatchEditABC, Delete, Update
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
-from persisty.storage.search_filter.include_all import INCLUDE_ALL
-from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.search_order import SearchOrderABC
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.search_order.search_order import SearchOrder
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.util import secure_hash
@@ -82,10 +82,14 @@ class TTLCacheStorage(StorageABC):
         items = [items_by_key.get(key) for key in keys]
         return items
 
-    def update(self, item: ExternalItemType) -> Optional[ExternalItemType]:
-        item = self.storage.update(item)
-        key = self.storage_meta.key_config.get_key(item)
-        self.store_item_in_cache(key, item)
+    def update(self,
+               updates: ExternalItemType,
+               search_filter: SearchFilterABC = INCLUDE_ALL
+               ) -> Optional[ExternalItemType]:
+        item = self.storage.update(updates, search_filter)
+        if item:
+            key = self.storage_meta.key_config.get_key(item)
+            self.store_item_in_cache(key, item)
         return item
 
     def delete(self, key: str) -> bool:
@@ -99,11 +103,11 @@ class TTLCacheStorage(StorageABC):
 
     def search(self,
                search_filter: SearchFilterABC = INCLUDE_ALL,
-               search_order: Optional[SearchOrderABC] = None,
+               search_order: Optional[SearchOrder] = None,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[ExternalItemType]:
-        result_set_key = [dump(search_filter, SearchFilterABC), dump(search_order, SearchOrderABC), page_key, limit]
+        result_set_key = [dump(search_filter, SearchFilterABC), dump(search_order, SearchOrder), page_key, limit]
         result_set_key = secure_hash(result_set_key)
         now = int(time())
         entry = self.cached_result_sets.get(result_set_key)

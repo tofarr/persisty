@@ -4,10 +4,10 @@ from typing import Tuple
 from dataclasses import dataclass
 from marshy.types import ExternalItemType
 
-from persisty.storage.access_control.access_control import ALL_ACCESS, NO_ACCESS
-from persisty.storage.access_control.access_control_abc import AccessControlABC
+from persisty.access_control.access_control import ALL_ACCESS, NO_ACCESS
+from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.storage.field.field_filter import FieldFilter
-from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 
 
 @dataclass(frozen=True)

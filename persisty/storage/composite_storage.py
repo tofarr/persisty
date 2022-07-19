@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import Tuple, Optional, Iterator, Any
+from typing import Tuple, Optional, Iterator
 
 from marshy.types import ExternalItemType
 
-from persisty.storage.search_filter import SearchFilterABC, INCLUDE_ALL
-from persisty.storage.search_order import SearchOrderABC
+from persisty.search_filter import SearchFilterABC, INCLUDE_ALL
+from persisty.search_order import SearchOrder
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.util.encrypt_at_rest import encrypt, decrypt
@@ -41,12 +41,15 @@ class CompositeStorage(StorageABC):
         self._set_key_after_read(item, storage.storage_meta)
         return item
 
-    def update(self, updates: ExternalItemType) -> Optional[ExternalItemType]:
+    def update(self,
+               updates: ExternalItemType,
+               search_filter: SearchFilterABC = INCLUDE_ALL
+               ) -> Optional[ExternalItemType]:
         key = self.storage_meta.key_config.get_key(updates)
         name, key = decrypt(key)
         storage = next(s for s in self.storage if s.storage_meta.name == name)
         storage.storage_meta.key_config.set_key(key, updates)
-        item = storage.update(updates)
+        item = storage.update(updates, search_filter)
         self._set_key_after_read(item, storage.storage_meta)
         return item
 
@@ -61,15 +64,16 @@ class CompositeStorage(StorageABC):
 
     def search_all(self,
                    search_filter: SearchFilterABC = INCLUDE_ALL,
-                   search_order: Optional[SearchOrderABC] = None
+                   search_order: Optional[SearchOrder] = None
                    ) -> Iterator[ExternalItemType]:
         if not search_order:
             for storage in self.storage:
                 yield from storage.search_all(search_filter)
             return
-        iterators = [SubIterator(s.storage_meta, s.search_all(search_filter, search_order)) for s in self.storage]
+        iterators = [SubIterator(s.storage_meta, s.search_all(search_filter, search_order), search_order)
+                     for s in self.storage]
         while next((i for i in iterators if i.next_item), None):
-            iterators.sort(key=lambda i: i.sort_key(search_order))
+            iterators.sort()
             item = iterators[0].next_item
             item = self._set_key_after_read(item, iterators[0].storage_meta)
             yield item
@@ -86,16 +90,18 @@ class CompositeStorage(StorageABC):
 class SubIterator:
     storage_meta: StorageMeta
     iterator: Iterator[ExternalItemType]
+    search_order: SearchOrder
     next_item: Optional[ExternalItemType] = None
 
     def __post_init__(self):
         if self.next_item is None:
             self.next_item = next(self.iterator, None)
 
-    def sort_key(self, search_order: SearchOrderABC) -> Tuple[bool, Any]:
-        if not self.next_item:
-            return True, ""
-        return False, search_order.key(self.next_item)
+    def __lt__(self, other):
+        return self.search_order.lt(self.next_item, other.next_item)
+
+    def __eq__(self, other):
+        return self.search_order.eq(self.next_item, other.next_item)
 
     def next(self):
         self.next_item = next(self.iterator, None)

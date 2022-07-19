@@ -1,18 +1,18 @@
 from dataclasses import dataclass
-from typing import Optional, List, Tuple
+from typing import Optional, Tuple
 
 from marshy.types import ExternalItemType
 
 from persisty.access_control.access_control import NO_ACCESS
 from persisty.errors import PersistyError
-from persisty.storage.filtered_storage_abc import FilteredStorageABC
-from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
+from persisty.storage.wrapper_storage_abc import WrapperStorageABC
 
 
 @dataclass(frozen=True)
-class SecuredStorage(FilteredStorageABC):
+class SecuredStorage(WrapperStorageABC):
     storage: StorageABC
     storage_meta: StorageMeta = None
 
@@ -25,9 +25,9 @@ class SecuredStorage(FilteredStorageABC):
             raise PersistyError('create_forbidden')
         return item
 
-    def filter_update(self, item: ExternalItemType, updates: ExternalItemType) -> ExternalItemType:
-        if self.storage_meta.access_control.is_creatable(item):
-            return item
+    def filter_update(self, old_item: ExternalItemType, updates: ExternalItemType) -> ExternalItemType:
+        if self.storage_meta.access_control.is_updatable(old_item, updates):
+            return updates
 
     def filter_read(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         if self.storage_meta.access_control.is_readable(item):

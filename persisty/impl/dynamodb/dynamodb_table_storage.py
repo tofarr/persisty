@@ -9,9 +9,9 @@ from marshy.types import ExternalItemType
 from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex
 from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.result_set import ResultSet
-from persisty.storage.search_filter.include_all import INCLUDE_ALL
-from persisty.storage.search_filter import SearchFilterABC, And, EXCLUDE_ALL
-from persisty.storage.search_order import SearchOrderABC
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter import SearchFilterABC, And, EXCLUDE_ALL
+from persisty.search_order import SearchOrder
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.util import filter_none, get_logger
@@ -79,7 +79,7 @@ class DynamodbTableStorage(StorageABC):
 
     def search(self,
                search_filter: SearchFilterABC = INCLUDE_ALL,
-               search_order: Optional[SearchOrderABC] = None,
+               search_order: Optional[SearchOrder] = None,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[ExternalItemType]:

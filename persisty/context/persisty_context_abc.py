@@ -3,7 +3,7 @@ from typing import Optional
 
 from persisty.context.obj_storage_meta import MetaStorageABC
 from persisty.context.obj_timestamp import TimestampStorageABC
-from persisty.storage.access_control.authorization import Authorization
+from persisty.access_control.authorization import Authorization
 from persisty.storage.storage_abc import StorageABC
 
 

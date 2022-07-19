@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import TypeVar, Generic
 from uuid import UUID, uuid4
 
-from persisty.storage.key_config.key_config_abc import KeyConfigABC
+from persisty.key_config.key_config_abc import KeyConfigABC
 
 T = TypeVar('T')
 

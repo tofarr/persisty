@@ -5,10 +5,10 @@ from typing import Optional, List, Iterator, Generic
 from marshy.types import ExternalItemType
 
 from persisty.obj_storage.obj_storage_meta import ObjStorageMeta, T, F, S, C, U
-from persisty.storage.batch_edit import BatchEditABC, Create, Update, Delete
+from persisty.storage.batch_edit import BatchEditABC
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
-from persisty.storage.storage_abc import skip_to_page
+from persisty.storage.storage_abc import edit_batch, search
 
 
 class ObjStorageABC(Generic[T, F, S, C, U]):
@@ -53,16 +53,7 @@ class ObjStorageABC(Generic[T, F, S, C, U]):
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[T]:
-        if limit is None:
-            limit = self.obj_storage_meta.batch_size
-        assert(limit <= self.obj_storage_meta.batch_size)
-        items = self.search_all(search_filter_factory, search_order_factory)
-        skip_to_page(page_key, items, self.obj_storage_meta.key_config)
-        items = list(islice(items, limit))
-        page_key = None
-        if len(items) == limit:
-            page_key = self.obj_storage_meta.key_config.get_key(items[-1])
-        return ResultSet(items, page_key)
+        return search(self, self.obj_storage_meta, search_filter_factory, search_order_factory, page_key, limit)
 
     def search_all(self,
                    search_filter_factory: Optional[F] = None,
@@ -82,23 +73,7 @@ class ObjStorageABC(Generic[T, F, S, C, U]):
 
     async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
         assert(len(edits) <= self.obj_storage_meta.batch_size)
-        results = []
-        for edit in edits:
-            try:
-                if isinstance(edit, Create):
-                    item = self.create(edit.item)
-                    results.append(BatchEditResult(edit, bool(item)))
-                elif isinstance(edit, Update):
-                    item = self.update(edit.updates)
-                    results.append(BatchEditResult(edit, bool(item)))
-                elif isinstance(edit, Delete):
-                    deleted = self.delete(edit.key)
-                    results.append(BatchEditResult(edit, bool(deleted)))
-                else:
-                    results.append(BatchEditResult(edit, False, 'unsupported_edit_type', edit.__class__.__name__))
-            except Exception as e:
-                results.append(BatchEditResult(edit, False, 'exception', str(e)))
-        return results
+        return edit_batch(self, edits)
 
     def edit_all(self, edits: Iterator[BatchEditABC]):
         edits = iter(edits)

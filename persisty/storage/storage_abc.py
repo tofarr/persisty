@@ -1,15 +1,15 @@
 from abc import ABC, abstractmethod
 from itertools import islice
-from typing import Optional, List, Iterator, TypeVar
+from typing import Optional, List, Iterator
 
 from marshy.types import ExternalItemType
 
 from persisty.storage.batch_edit import BatchEditABC, Create, Update, Delete
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
-from persisty.storage.search_filter.include_all import INCLUDE_ALL
-from persisty.storage.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.search_order import SearchOrderABC
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.search_order import SearchOrder
 from persisty.storage.storage_meta import StorageMeta
 
 
@@ -17,7 +17,6 @@ class StorageABC(ABC):
     """
     General contract for storage object, allowing CRUD, search, and batch updates for objects
     """
-
     @abstractmethod
     @property
     def storage_meta(self) -> StorageMeta:
@@ -46,8 +45,14 @@ class StorageABC(ABC):
             yield from items
 
     @abstractmethod
-    def update(self, updates: ExternalItemType) -> Optional[ExternalItemType]:
-        """ Create an stored in the data store. By convention any stored with a value of UNDEFINED is left alone. """
+    def update(self,
+               updates: ExternalItemType,
+               search_filter: SearchFilterABC = INCLUDE_ALL
+               ) -> Optional[ExternalItemType]:
+        """
+        Update (a partial set of values from) an item based upon its key and the constraint given. By convention
+        any UNDEFINED value is ignored. Return the full new version of the item if an update occurred
+        """
 
     @abstractmethod
     def delete(self, key: str) -> bool:
@@ -55,7 +60,7 @@ class StorageABC(ABC):
 
     def search(self,
                search_filter: SearchFilterABC = INCLUDE_ALL,
-               search_order: Optional[SearchOrderABC] = None,
+               search_order: Optional[SearchOrder] = None,
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[ExternalItemType]:
@@ -72,7 +77,7 @@ class StorageABC(ABC):
 
     def search_all(self,
                    search_filter: SearchFilterABC = INCLUDE_ALL,
-                   search_order: Optional[SearchOrderABC] = None
+                   search_order: Optional[SearchOrder] = None
                    ) -> Iterator[ExternalItemType]:
         page_key = None
         while True:
@@ -92,23 +97,7 @@ class StorageABC(ABC):
         order
         """
         assert(len(edits) <= self.storage_meta.batch_size)
-        results = []
-        for edit in edits:
-            try:
-                if isinstance(edit, Create):
-                    item = self.create(edit.item)
-                    results.append(BatchEditResult(edit, bool(item)))
-                elif isinstance(edit, Update):
-                    item = self.update(edit.updates)
-                    results.append(BatchEditResult(edit, bool(item)))
-                elif isinstance(edit, Delete):
-                    deleted = self.delete(edit.key)
-                    results.append(BatchEditResult(edit, bool(deleted)))
-                else:
-                    results.append(BatchEditResult(edit, False, 'unsupported_edit_type', edit.__class__.__name__))
-            except Exception as e:
-                results.append(BatchEditResult(edit, False, 'exception', str(e)))
-        return results
+        return edit_batch(self, edits)
 
     def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
         edits = iter(edits)
@@ -129,3 +118,40 @@ def skip_to_page(page_key: str, items, key_config):
             key = key_config.get_key(next_result)
             if key == page_key:
                 return
+
+
+def edit_batch(storage, edits: List[BatchEditABC]) -> List[BatchEditResult]:
+    """
+    Simple non transactional implementation of batch functionality. Other implementations employ strategies to boost
+    performance such reducing the number of network round trips.
+    """
+    results = []
+    for edit in edits:
+        try:
+            if isinstance(edit, Create):
+                item = storage.create(edit.item)
+                results.append(BatchEditResult(edit, bool(item)))
+            elif isinstance(edit, Update):
+                item = storage.update(edit.updates)
+                results.append(BatchEditResult(edit, bool(item)))
+            elif isinstance(edit, Delete):
+                deleted = storage.delete(edit.key)
+                results.append(BatchEditResult(edit, bool(deleted)))
+            else:
+                results.append(BatchEditResult(edit, False, 'unsupported_edit_type', edit.__class__.__name__))
+        except Exception as e:
+            results.append(BatchEditResult(edit, False, 'exception', str(e)))
+    return results
+
+
+def search(storage, storage_meta, search_filter, search_order, page_key, limit):
+    if limit is None:
+        limit = storage_meta.batch_size
+    assert (limit <= storage_meta.batch_size)
+    items = storage.search_all(search_filter, search_order)
+    skip_to_page(page_key, items, storage_meta.key_config)
+    items = list(islice(items, limit))
+    page_key = None
+    if len(items) == limit:
+        page_key = storage_meta.key_config.get_key(items[-1])
+    return ResultSet(items, page_key)
