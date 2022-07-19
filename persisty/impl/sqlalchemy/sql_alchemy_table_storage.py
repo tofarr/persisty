@@ -8,7 +8,8 @@ from persisty.impl.sqlalchemy.engine import get_engine
 from persisty.storage.batch_edit import BatchEditABC
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
-from persisty.search_filter import SearchFilterABC, INCLUDE_ALL
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
@@ -80,7 +81,7 @@ class SqlAlchemyTableStorage(StorageABC):
 
     def _key_where_clause(self, key: str):
         key_dict = {}
-        self.storage_meta.key_config.set_key(key, key_dict)
+        self.get_storage_meta().key_config.set_key(key, key_dict)
         conditions = []
         for k, v in key_dict.items():
             conditions.append(self.table.columns.get(k) == v)

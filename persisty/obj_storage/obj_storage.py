@@ -29,7 +29,7 @@ class ObjStorage(ObjStorageABC[T, F, S, C, U]):
 
     @property
     def obj_storage_meta(self) -> ObjStorageMeta[T, F, S, C, U]:
-        storage_meta = self.storage.storage_meta
+        storage_meta = self.get_storage().get_storage_meta()
         return ObjStorageMeta(
             name=storage_meta.name,
             item_type=self.item_marshaller.marshalled_type,
@@ -48,23 +48,23 @@ class ObjStorage(ObjStorageABC[T, F, S, C, U]):
 
     def create(self, item: C) -> T:
         dumped = self.create_input_marshaller.dump(item)
-        created = self.storage.create(dumped)
+        created = self.get_storage().create(dumped)
         loaded = self.item_marshaller.load(created)
         return loaded
 
     def read(self, key: str) -> Optional[ExternalItemType]:
-        read = self.storage.read(key)
+        read = self.get_storage().read(key)
         if read:
             loaded = self.item_marshaller.load(read)
             return loaded
 
     async def read_batch(self, keys: List[str]) -> List[Optional[T]]:
-        read = await self.storage.read_batch(keys)
+        read = await self.get_storage().read_batch(keys)
         loaded = [self.item_marshaller.load(item) if item else None for item in read]
         return loaded
 
     def read_all(self, keys: Iterator[str]) -> Iterator[Optional[T]]:
-        for read in self.storage.read_all(keys):
+        for read in self.get_storage().read_all(keys):
             if read is None:
                 yield read
             else:
@@ -73,12 +73,12 @@ class ObjStorage(ObjStorageABC[T, F, S, C, U]):
 
     def update(self, updates: U) -> Optional[T]:
         dumped = self.update_input_marshaller.dump(updates)
-        updated = self.storage.update(dumped)
+        updated = self.get_storage().update(dumped)
         loaded = self.item_marshaller.load(updated)
         return loaded
 
     def delete(self, key: str) -> bool:
-        return self.storage.delete(key)
+        return self.get_storage().delete(key)
 
     def search(self,
                search_filter_factory: Optional[F] = None,
@@ -88,7 +88,7 @@ class ObjStorage(ObjStorageABC[T, F, S, C, U]):
                ) -> ResultSet[T]:
         search_filter = search_filter_factory.to_search_filter() if search_filter_factory else INCLUDE_ALL
         search_order = search_order_factory.to_search_order() if search_order_factory else None
-        result_set = self.storage.search(search_filter, search_order, page_key, limit)
+        result_set = self.get_storage().search(search_filter, search_order, page_key, limit)
         result_set.results = [self.item_marshaller.load(item) if item else None for item in result_set.results]
         return result_set
 
@@ -98,13 +98,13 @@ class ObjStorage(ObjStorageABC[T, F, S, C, U]):
                    ) -> Iterator[ExternalItemType]:
         search_filter = search_filter_factory.to_search_filter() if search_filter_factory else INCLUDE_ALL
         search_order = search_order_factory.to_search_order() if search_order_factory else None
-        for item in self.storage.search_all(search_filter, search_order):
+        for item in self.get_storage().search_all(search_filter, search_order):
             loaded = self.item_marshaller.load(item)
             yield loaded
 
     def count(self, search_filter_factory: Optional[F] = None) -> int:
         search_filter = search_filter_factory.to_search_filter() if search_filter_factory else INCLUDE_ALL
-        return self.storage.count(search_filter)
+        return self.get_storage().count(search_filter)
 
     async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
         """
@@ -112,14 +112,14 @@ class ObjStorage(ObjStorageABC[T, F, S, C, U]):
         order
         """
         unmarshalled_edits = list(self._edit_iterator(edits))
-        results = await self.storage.edit_batch(unmarshalled_edits)
+        results = await self.get_storage().edit_batch(unmarshalled_edits)
         for result, edit in zip(results, edits):
             result.edit = edit
         return results
 
     def edit_all(self, edits: Iterator[BatchEditABC]):
         edits = self._edit_iterator(edits)
-        self.storage.edit_all(edits)
+        self.get_storage().edit_all(edits)
 
     def _edit_iterator(self, edits: Iterator[BatchEditABC]):
         edits = iter(edits)

@@ -9,8 +9,8 @@ T = TypeVar('T')
 
 
 class BatchEditABC(ABC):
-    @abstractmethod
     @property
+    @abstractmethod
     def id(self) -> UUID:
         """ Get a unique id for this edit"""
 

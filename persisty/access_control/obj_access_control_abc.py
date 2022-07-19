@@ -1,7 +1,14 @@
 from abc import abstractmethod
-from typing import Generic, Optional
+from typing import Generic, Optional, TypeVar
 
-from persisty.obj_storage.obj_storage_meta import T, F, C, U
+from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
+from persisty.search_order.search_order_factory_abc import SearchOrderFactoryABC
+
+T = TypeVar('T')
+F = TypeVar('F', bound=SearchFilterFactoryABC)
+S = TypeVar('S', bound=SearchOrderFactoryABC)
+C = TypeVar('C')
+U = TypeVar('U')
 
 
 class ObjAccessControlABC(Generic[T, F, C, U]):

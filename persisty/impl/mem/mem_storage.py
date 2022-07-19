@@ -7,7 +7,9 @@ from marshy.types import ExternalItemType
 from persisty.errors import PersistyError
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.search_order import SearchOrder
+from persisty.search_order.search_order import SearchOrder
+from persisty.storage.schema_validating_storage import SchemaValidatingStorage
+from persisty.storage.secured_storage import SecuredStorage
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 
@@ -19,8 +21,11 @@ class MemStorage(StorageABC):
     """
     In memory storage, used mostly for mocking and testing
     """
-    storage_meta: StorageMeta
+    storage_meta: StorageMeta = field()
     storage: Dict[str, ExternalItemType] = field(default_factory=dict)
+
+    def get_storage_meta(self) -> StorageMeta:
+        return self.storage_meta
 
     def create(self, item: ExternalItemType) -> ExternalItemType:
         dumped = self._dump(item)
@@ -102,3 +107,13 @@ class MemStorage(StorageABC):
             if value is not UNDEFINED:
                 result[field_.name] = value
         return result
+
+
+def mem_storage(storage_meta: StorageMeta, storage: Optional[Dict[str, ExternalItemType]] = None):
+    """ Wraps a mem storage instance to provide additional checking """
+    if storage is None:
+        storage = {}
+    storage = MemStorage(storage_meta, storage)
+    storage = SecuredStorage(storage)
+    storage = SchemaValidatingStorage(storage)
+    return storage

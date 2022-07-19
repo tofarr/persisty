@@ -14,3 +14,7 @@ class KeyConfigABC(ABC):
     @abstractmethod
     def set_key(self, key: Optional[str], item: ExternalItemType):
         """ Set the key for the stored given """
+
+    @abstractmethod
+    def is_required_field(self, field_name: str) -> bool:
+        """ Determine whether the field given is required to be non null by this key config """

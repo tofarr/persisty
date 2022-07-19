@@ -79,7 +79,7 @@ class TimestampUpdateStorage(WrapperStorageABC):
     timestamp_storage: StorageABC
 
     def create(self, item: ExternalItemType) -> ExternalItemType:
-        item = self.storage.create(item)
+        item = self.get_storage().create(item)
         self.update_timestamp()
         return item
 
@@ -87,26 +87,26 @@ class TimestampUpdateStorage(WrapperStorageABC):
                updates: ExternalItemType,
                search_filter: SearchFilterABC = INCLUDE_ALL
                ) -> Optional[ExternalItemType]:
-        item = self.storage.update(updates)
+        item = self.get_storage().update(updates)
         if item:
             self.update_timestamp()
         return item
 
     def delete(self, key: str) -> bool:
-        result = self.storage.delete(key)
+        result = self.get_storage().delete(key)
         if result:
             self.update_timestamp()
         return result
 
     async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
-        result = await self.storage.edit_batch(edits)
+        result = await self.get_storage().edit_batch(edits)
         if next((True for r in result if r.success), False):
             self.update_timestamp()
         return result
 
     def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
         update_timestamp = False
-        for result in self.storage.edit_all(edits):
+        for result in self.get_storage().edit_all(edits):
             yield result
             update_timestamp |= result.success
         if update_timestamp:
@@ -114,6 +114,6 @@ class TimestampUpdateStorage(WrapperStorageABC):
 
     def update_timestamp(self):
         self.timestamp_storage.update(dict(
-            name=self.storage_meta.name,
+            name=self.get_storage_meta().name,
             content_updated_at=datetime.now().isoformat()
         ))

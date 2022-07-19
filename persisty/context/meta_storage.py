@@ -34,11 +34,11 @@ class MetaStorage(MetaStorageABC):
         return storage_meta
 
     def read(self, key: str) -> Optional[StorageMeta]:
-        storage = self.storage.get(key)
+        storage = self.get_storage().get(key)
         return storage.storage_meta if storage else None
 
     def update(self, updates: UpdateStorageMetaInput) -> Optional[StorageMeta]:
-        storage = self.storage.get(updates.name)
+        storage = self.get_storage().get(updates.name)
         if not storage:
             return None
         params = dataclass_to_params(storage.storage_meta)
@@ -48,7 +48,7 @@ class MetaStorage(MetaStorageABC):
         return storage_meta
 
     def delete(self, key: str) -> bool:
-        return bool(self.storage.pop(key, None))
+        return bool(self.get_storage().pop(key, None))
 
     def search(self,
                search_filter_factory: Optional[StorageMetaSearchFilter] = None,
@@ -56,7 +56,7 @@ class MetaStorage(MetaStorageABC):
                page_key: Optional[str] = None,
                limit: Optional[int] = None
                ) -> ResultSet[StorageMeta]:
-        items = iter(self.storage.values())
+        items = iter(self.get_storage().values())
         items = (i.storage_meta for i in items)
         return meta_result_set(items, search_filter_factory, search_order_factory, page_key, limit)
 

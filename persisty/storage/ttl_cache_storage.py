@@ -37,9 +37,8 @@ class TTLCacheStorage(StorageABC):
         self.cache.clear()
         self.cached_result_sets.clear()
 
-    @property
-    def storage_meta(self) -> StorageMeta:
-        return self.storage.storage_meta
+    def get_storage_meta(self) -> StorageMeta:
+        return self.get_storage().get_storage_meta()
 
     def store_item_in_cache(self, key: str, item: ExternalItemType, expire_at: Optional[int] = None):
         if expire_at is None:
@@ -54,15 +53,15 @@ class TTLCacheStorage(StorageABC):
             return deepcopy(entry.value)
 
     def create(self, item: ExternalItemType) -> ExternalItemType:
-        item = self.storage.create(item)
-        key = self.storage_meta.key_config.get_key(item)
+        item = self.get_storage().create(item)
+        key = self.get_storage_meta().key_config.get_key(item)
         self.store_item_in_cache(key, item)
         return item
 
     def read(self, key: str) -> Optional[ExternalItemType]:
         item = self.load_item_from_cache(key)
         if item is None:
-            item = self.storage.read(key)
+            item = self.get_storage().read(key)
             if item:
                 self.store_item_in_cache(key, item)
         return item
@@ -72,8 +71,8 @@ class TTLCacheStorage(StorageABC):
         items_by_key = {key: self.load_item_from_cache(key, now) for key in keys}
         keys_to_load = [key for key, item in items_by_key.values() if item is None]
         if keys_to_load:
-            items = await self.storage.read_batch(keys_to_load)
-            key_config = self.storage_meta.key_config
+            items = await self.get_storage().read_batch(keys_to_load)
+            key_config = self.get_storage_meta().key_config
             for item in items:
                 if item:
                     key = key_config.get_key(item)
@@ -86,20 +85,20 @@ class TTLCacheStorage(StorageABC):
                updates: ExternalItemType,
                search_filter: SearchFilterABC = INCLUDE_ALL
                ) -> Optional[ExternalItemType]:
-        item = self.storage.update(updates, search_filter)
+        item = self.get_storage().update(updates, search_filter)
         if item:
-            key = self.storage_meta.key_config.get_key(item)
+            key = self.get_storage_meta().key_config.get_key(item)
             self.store_item_in_cache(key, item)
         return item
 
     def delete(self, key: str) -> bool:
-        destroyed = self.storage.delete(key)
+        destroyed = self.get_storage().delete(key)
         if key in self.cache:
             del self.cache[key]
         return destroyed
 
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
-        return self.storage.count(search_filter)
+        return self.get_storage().count(search_filter)
 
     def search(self,
                search_filter: SearchFilterABC = INCLUDE_ALL,
@@ -114,8 +113,8 @@ class TTLCacheStorage(StorageABC):
         if entry and entry.expire_at > now:
             results = [self.load_item_from_cache(key, now) for key in entry.value['keys']]
             return ResultSet(results, entry.value['next_page_key'])
-        result_set = self.storage.search(search_filter, search_order, page_key, limit)
-        key_config = self.storage_meta.key_config
+        result_set = self.get_storage().search(search_filter, search_order, page_key, limit)
+        key_config = self.get_storage_meta().key_config
         expire_at = int(time()) + self.ttl
         keys = []
         for item in result_set.results:
@@ -127,13 +126,13 @@ class TTLCacheStorage(StorageABC):
         return result_set
 
     async def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
-        results = await self.storage.edit_batch(edits)
+        results = await self.get_storage().edit_batch(edits)
         for result in results:
             if not result.success:
                 continue
             edit = result.edit
             if isinstance(edit, Update):
-                key = self.storage_meta.key_config.get_key(edit.updates)
+                key = self.get_storage_meta().key_config.get_key(edit.updates)
                 self.cache.pop(key, None)
             elif isinstance(edit, Delete):
                 self.cache.pop(edit.key, None)

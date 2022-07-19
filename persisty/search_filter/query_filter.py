@@ -1,12 +1,15 @@
-from typing import Tuple, Optional, Any
+from __future__ import annotations
+from typing import Tuple, Optional, Any, TYPE_CHECKING
 
 from dataclasses import dataclass
 
 from marshy.types import ExternalItemType
 
-from persisty.storage.field.field import Field
 from persisty.storage.field.field_type import FieldType
 from persisty.search_filter.search_filter_abc import SearchFilterABC
+
+if TYPE_CHECKING:
+    from persisty.storage.field.field import Field
 
 
 @dataclass

@@ -13,8 +13,8 @@ from persisty.storage.storage_abc import edit_batch, search
 
 class ObjStorageABC(Generic[T, F, S, C, U]):
 
-    @abstractmethod
     @property
+    @abstractmethod
     def obj_storage_meta(self) -> ObjStorageMeta[T, F, S, C, U]:
         """ Get the type for items returned """
 

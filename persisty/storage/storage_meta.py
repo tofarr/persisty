@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from marshy.types import ExternalItemType
 
 from persisty.access_control.access_control_abc import AccessControlABC
-from persisty.access_control.access_control import ALL_ACCESS
+from persisty.access_control.constants import ALL_ACCESS
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG

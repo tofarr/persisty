@@ -37,7 +37,7 @@ class MemContext(PersistyContextABC):
     meta_access_control_factory: AccessControlFactoryABC = READ_ONLY_ACCESS_FACTORY
 
     def get_storage(self, storage_name: str, authorization: Authorization) -> Optional[StorageABC]:
-        storage = self.storage.storage.get(storage_name)
+        storage = self.get_storage().storage.get(storage_name)
         if not storage:
             return None
 
@@ -61,7 +61,7 @@ class MemContext(PersistyContextABC):
                                           self.marshaller_context.get_marshaller(CreateStorageMetaInput),
                                           self.marshaller_context.get_marshaller(UpdateStorageMetaInput),
                                           )
-        storage = MemMetaStorage(access_control, self.storage.storage)
+        storage = MemMetaStorage(access_control, self.get_storage().storage)
         return storage
 
     # noinspection PyMethodMayBeStatic, PyUnusedLocal

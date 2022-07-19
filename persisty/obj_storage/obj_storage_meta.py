@@ -3,7 +3,7 @@ from typing import Generic, TypeVar, Type
 
 from dataclasses import dataclass
 
-from persisty.access_control.access_control import ALL_ACCESS
+from persisty.access_control.constants import ALL_ACCESS
 from persisty.access_control.obj_access_control_abc import ObjAccessControlABC
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl

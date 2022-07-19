@@ -1,11 +1,13 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Tuple, Optional, Any
+from typing import Tuple, Optional, Any, TYPE_CHECKING
 
 from marshy import ExternalType
 
-from persisty.search_filter import SearchFilterFactoryABC
-from persisty.storage.field.field import Field
+from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
+
+if TYPE_CHECKING:
+    from persisty.storage.field.field import Field
 
 
 class SearchFilterABC(SearchFilterFactoryABC, ABC):

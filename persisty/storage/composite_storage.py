@@ -3,8 +3,9 @@ from typing import Tuple, Optional, Iterator
 
 from marshy.types import ExternalItemType
 
-from persisty.search_filter import SearchFilterABC, INCLUDE_ALL
-from persisty.search_order import SearchOrder
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.search_order.search_order import SearchOrder
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.util.encrypt_at_rest import encrypt, decrypt
@@ -20,23 +21,23 @@ class CompositeStorage(StorageABC):
             object.__setattr__(self, 'storage_meta', self.storage[0].storage_meta)
 
     def create(self, item: ExternalItemType) -> ExternalItemType:
-        key = self.storage_meta.key_config.get_key(item)
+        key = self.get_storage_meta().key_config.get_key(item)
         if key:
             name, key = decrypt(key)
-            storage = next(s for s in self.storage if s.storage_meta.name == name)
-            storage.storage_meta.key_config.set_key(key, item)
+            storage = next(s for s in self.storage if s.get_storage_meta().name == name)
+            storage.get_storage_meta().key_config.set_key(key, item)
             item = storage.create(item)
             self._set_key_after_read(item, self.storage_meta)
             return item
         for storage in self.storage:
-            if storage.storage_meta.access_control.is_creatable(item):
+            if storage.get_storage_meta().access_control.is_creatable(item):
                 item = storage.create(item)
                 self._set_key_after_read(item, self.storage_meta)
                 return item
 
     def read(self, key: str) -> Optional[ExternalItemType]:
         name, key = decrypt(key)
-        storage = next(s for s in self.storage if s.storage_meta.name == name)
+        storage = next(s for s in self.storage if s.get_storage_meta().name == name)
         item = storage.read(key)
         self._set_key_after_read(item, storage.storage_meta)
         return item
@@ -45,17 +46,17 @@ class CompositeStorage(StorageABC):
                updates: ExternalItemType,
                search_filter: SearchFilterABC = INCLUDE_ALL
                ) -> Optional[ExternalItemType]:
-        key = self.storage_meta.key_config.get_key(updates)
+        key = self.get_storage_meta().key_config.get_key(updates)
         name, key = decrypt(key)
-        storage = next(s for s in self.storage if s.storage_meta.name == name)
-        storage.storage_meta.key_config.set_key(key, updates)
+        storage = next(s for s in self.storage if s.get_storage_meta().name == name)
+        storage.get_storage_meta().key_config.set_key(key, updates)
         item = storage.update(updates, search_filter)
         self._set_key_after_read(item, storage.storage_meta)
         return item
 
     def delete(self, key: str) -> bool:
         name, key = decrypt(key)
-        storage = next(s for s in self.storage if s.storage_meta.name == name)
+        storage = next(s for s in self.storage if s.get_storage_meta().name == name)
         return storage.delete(key)
 
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
@@ -82,7 +83,7 @@ class CompositeStorage(StorageABC):
     def _set_key_after_read(self, item: ExternalItemType, storage_meta: StorageMeta) -> ExternalItemType:
         key = storage_meta.key_config.get_key(item)
         key = encrypt([storage_meta.name, key])
-        self.storage_meta.key_config.set_key(key, item)
+        self.get_storage_meta().key_config.set_key(key, item)
         return item
 
 

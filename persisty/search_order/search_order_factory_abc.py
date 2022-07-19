@@ -8,13 +8,13 @@ from persisty.search_order.search_order_field import SearchOrderField
 
 class SearchOrderFactoryABC(ABC):
 
-    @abstractmethod
     @property
+    @abstractmethod
     def field(self) -> Optional[Enum]:
         """ Get the field to search """
 
-    @abstractmethod
     @property
+    @abstractmethod
     def desc(self) -> bool:
         """ Determine if search is in inverse order """
 

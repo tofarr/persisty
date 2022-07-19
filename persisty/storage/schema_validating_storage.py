@@ -17,15 +17,17 @@ class SchemaValidatingStorage(WrapperStorageABC):
     def __post_init__(self):
         if self.schema:
             return
-        storage_meta = self.storage.storage_meta
+        storage_meta = self.get_storage().get_storage_meta()
         return ObjectSchema(
             name=storage_meta.name,
             properties={f.name: f.schema for f in storage_meta.fields}
         )
 
-    @property
-    def storage_meta(self) -> StorageMeta:
-        return self.storage.storage_meta
+    def get_storage(self) -> StorageABC:
+        return self.storage
+
+    def get_storage_meta(self) -> StorageMeta:
+        return self.get_storage().get_storage_meta()
 
     def filter_create(self, item: ExternalItemType) -> ExternalItemType:
         self.schema.validate(item)

@@ -50,8 +50,8 @@ STORAGE_META_MARSHALLER = get_default_context().get_marshaller(StorageMeta)
 class MetaStorageABC(ObjStorageABC[StorageMeta, StorageMetaSearchFilter, StorageMetaSearchOrder, CreateStorageMetaInput,
                                    UpdateStorageMetaInput], ABC):
 
-    @abstractmethod
     @property
+    @abstractmethod
     def access_control(self) -> ObjAccessControlABC[StorageMeta]:
         """ Get the access control for this storage """
 

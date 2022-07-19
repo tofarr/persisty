@@ -6,7 +6,8 @@ from marshy.types import ExternalItemType
 from persisty.storage.batch_edit import BatchEditABC, Delete, Update, Create
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
-from persisty.search_filter import SearchFilterABC, INCLUDE_ALL
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
@@ -21,14 +22,13 @@ logger = get_logger(__name__)
 class FilteredStorageABC(WrapperStorageABC, ABC):
     """ Extension to wrapper storage which loads items before updates / deletes for the purpose of filtering """
 
-    @abstractmethod
     @property
+    @abstractmethod
     def storage(self) -> StorageABC:
         """ Get wrapped storage """
 
-    @property
-    def storage_meta(self) -> StorageMeta:
-        return self.storage.storage_meta
+    def get_storage_meta(self) -> StorageMeta:
+        return self.get_storage().get_storage_meta()
 
     def filter_create(self, item: ExternalItemType) -> ExternalItemType:
         """ search_filter an stored before create """
@@ -57,16 +57,16 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
 
     def create(self, item: ExternalItemType) -> ExternalItemType:
         item = self.filter_create(item)
-        return self.storage.create(item)
+        return self.get_storage().create(item)
 
     def read(self, key: str) -> Optional[ExternalItemType]:
-        item = self.storage.read(key)
+        item = self.get_storage().read(key)
         item = self.filter_read(item)
         return item
 
     async def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
-        assert len(keys) <= self.storage_meta.batch_size
-        items = await self.storage.read_batch(keys)
+        assert len(keys) <= self.get_storage_meta().batch_size
+        items = await self.get_storage().read_batch(keys)
         items = [self.filter_read(item) for item in items]
         return items
 
@@ -74,19 +74,19 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
                updates: ExternalItemType,
                search_filter: SearchFilterABC = INCLUDE_ALL
                ) -> Optional[ExternalItemType]:
-        key = self.storage_meta.key_config.get_key(updates)
+        key = self.get_storage_meta().key_config.get_key(updates)
         old_item = self.read(key)
-        if not old_item or not search_filter.match(old_item, self.storage_meta.fields):
+        if not old_item or not search_filter.match(old_item, self.get_storage_meta().fields):
             return None
         item = self.filter_update(old_item, updates)
         if not item:
             return None
-        return self.storage.update(item)
+        return self.get_storage().update(item)
 
     def delete(self, key: str) -> bool:
-        item = self.storage.read(key)
+        item = self.get_storage().read(key)
         if item and self.allow_delete(item):
-            return self.storage.delete(key)
+            return self.get_storage().delete(key)
         return False
 
     def search(self,
@@ -96,21 +96,21 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
                limit: Optional[int] = None
                ) -> ResultSet[ExternalItemType]:
         if limit is None:
-            limit = self.storage_meta.batch_size
+            limit = self.get_storage_meta().batch_size
         else:
-            assert limit <= self.storage_meta.batch_size
+            assert limit <= self.get_storage_meta().batch_size
         search_filter, fully_handled = self.filter_search_filter(search_filter)
         if fully_handled:
-            return self.storage.search(search_filter, search_order, page_key, limit)
+            return self.get_storage().search(search_filter, search_order, page_key, limit)
         # Since the nested search_filter was not fully able to handle the constraint, we handle it here...
         nested_page_key = None
         nested_item_key = None
         if page_key:
             nested_page_key, nested_item_key = decrypt(page_key)
-        key_config = self.storage_meta.key_config
+        key_config = self.get_storage_meta().key_config
         results = []
         while True:
-            result_set = self.storage.search(search_filter, search_order, nested_page_key)
+            result_set = self.get_storage().search(search_filter, search_order, nested_page_key)
             items = (self.filter_read(item) for item in result_set.results)
             items = (item for item in items if item)  # Remove filtered items
 
@@ -139,7 +139,7 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
                    search_order: Optional[SearchOrder] = None
                    ) -> Iterator[ExternalItemType]:
         search_filter, fully_handled = self.filter_search_filter(search_filter)
-        items = self.storage.search_all(search_filter, search_order)
+        items = self.get_storage().search_all(search_filter, search_order)
         if fully_handled:
             return items
         for item in items:
@@ -150,16 +150,16 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         search_filter, fully_handled = self.filter_search_filter(search_filter)
         if fully_handled:
-            return self.storage.count(search_filter)
-        items = self.storage.search_all(search_filter)
+            return self.get_storage().count(search_filter)
+        items = self.get_storage().search_all(search_filter)
         items = (self.filter_read(item) for item in items)
         items = (item for item in items if item)  # Remove filtered items
         count = sum(1 for _ in items)
         return count
 
     async def edit_batch(self, edits: List[BatchEditABC]):
-        assert len(edits) <= self.storage_meta.batch_size
-        key_config = self.storage_meta.key_config
+        assert len(edits) <= self.get_storage_meta().batch_size
+        key_config = self.get_storage_meta().key_config
 
         # Load the items that may be needed for filtering
         keys = list(filter(None, (edit.get_key(key_config) for edit in edits)))
@@ -205,7 +205,7 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
                 results_by_id[edit.id].code = 'unsupported_edit_type'
                 results_by_id[edit.id].msg = edit.__class__.__name__
         if filtered_edits:
-            filtered_results = await self.storage.edit_batch(filtered_edits)
+            filtered_results = await self.get_storage().edit_batch(filtered_edits)
             for filtered_result in filtered_results:
                 result = results_by_id.get(filtered_result.edit.id)
                 if not result:

@@ -10,7 +10,7 @@ from persisty.util.undefined import UNDEFINED
 
 
 @dataclass(frozen=True)
-class DefaultValueTransform(SingletonABC, WriteTransformABC):
+class DefaultValueTransform(WriteTransformABC):
     default_value: Any
 
     @property

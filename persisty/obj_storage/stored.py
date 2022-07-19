@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from persisty.access_control.access_control import ALL_ACCESS
+from persisty.access_control.constants import ALL_ACCESS
 from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
@@ -9,10 +9,11 @@ from persisty.obj_storage.attr import Attr
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.storage.field.write_transform.default_value_transform import DefaultValueTransform
-from persisty.util import UNDEFINED
+from persisty.util import UNDEFINED, to_snake_case
 
 
-def stored(cls,
+def stored(cls=None,
+           *,
            key_config: KeyConfigABC = FIELD_KEY_CONFIG,
            access_control: AccessControlABC = ALL_ACCESS,
            cache_control: CacheControlABC = SecureHashCacheControl(),
@@ -24,8 +25,8 @@ def stored(cls,
         params = {k: v for k, v in cls_dict.items() if not k.startswith('__')}
         annotations = {**cls_dict['__annotations__']}
         fields = []
-        for name, type_ in annotations:
-            attr = cls.get(name, UNDEFINED)
+        for name, type_ in annotations.items():
+            attr = cls_dict.get(name, UNDEFINED)
             if not isinstance(attr, Attr):
                 attr = Attr(
                     name=name,
@@ -43,8 +44,8 @@ def stored(cls,
             cache_control=cache_control,
             batch_size=batch_size
         )
-        attrs = {**fields, '__annotations__': annotations, '__persisty_storage_meta__': storage_meta}
-        wrapped = type(cls.__name__, tuple(), attrs)
+        attrs = {**params, '__annotations__': annotations, '__persisty_storage_meta__': storage_meta}
+        wrapped = type(to_snake_case(cls_.__name__), tuple(), attrs)
         wrapped = dataclass(wrapped)
         return wrapped
 

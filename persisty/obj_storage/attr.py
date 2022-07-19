@@ -8,6 +8,7 @@ from schemey.obj_schema import ObjSchema
 from schemey.schema_context import schema_for_type
 from schemey.string_schema import StringSchema
 
+from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.storage.field.field import Field
 from persisty.storage.field.field_filter import FieldFilterOp
 from persisty.storage.field.field_type import FieldType
@@ -50,6 +51,7 @@ TYPE_FILTER_OPS = {
     FieldType.STR: STRING_FILTER_OPS,
     FieldType.UUID: FILTER_OPS,
 }
+NONE_TYPE = type(None)
 
 
 @dataclass
@@ -65,7 +67,7 @@ class Attr:
     is_readable: bool = True
     is_creatable: bool = True
     is_updatable: bool = True
-    write_transform: Union[WriteTransformABC, type(None), Undefined] = UNDEFINED
+    write_transform: Union[WriteTransformABC, NONE_TYPE, Undefined] = UNDEFINED
     permitted_filter_ops: Optional[Tuple[FieldFilterOp, ...]] = None
     is_sortable: Optional[bool] = None
     description: Optional[str] = None
@@ -92,19 +94,17 @@ class Attr:
         instance.__dict__[self.name] = value
 
     def to_field(self) -> Field:
-        self.populate()
         kwargs = {f.name: getattr(self, f.name) for f in fields(Field)}
         return Field(**kwargs)
 
-    def populate(self):
-        """ Called automatically before a field is generated. This tries to set standard values for an attr. """
+    def populate(self, key_config: KeyConfigABC):
         self.populate_field_type()
         self.populate_schema()
         self.populate_write_transform()
-        self.populate_nullable()
+        self.populate_nullable(key_config)
         self.populate_permitted_filter_ops()
         self.populate_sortable()
-        self.populate_indexed()
+        self.populate_indexed(key_config)
 
     def populate_field_type(self):
         if self.field_type is not None:
@@ -134,11 +134,11 @@ class Attr:
         else:
             self.write_transform = None
 
-    def populate_nullable(self):
+    def populate_nullable(self, key_config: KeyConfigABC):
         if self.is_nullable is None:
-            if not self.write_transform:
-                self.is_nullable = True
-            if isinstance(self.write_transform, DefaultValueTransform) and self.write_transform.default_value is None:
+            if key_config.is_required_field(self.name):
+                self.is_nullable = False
+            elif not self.write_transform:
                 self.is_nullable = True
 
     def populate_permitted_filter_ops(self):
@@ -149,6 +149,6 @@ class Attr:
         if self.is_sortable is None:
             self.is_sortable = FieldFilterOp.lt in self.permitted_filter_ops
 
-    def populate_indexed(self):
+    def populate_indexed(self, key_config: KeyConfigABC):
         if self.is_sortable is None:
-            self.is_sortable = 'id' in self.name
+            self.is_sortable = key_config.is_required_field(self.name) or 'id' in self.name or 'code' in self.name

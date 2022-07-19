@@ -9,7 +9,7 @@ from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.search_order import SearchOrder
+from persisty.search_order.search_order import SearchOrder
 from persisty.storage.storage_meta import StorageMeta
 
 
@@ -18,8 +18,7 @@ class StorageABC(ABC):
     General contract for storage object, allowing CRUD, search, and batch updates for objects
     """
     @abstractmethod
-    @property
-    def storage_meta(self) -> StorageMeta:
+    def get_storage_meta(self) -> StorageMeta:
         """ Get the meta for this storage """
 
     @abstractmethod
@@ -31,14 +30,14 @@ class StorageABC(ABC):
         """ Read an stored from the data store """
 
     async def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
-        assert(len(keys) <= self.storage_meta.batch_size)
+        assert(len(keys) <= self.get_storage_meta().batch_size)
         items = [self.read(key) for key in keys]
         return items
 
     def read_all(self, keys: Iterator[str]) -> Iterator[Optional[ExternalItemType]]:
         keys = iter(keys)
         while True:
-            batch_keys = list(islice(keys, self.storage_meta.batch_size))
+            batch_keys = list(islice(keys, self.get_storage_meta().batch_size))
             if not batch_keys:
                 return
             items = self.read_batch(batch_keys)
@@ -65,14 +64,14 @@ class StorageABC(ABC):
                limit: Optional[int] = None
                ) -> ResultSet[ExternalItemType]:
         if limit is None:
-            limit = self.storage_meta.batch_size
-        assert(limit <= self.storage_meta.batch_size)
+            limit = self.get_storage_meta().batch_size
+        assert(limit <= self.get_storage_meta().batch_size)
         items = self.search_all(search_filter, search_order)
-        skip_to_page(page_key, items, self.storage_meta.key_config)
+        skip_to_page(page_key, items, self.get_storage_meta().key_config)
         items = list(islice(items, limit))
         page_key = None
         if len(items) == limit:
-            page_key = self.storage_meta.key_config.get_key(items[-1])
+            page_key = self.get_storage_meta().key_config.get_key(items[-1])
         return ResultSet(items, page_key)
 
     def search_all(self,
@@ -96,13 +95,13 @@ class StorageABC(ABC):
         Do a batch edit and return a list of results. The results should contain all the same edits in the same
         order
         """
-        assert(len(edits) <= self.storage_meta.batch_size)
+        assert(len(edits) <= self.get_storage_meta().batch_size)
         return edit_batch(self, edits)
 
     def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
         edits = iter(edits)
         while True:
-            page = list(islice(edits, self.storage_meta.batch_size))
+            page = list(islice(edits, self.get_storage_meta().batch_size))
             if not page:
                 break
             results = self.edit_batch(page)

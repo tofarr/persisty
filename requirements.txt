@@ -1,6 +1,6 @@
-marshy==2.1.0
-schemey==4.3.0
-validators==0.18.2
+marshy
+schemey
+validators
 pyaes
 sqlalchemy
 boto3

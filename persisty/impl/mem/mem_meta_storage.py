@@ -34,13 +34,13 @@ class MemMetaStorage(MetaStorageABC):
         return storage_meta
 
     def read(self, key: str) -> Optional[StorageMeta]:
-        storage = self.storage.get(key)
+        storage = self.get_storage().get(key)
         if not storage or not self.access_control.is_readable(storage.storage_meta):
             return None
         return storage.storage_meta
 
     def update(self, updates: UpdateStorageMetaInput) -> Optional[StorageMeta]:
-        storage = self.storage.get(updates.name)
+        storage = self.get_storage().get(updates.name)
         if not storage or self.access_control.is_updatable(storage.storage_meta, updates):
             return None
         params = dataclass_to_params(storage.storage_meta)
@@ -50,7 +50,7 @@ class MemMetaStorage(MetaStorageABC):
         return storage_meta
 
     def delete(self, key: str) -> bool:
-        return bool(self.storage.pop(key, None))
+        return bool(self.get_storage().pop(key, None))
 
     def search(self,
                search_filter_factory: Optional[StorageMetaSearchFilter] = None,
@@ -59,7 +59,7 @@ class MemMetaStorage(MetaStorageABC):
                limit: Optional[int] = None
                ) -> ResultSet[StorageMeta]:
         search_filter_factory = self.access_control.transform_search_filter(search_filter_factory)
-        items = iter(self.storage.values())
+        items = iter(self.get_storage().values())
         items = (i.storage_meta for i in items if self.access_control.is_readable(i.storage_meta))
         return meta_result_set(items, search_filter_factory, search_order_factory, page_key, limit)
 

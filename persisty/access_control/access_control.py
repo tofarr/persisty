@@ -29,8 +29,3 @@ class AccessControl(AccessControlABC, ObjAccessControlABC):
 
     def transform_search_filter(self, search_filter):
         return search_filter, True
-
-
-ALL_ACCESS = AccessControl(**{f.name: True for f in fields(AccessControl)})
-READ_ONLY = AccessControl(readable=True, searchable=True)
-NO_ACCESS = AccessControl()

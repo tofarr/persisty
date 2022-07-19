@@ -6,7 +6,6 @@ from persisty.access_control.authorization import Authorization
 class AccessControlFactoryABC(ABC):
 
     @abstractmethod
-    @property
     def priority(self) -> int:
         """ Get the priority for this factory"""
 

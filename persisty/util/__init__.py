@@ -68,3 +68,7 @@ def dataclass_to_params(dataclass):
         if getattr(dataclass, field.name) is not UNDEFINED
     }
     return items
+
+
+def to_snake_case(name: str):
+    return _PATTERN.sub('_', name).lower()

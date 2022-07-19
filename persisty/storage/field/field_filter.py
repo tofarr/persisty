@@ -1,14 +1,17 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial
 import operator
-from typing import Tuple, Optional, Any
+from typing import Tuple, Optional, Any, TYPE_CHECKING
 
 from marshy import ExternalType
 from marshy.types import ExternalItemType
 
-from persisty.storage.field.field import Field
 from persisty.search_filter.search_filter_abc import SearchFilterABC
+
+if TYPE_CHECKING:
+    from persisty.storage.field.field import Field
 
 
 def _gte(a, b):
