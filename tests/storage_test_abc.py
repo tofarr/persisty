@@ -1,18 +1,17 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from datetime import datetime
-from typing import List
 from unittest import TestCase
 
 from persisty.errors import PersistyError
+from persisty.obj_storage.filter_factory import filter_factory
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_field import SearchOrderField
-from persisty.storage.batch_edit import Delete, Update, BatchEditABC, Create
-from persisty.storage.batch_edit_result import BatchEditResult
+from persisty.storage.batch_edit import Delete, Update, Create
 from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.storage_abc import StorageABC
-from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULT_DICTS
+from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULT_DICTS, SuperBowlResult
 
 
 class StorageTestABC(TestCase, ABC):
@@ -238,19 +237,11 @@ class StorageTestABC(TestCase, ABC):
     def test_count(self):
         storage = self.new_super_bowl_results_storage()
         self.assertEqual(56, storage.count())
+        filters = filter_factory(SuperBowlResult)
         self.assertEqual(
-            20,
-            storage.count(
-                FieldFilter("year", FieldFilterOp.gte, 1984)
-                & FieldFilter("year", FieldFilterOp.lt, 2004)
-            ),
+            20, storage.count(filters.year.gte(1984) & filters.year.lt(2004))
         )
-        self.assertEqual(
-            6,
-            storage.count(
-                FieldFilter("winner_code", FieldFilterOp.contains, "new_england")
-            ),
-        )
+        self.assertEqual(6, storage.count(filters.winner_code.contains("new_england")))
         self.assertEqual(0, storage.count(FieldFilter("year", FieldFilterOp.lt, 1967)))
 
     def test_count_invalid_field_filter(self):
@@ -265,14 +256,10 @@ class StorageTestABC(TestCase, ABC):
     def test_search_all(self):
         storage = self.new_super_bowl_results_storage()
         self.assertEqual(SUPER_BOWL_RESULT_DICTS, list(storage.search_all()))
+        filters = filter_factory(SuperBowlResult)
         self.assertEqual(
             SUPER_BOWL_RESULT_DICTS[17:37],
-            list(
-                storage.search_all(
-                    FieldFilter("year", FieldFilterOp.gte, 1984)
-                    & FieldFilter("year", FieldFilterOp.lt, 2004)
-                )
-            ),
+            list(storage.search_all(filters.year.gte(1984) & filters.year.lt(2004))),
         )
         self.assertEqual(
             [r for r in SUPER_BOWL_RESULT_DICTS if r["winner_code"] == "new_england"],
@@ -288,21 +275,16 @@ class StorageTestABC(TestCase, ABC):
 
     def test_search_all_sorted(self):
         storage = self.new_super_bowl_results_storage()
+        filters = filter_factory(SuperBowlResult)
         self.assertEqual(
             list(reversed(SUPER_BOWL_RESULT_DICTS)),
-            list(
-                storage.search_all(
-                    INCLUDE_ALL, SearchOrder((SearchOrderField("year", True),))
-                )
-            ),
+            list(storage.search_all(INCLUDE_ALL, filters.year.desc())),
         )
         self.assertEqual(
             list(reversed(SUPER_BOWL_RESULT_DICTS[17:37])),
             list(
                 storage.search_all(
-                    FieldFilter("year", FieldFilterOp.gte, 1984)
-                    & FieldFilter("year", FieldFilterOp.lt, 2004),
-                    SearchOrder((SearchOrderField("year", True),)),
+                    filters.year.gte(1984) & filters.year.lt(2004), filters.year.desc()
                 )
             ),
         )
@@ -333,22 +315,22 @@ class StorageTestABC(TestCase, ABC):
         results = list(
             storage.search_all(search_order=SearchOrder((SearchOrderField("value"),)))
         )
-        self.assertTrue(results[0]['created_at'] >= now)
-        self.assertTrue(results[0]['updated_at'] >= now)
-        self.assertTrue(results[1]['updated_at'] >= now)
+        self.assertTrue(results[0]["created_at"] >= now)
+        self.assertTrue(results[0]["updated_at"] >= now)
+        self.assertTrue(results[1]["updated_at"] >= now)
         expected_results = [
             {
-                "created_at": results[0]['created_at'],
+                "created_at": results[0]["created_at"],
                 "id": "00000000-0000-0000-0001-000000000000",
                 "title": "Minus One",
-                "updated_at": results[0]['updated_at'],
+                "updated_at": results[0]["updated_at"],
                 "value": -1,
             },
             {
                 "created_at": "1969-12-31T17:00:00",
                 "id": "00000000-0000-0000-0000-000000000001",
                 "title": "First",
-                "updated_at": results[1]['updated_at'],
+                "updated_at": results[1]["updated_at"],
                 "value": 1,
             },
             {
