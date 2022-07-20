@@ -24,7 +24,7 @@ class WrapperStorageABC(StorageABC, ABC):
     def get_storage_meta(self) -> StorageMeta:
         return self.get_storage().get_storage_meta()
 
-    def create(self, item: ExternalItemType) -> ExternalItemType:
+    def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         return self.get_storage().create(item)
 
     def read(self, key: str) -> Optional[ExternalItemType]:

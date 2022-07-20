@@ -1,10 +1,18 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from datetime import datetime
+from typing import List
 from unittest import TestCase
 
 from persisty.errors import PersistyError
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_order.search_order import SearchOrder
+from persisty.search_order.search_order_field import SearchOrderField
+from persisty.storage.batch_edit import Delete, Update, BatchEditABC, Create
+from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.storage_abc import StorageABC
+from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULT_DICTS
 
 
 class StorageTestABC(TestCase, ABC):
@@ -12,7 +20,11 @@ class StorageTestABC(TestCase, ABC):
 
     @abstractmethod
     def new_super_bowl_results_storage(self) -> StorageABC:
-        """Create a new storage object containing only BANDS"""
+        """Create a new storage object containing only Superbowl results"""
+
+    @abstractmethod
+    def new_number_name_storage(self) -> StorageABC:
+        """Create a new storage object containing only Number Names"""
 
     def test_read(self):
         storage = self.new_super_bowl_results_storage()
@@ -82,7 +94,7 @@ class StorageTestABC(TestCase, ABC):
         self.assertEqual(56, storage.count())
         created = storage.create(deepcopy(item))
         self.assertEqual(item, created)
-        read = storage.read('c')
+        read = storage.read("c")
         self.assertEqual(item, read)
         self.assertEqual(57, storage.count())
 
@@ -90,7 +102,7 @@ class StorageTestABC(TestCase, ABC):
         storage = self.new_super_bowl_results_storage()
         item = {
             "code": "c",
-            "year": 'not_a_year',
+            "year": "not_a_year",
             "date": "2067-01-15T00:00:00",
             "winner_code": "robots",
             "runner_up_code": "humans",
@@ -98,7 +110,7 @@ class StorageTestABC(TestCase, ABC):
             "runner_up_score": 0,
         }
         try:
-            storage.create(deepcopy(item))
+            storage.create(deepcopy(item)) and self.assertTrue(False)
         except PersistyError:
             self.assertEqual(56, storage.count())
 
@@ -114,7 +126,7 @@ class StorageTestABC(TestCase, ABC):
             "runner_up_score": 10,
         }
         try:
-            storage.create(deepcopy(item))
+            storage.create(deepcopy(item)) and self.assertTrue(False)
         except PersistyError:
             self.assertEqual(56, storage.count())
 
@@ -124,8 +136,7 @@ class StorageTestABC(TestCase, ABC):
             "code": "li",
             "winner_code": "tom_brady_fan_club",
         }
-        storage.update(item)
-        item = storage.read('li')
+        updated = storage.update(item)
         expected = {
             "code": "li",
             "year": 2017,
@@ -135,22 +146,20 @@ class StorageTestABC(TestCase, ABC):
             "winner_score": 34,
             "runner_up_score": 28,
         }
+        self.assertEqual(expected, updated)
+        self.assertEqual(56, storage.count())
+        item = storage.read("li")
         self.assertEqual(expected, item)
 
     def test_update_missing_key(self):
         storage = self.new_super_bowl_results_storage()
         item = {
-            "code": "i",
+            "code": "not_a_key",
             "year": 1971,
-            "date": "1967-01-15T00:00:00",
-            "winner_code": "green_bay",
-            "runner_up_code": "kansas_city",
-            "winner_score": 35,
-            "runner_up_score": 10,
         }
         updates = {**item}
         try:
-            storage.update(updates)
+            storage.update(updates) and self.assertTrue(False)
         except PersistyError:
             self.assertEqual(56, storage.count())
         self.assertEqual(item, updates)
@@ -158,13 +167,12 @@ class StorageTestABC(TestCase, ABC):
     def test_update_invalid_schema(self):
         storage = self.new_super_bowl_results_storage()
         try:
-            storage.update({
-                "code": "i",
-                "date": "not_a_date"
-            })
+            storage.update({"code": "i", "date": "not_a_date"}) and self.assertTrue(
+                False
+            )
         except PersistyError:
             self.assertEqual(56, storage.count())
-        read = storage.read('i')
+        read = storage.read("i")
         expected = {
             "code": "i",
             "year": 1967,
@@ -174,6 +182,7 @@ class StorageTestABC(TestCase, ABC):
             "winner_score": 35,
             "runner_up_score": 10,
         }
+        self.assertEqual(56, storage.count())
         self.assertEqual(expected, read)
 
     def test_update_valid_filter(self):
@@ -182,8 +191,10 @@ class StorageTestABC(TestCase, ABC):
             "code": "li",
             "winner_code": "tom_brady_fan_club",
         }
-        storage.update(item, FieldFilter('year', FieldFilterOp.eq, 2017))
-        item = storage.read('li')
+        self.assertTrue(
+            storage.update(item, FieldFilter("year", FieldFilterOp.eq, 2017))
+        )
+        item = storage.read("li")
         expected = {
             "code": "li",
             "year": 2017,
@@ -201,8 +212,10 @@ class StorageTestABC(TestCase, ABC):
             "code": "li",
             "winner_code": "tom_brady_fan_club",
         }
-        storage.update(item, FieldFilter('year', FieldFilterOp.eq, 2018))
-        item = storage.read('li')
+        self.assertIsNone(
+            storage.update(item, FieldFilter("year", FieldFilterOp.eq, 2018))
+        )
+        item = storage.read("li")
         expected = {
             "code": "li",
             "year": 2017,
@@ -213,3 +226,144 @@ class StorageTestABC(TestCase, ABC):
             "runner_up_score": 28,
         }
         self.assertEqual(expected, item)
+
+    def test_delete(self):
+        storage = self.new_super_bowl_results_storage()
+        self.assertTrue(storage.read("lvi"))
+
+    def test_delete_missing_key(self):
+        storage = self.new_super_bowl_results_storage()
+        self.assertFalse(storage.delete("missing_key"))
+
+    def test_count(self):
+        storage = self.new_super_bowl_results_storage()
+        self.assertEqual(56, storage.count())
+        self.assertEqual(
+            20,
+            storage.count(
+                FieldFilter("year", FieldFilterOp.gte, 1984)
+                & FieldFilter("year", FieldFilterOp.lt, 2004)
+            ),
+        )
+        self.assertEqual(
+            6,
+            storage.count(
+                FieldFilter("winner_code", FieldFilterOp.contains, "new_england")
+            ),
+        )
+        self.assertEqual(0, storage.count(FieldFilter("year", FieldFilterOp.lt, 1967)))
+
+    def test_count_invalid_field_filter(self):
+        storage = self.new_super_bowl_results_storage()
+        try:
+            storage.count(
+                FieldFilter("non_field", FieldFilterOp.gte, 1984)
+            ) and self.assertTrue(False)
+        except PersistyError:
+            pass
+
+    def test_search_all(self):
+        storage = self.new_super_bowl_results_storage()
+        self.assertEqual(SUPER_BOWL_RESULT_DICTS, list(storage.search_all()))
+        self.assertEqual(
+            SUPER_BOWL_RESULT_DICTS[17:37],
+            list(
+                storage.search_all(
+                    FieldFilter("year", FieldFilterOp.gte, 1984)
+                    & FieldFilter("year", FieldFilterOp.lt, 2004)
+                )
+            ),
+        )
+        self.assertEqual(
+            [r for r in SUPER_BOWL_RESULT_DICTS if r["winner_code"] == "new_england"],
+            list(
+                storage.search_all(
+                    FieldFilter("winner_code", FieldFilterOp.contains, "new_england")
+                )
+            ),
+        )
+        self.assertEqual(
+            [], list(storage.search_all(FieldFilter("year", FieldFilterOp.lt, 1967)))
+        )
+
+    def test_search_all_sorted(self):
+        storage = self.new_super_bowl_results_storage()
+        self.assertEqual(
+            list(reversed(SUPER_BOWL_RESULT_DICTS)),
+            list(
+                storage.search_all(
+                    INCLUDE_ALL, SearchOrder((SearchOrderField("year", True),))
+                )
+            ),
+        )
+        self.assertEqual(
+            list(reversed(SUPER_BOWL_RESULT_DICTS[17:37])),
+            list(
+                storage.search_all(
+                    FieldFilter("year", FieldFilterOp.gte, 1984)
+                    & FieldFilter("year", FieldFilterOp.lt, 2004),
+                    SearchOrder((SearchOrderField("year", True),)),
+                )
+            ),
+        )
+
+    def test_edit_all(self):
+        storage = self.new_number_name_storage()
+        edits = storage.search_all(FieldFilter("value", FieldFilterOp.gt, 3))
+        edits = (Delete(n["id"]) for n in edits)
+        list(storage.edit_all(edits))
+        self.assertEqual(3, storage.count())
+        edits = [
+            Create(
+                dict(
+                    id="00000000-0000-0000-0001-000000000000",
+                    title="Minus One",
+                    value=-1,
+                )
+            ),
+            Update(
+                dict(id="00000000-0000-0000-0002-000000000001", title="Not existing")
+            ),
+            Update(dict(id="00000000-0000-0000-0000-000000000001", title="First")),
+            Delete("00000000-0000-0000-0002-000000000001"),
+        ]
+        now = str(datetime.now())
+        results = [r.success for r in storage.edit_all(edits)]
+        self.assertEqual(results, [True, False, True, False])
+        results = list(
+            storage.search_all(search_order=SearchOrder((SearchOrderField("value"),)))
+        )
+        self.assertTrue(results[0]['created_at'] >= now)
+        self.assertTrue(results[0]['updated_at'] >= now)
+        self.assertTrue(results[1]['updated_at'] >= now)
+        expected_results = [
+            {
+                "created_at": results[0]['created_at'],
+                "id": "00000000-0000-0000-0001-000000000000",
+                "title": "Minus One",
+                "updated_at": results[0]['updated_at'],
+                "value": -1,
+            },
+            {
+                "created_at": "1969-12-31T17:00:00",
+                "id": "00000000-0000-0000-0000-000000000001",
+                "title": "First",
+                "updated_at": results[1]['updated_at'],
+                "value": 1,
+            },
+            {
+                "created_at": "1969-12-31T17:00:00",
+                "id": "00000000-0000-0000-0000-000000000002",
+                "title": "Two",
+                "updated_at": "1969-12-31T17:00:00",
+                "value": 2,
+            },
+            {
+                "created_at": "1969-12-31T17:00:00",
+                "id": "00000000-0000-0000-0000-000000000003",
+                "title": "Three",
+                "updated_at": "1969-12-31T17:00:00",
+                "value": 3,
+            },
+        ]
+        self.assertEqual(expected_results, results)

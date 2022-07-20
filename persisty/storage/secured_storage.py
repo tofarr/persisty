@@ -28,7 +28,7 @@ class SecuredStorage(WrapperStorageABC):
     def get_storage_meta(self) -> StorageMeta:
         return self.storage_meta
 
-    def filter_create(self, item: ExternalItemType) -> ExternalItemType:
+    def filter_create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         if not self.get_storage_meta().access_control.is_creatable(item):
             raise PersistyError("create_forbidden")
         return item

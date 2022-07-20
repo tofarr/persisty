@@ -72,7 +72,7 @@ class MemStorage(StorageABC):
         search_filter.validate_for_fields(self.storage_meta.fields)
         if search_order:
             search_order.validate_for_fields(self.storage_meta.fields)
-        items = iter(self.storage.values())
+        items = list(self.storage.values())  # Copy to list prevents iterator bugs
         if search_filter is not INCLUDE_ALL:
             items = (
                 item

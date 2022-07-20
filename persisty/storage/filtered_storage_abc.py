@@ -3,6 +3,7 @@ from typing import Iterator, List, Optional, Tuple
 
 from marshy.types import ExternalItemType
 
+from persisty.errors import PersistyError
 from persisty.storage.batch_edit import BatchEditABC, Delete, Update, Create
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
@@ -29,7 +30,7 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
     def get_storage_meta(self) -> StorageMeta:
         return self.get_storage().get_storage_meta()
 
-    def filter_create(self, item: ExternalItemType) -> ExternalItemType:
+    def filter_create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         """search_filter an stored before create"""
         return item
 
@@ -58,9 +59,10 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
         """
         return search_filter, True
 
-    def create(self, item: ExternalItemType) -> ExternalItemType:
+    def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         item = self.filter_create(item)
-        return self.get_storage().create(item)
+        if item:
+            return self.get_storage().create(item)
 
     def read(self, key: str) -> Optional[ExternalItemType]:
         item = self.get_storage().read(key)
@@ -85,7 +87,7 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
         item = self.filter_update(old_item, updates)
         if not item:
             return None
-        return self.get_storage().update(item)
+        return self.get_storage().update(item, search_filter)
 
     def delete(self, key: str) -> bool:
         item = self.get_storage().read(key)
@@ -153,7 +155,8 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
         search_filter, fully_handled = self.filter_search_filter(search_filter)
         items = self.get_storage().search_all(search_filter, search_order)
         if fully_handled:
-            return items
+            yield from items
+            return
         for item in items:
             item = self.filter_read(item)
             if item:

@@ -23,7 +23,7 @@ class StorageABC(ABC):
         """Get the meta for this storage"""
 
     @abstractmethod
-    def create(self, item: ExternalItemType) -> ExternalItemType:
+    def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         """Create an stored in the data store"""
 
     @abstractmethod
@@ -50,12 +50,14 @@ class StorageABC(ABC):
     ) -> Optional[ExternalItemType]:
         """
         Update (a partial set of values from) an item based upon its key and the constraint given. By convention
-        any UNDEFINED value is ignored. Return the full new version of the item if an update occurred
+        any UNDEFINED value is ignored. Return the full new version of the item if an update occured. If the key
+        extracted from the updates did not match any existing item, return None. If any other error occurrecd, throw
+        a PersistyError
         """
 
     @abstractmethod
     def delete(self, key: str) -> bool:
-        """Delete an stored from the data store."""
+        """Delete an stored from the data store. Return true if an item was deleted, false otherwise"""
 
     def search(
         self,

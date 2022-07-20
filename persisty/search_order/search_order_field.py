@@ -19,7 +19,7 @@ class SearchOrderField:
         raise ValueError(f"search_order_invalid:{self.field}")
 
     def sort(self, items: Iterator[ExternalItemType]) -> Iterator[ExternalItemType]:
-        items = sorted(items, key=self.key)
+        items = sorted(items, key=self.key, reverse=self.desc)
         return items
 
     def key(self, item: ExternalItemType) -> Any:

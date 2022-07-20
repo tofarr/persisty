@@ -54,7 +54,7 @@ class TTLCacheStorage(StorageABC):
         if entry and entry.expire_at > now:
             return deepcopy(entry.value)
 
-    def create(self, item: ExternalItemType) -> ExternalItemType:
+    def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         item = self.storage.create(item)
         key = self.get_storage_meta().key_config.get_key(item)
         self.store_item_in_cache(key, item)

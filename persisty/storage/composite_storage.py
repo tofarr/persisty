@@ -20,7 +20,7 @@ class CompositeStorage(StorageABC):
         if not self.storage_meta:
             object.__setattr__(self, "storage_meta", self.storage[0].storage_meta)
 
-    def create(self, item: ExternalItemType) -> ExternalItemType:
+    def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         key = self.get_storage_meta().key_config.get_key(item)
         if key:
             name, key = decrypt(key)

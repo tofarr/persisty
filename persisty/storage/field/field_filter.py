@@ -8,6 +8,7 @@ from typing import Tuple, Optional, Any, TYPE_CHECKING
 from marshy import ExternalType
 from marshy.types import ExternalItemType
 
+from persisty.errors import PersistyError
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 
 if TYPE_CHECKING:
@@ -67,7 +68,7 @@ class FieldFilter(SearchFilterABC):
             field = next(field for field in fields if field.name == self.name)
             assert field.is_readable and self.op in field.permitted_filter_ops
         except (StopIteration, AssertionError):
-            raise ValueError("field_filter_invalid_for_fields")
+            raise PersistyError("field_filter_invalid_for_fields")
 
     def match(self, item: ExternalItemType, fields: Tuple[Field, ...] = None) -> bool:
         value = item.get(self.name)

@@ -8,12 +8,8 @@ from persisty.key_config.key_config_abc import KeyConfigABC
 T = TypeVar("T")
 
 
+@dataclass
 class BatchEditABC(ABC):
-    @property
-    @abstractmethod
-    def id(self) -> UUID:
-        """Get a unique id for this edit"""
-
     @abstractmethod
     def get_key(self, key_config: KeyConfigABC) -> str:
         """Get the key for the stored being edited"""
