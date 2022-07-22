@@ -1,16 +1,20 @@
-from functools import lru_cache
+from decimal import Decimal
 from typing import Optional, Dict, Tuple, List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import boto3
 from boto3.dynamodb.conditions import Not as DynNot, ConditionBase, Key
+from botocore.exceptions import ClientError
 from marshy.types import ExternalItemType
 
+from persisty.errors import PersistyError
 from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex
+from persisty.search_filter.and_filter import And
+from persisty.search_filter.exclude_all import EXCLUDE_ALL
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
-from persisty.search_filter import SearchFilterABC, And, EXCLUDE_ALL
 from persisty.search_order.search_order import SearchOrder
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
@@ -20,6 +24,15 @@ from persisty.util.undefined import UNDEFINED
 logger = get_logger(__name__)
 
 
+def catch_client_error(fn):
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except ClientError as e:
+            raise PersistyError(e)
+    return wrapper
+
+
 @dataclass(frozen=True)
 class DynamodbTableStorage(StorageABC):
     """Storage backed by a dynamodb table. Does not do single table design or anything of that nature."""
@@ -27,54 +40,69 @@ class DynamodbTableStorage(StorageABC):
     storage_meta: StorageMeta
     table_name: str
     index: DynamodbIndex
-    gsis: Dict[str, DynamodbIndex]
+    global_secondary_indexes: Dict[str, DynamodbIndex] = field(default_factory=dict)
+    aws_profile_name: Optional[str] = None
+    region_name: Optional[str] = None
 
-    def __post_init__(self):
-        # Validate that fields for all indexed values exist
-        # Validate that no fields are sortable. (Dynamodb sorting only works in conjunction with a partition key)
-        pass
+    def get_storage_meta(self) -> StorageMeta:
+        return self.storage_meta
 
+    @catch_client_error
     def create(self, item: ExternalItemType) -> ExternalItemType:
         item = self._dump(item)
-        _dynamodb_table(self.table_name).put_item(
+        self._dynamodb_table().put_item(
             Item=item,
             ConditionExpression=DynNot(self.index.to_condition_expression(item)),
         )
         return item
 
+    @catch_client_error
     def read(self, key: str) -> Optional[ExternalItemType]:
-        table = _dynamodb_table(self.table_name)
+        table = self._dynamodb_table()
         key_dict = {}
-        self.get_storage_meta().key_config.set_key(key, key_dict)
+        self.storage_meta.key_config.set_key(key, key_dict)
         response = table.get_item(Key=key_dict)
-        return response.get("Item")
+        loaded = self._load(response.get("Item"))
+        return loaded
 
-    def update(self, item: ExternalItemType) -> Optional[ExternalItemType]:
-        updates = self._dump(item)
-        table = _dynamodb_table(self.table_name)
+    @catch_client_error
+    def update(
+        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    ) -> Optional[ExternalItemType]:
+        if search_filter is not INCLUDE_ALL:
+            search_filter.validate_for_fields(self.storage_meta.fields)
+            item = self.read(self.storage_meta.key_config.get_key(updates))
+            if not search_filter.match(item, self.storage_meta.fields):
+                return None
+        updates = self._dump(updates, True)
+        key_dict = self.index.to_dict(updates)
+        table = self._dynamodb_table()
         updates = {**updates}
         updates.pop(self.index.pk)
         if self.index.sk:
             updates.pop(self.index.sk)
         update = _build_update(updates)
         response = table.update_item(
-            Key=self.index.to_dict(updates),
-            ConditionExpression=self.index.to_condition_expression(item),
+            Key=key_dict,
+            ConditionExpression=self.index.to_condition_expression(key_dict),
             UpdateExpression=update["str"],
             ExpressionAttributeNames=update["names"],
             ExpressionAttributeValues=update["values"],
             ReturnValues="ALL_NEW",
         )
-        return response.get("Attributes")
+        loaded = self._load(response.get("Attributes"))
+        return loaded
 
+    @catch_client_error
     def delete(self, key: str) -> bool:
-        table = _dynamodb_table(self.table_name)
+        table = self._dynamodb_table()
         key_dict = {}
-        self.get_storage_meta().key_config.set_key(key, key_dict)
+        self.storage_meta.key_config.set_key(key, key_dict)
         response = table.delete_item(Key=key_dict, ReturnValues="ALL_OLD")
         attributes = response.get("Attributes")
         return bool(attributes)
 
+    @catch_client_error
     def search(
         self,
         search_filter: SearchFilterABC = INCLUDE_ALL,
@@ -82,10 +110,13 @@ class DynamodbTableStorage(StorageABC):
         page_key: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> ResultSet[ExternalItemType]:
-        assert limit <= self.get_storage_meta().batch_size
-        search_filter.validate_for_fields(self.get_storage_meta().fields)
-        search_order.validate_for_fields(self.get_storage_meta().fields)
-        search_filter.validate_for_fields(self.get_storage_meta().fields)
+        if limit is None:
+            limit = self.storage_meta.batch_size
+        else:
+            assert limit <= self.storage_meta.batch_size
+        search_filter.validate_for_fields(self.storage_meta.fields)
+        if search_order:
+            search_order.validate_for_fields(self.storage_meta.fields)
         if search_filter is EXCLUDE_ALL:
             return ResultSet([])
         index_name, condition, filter_expression, handled = self.to_dynamodb_filter(
@@ -97,16 +128,16 @@ class DynamodbTableStorage(StorageABC):
                 "IndexName": index_name,
                 "Select": "SPECIFIC_ATTRIBUTES",
                 "ProjectionExpression": ",".join(
-                    f.name for f in self.get_storage_meta().fields if f.is_readable
+                    f.name for f in self.storage_meta.fields if f.is_readable
                 ),
                 "FilterExpression": filter_expression,
-                "LIMIT": limit,
+                "Limit": limit,
             }
         )
         if page_key:
             exclusive_start_key = query_args["ExclusiveStartKey"] = {}
-            self.get_storage_meta().key_config.set_key(page_key, exclusive_start_key)
-        table = _dynamodb_table(self.table_name)
+            self.storage_meta.key_config.set_key(page_key, exclusive_start_key)
+        table = self._dynamodb_table()
         results = []
         while True:
             if condition:
@@ -116,22 +147,23 @@ class DynamodbTableStorage(StorageABC):
             items = response["Items"]
             if not handled:
                 items = [
-                    item
+                    self._load(item)
                     for item in items
-                    if search_filter.match(item, self.get_storage_meta().fields)
+                    if search_filter.match(item, self.storage_meta.fields)
                 ]
             results.extend(items)
             if len(results) >= limit:
                 results = results[:limit]
-                next_page_key = self.get_storage_meta().key_config.get_key(results[-1])
+                next_page_key = self.storage_meta.key_config.get_key(results[-1])
                 return ResultSet(results, next_page_key)
             last_evaluated_key = response.get("LastEvaluatedKey")
             if not last_evaluated_key:
                 return ResultSet(results)
             query_args["ExclusiveStartKey"] = last_evaluated_key
 
+    @catch_client_error
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
-        search_filter.validate_for_fields(self.get_storage_meta().fields)
+        search_filter.validate_for_fields(self.storage_meta.fields)
         if search_filter is EXCLUDE_ALL:
             return 0
         index_name, condition, filter_expression, handled = self.to_dynamodb_filter(
@@ -149,7 +181,7 @@ class DynamodbTableStorage(StorageABC):
                 "FilterExpression": filter_expression,
             }
         )
-        table = _dynamodb_table(self.table_name)
+        table = self._dynamodb_table()
         count = 0
         while True:
             if condition:
@@ -162,11 +194,25 @@ class DynamodbTableStorage(StorageABC):
                 return count
             query_args["ExclusiveStartKey"] = last_evaluated_key
 
+    def _load(self, item):
+        if isinstance(item, dict):
+            return {k: self._load(v) for k, v in item.items()}
+        elif isinstance(item, list):
+            return [self._load(i) for i in item]
+        elif isinstance(item, Decimal):
+            int_val = int(item)
+            if int_val == item:
+                return int_val
+            else:
+                return float(item)
+        else:
+            return item
+
     def _dump(
         self, item: ExternalItemType, is_update: bool = False
     ) -> ExternalItemType:
         result = {}
-        for field_ in self.get_storage_meta().fields:
+        for field_ in self.storage_meta.fields:
             value = item.get(field_.name, UNDEFINED)
             if field_.write_transform:
                 value = field_.write_transform.transform(value, is_update)
@@ -181,7 +227,7 @@ class DynamodbTableStorage(StorageABC):
         eq_filters = _get_top_level_eq_filters(search_filter)
         if not eq_filters:
             filter_expression, handled = search_filter.build_filter_expression(
-                self.get_storage_meta().fields
+                self.storage_meta.fields
             )
             return None, None, filter_expression, handled
         index_name, index = self.get_index_for_eq_filters(eq_filters)
@@ -190,7 +236,7 @@ class DynamodbTableStorage(StorageABC):
                 index, eq_filters
             )
             filter_expression, handled = search_filter.build_filter_expression(
-                self.get_storage_meta().fields
+                self.storage_meta.fields
             )
             return (
                 index_name,
@@ -199,7 +245,7 @@ class DynamodbTableStorage(StorageABC):
                 handled and index_handled,
             )
         filter_expression, handled = search_filter.build_filter_expression(
-            self.get_storage_meta().fields
+            self.storage_meta.fields
         )
         return None, None, filter_expression, handled
 
@@ -209,20 +255,20 @@ class DynamodbTableStorage(StorageABC):
         attr_names = {f.name for f in eq_filters}
         if self.index.pk in attr_names:
             return None, self.index
-        for name, index in self.gsis:
+        for name, index in self.global_secondary_indexes:
             if index.pk in attr_names:
                 return name, index
         return None, None
 
-
-@lru_cache(maxsize=200)
-def _dynamodb_table(table_name: str):
-    return _dynamodb().Table(table_name)
-
-
-@lru_cache()
-def _dynamodb():
-    return boto3.resource("dynamodb")
+    def _dynamodb_table(self):
+        if hasattr(self, '_table'):
+            return self._table
+        kwargs = filter_none(dict(profile_name=self.aws_profile_name, region_name=self.region_name))
+        session = boto3.Session(**kwargs)
+        resource = session.resource("dynamodb")
+        table = resource.Table(self.table_name)
+        object.__setattr__(self, '_table', table)
+        return table
 
 
 def _build_update(updates: dict):
@@ -243,7 +289,7 @@ def _get_top_level_eq_filters(search_filter: SearchFilterABC) -> List[FieldFilte
     if _is_eq_filter(search_filter):
         return [search_filter]
     elif isinstance(search_filter, And):
-        return [f for f in search_filter if _is_eq_filter(search_filter)]
+        return [f for f in search_filter.search_filters if _is_eq_filter(search_filter)]
     return []
 
 

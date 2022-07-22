@@ -24,7 +24,7 @@ class WrapperStorageABC(StorageABC, ABC):
     def get_storage_meta(self) -> StorageMeta:
         return self.get_storage().get_storage_meta()
 
-    def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
+    def create(self, item: ExternalItemType) -> ExternalItemType:
         return self.get_storage().create(item)
 
     def read(self, key: str) -> Optional[ExternalItemType]:
@@ -61,7 +61,7 @@ class WrapperStorageABC(StorageABC, ABC):
         return self.get_storage().count(search_filter)
 
     def edit_batch(self, edits: List[BatchEditABC]):
-        return self.edit_batch(edits)
+        return self.get_storage().edit_batch(edits)
 
     def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
         return self.get_storage().edit_all(edits)

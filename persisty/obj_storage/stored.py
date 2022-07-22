@@ -30,6 +30,8 @@ def stored(
         annotations = {**cls_dict["__annotations__"]}
         fields = []
         for name, type_ in annotations.items():
+            if name.startswith("__"):
+                continue
             attr = cls_dict.get(name, UNDEFINED)
             if not isinstance(attr, Attr):
                 attr = Attr(
@@ -44,7 +46,7 @@ def stored(
             params[name] = UNDEFINED
 
         storage_meta = StorageMeta(
-            name=cls_.__name__,
+            name=to_snake_case(cls_.__name__),
             fields=tuple(fields),
             key_config=key_config,
             access_control=access_control,
@@ -56,7 +58,7 @@ def stored(
             "__annotations__": annotations,
             "__persisty_storage_meta__": storage_meta,
         }
-        wrapped = type(to_snake_case(cls_.__name__), tuple(), attrs)
+        wrapped = type(cls_.__name__, tuple(), attrs)
         wrapped = dataclass(wrapped)
         return wrapped
 

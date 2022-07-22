@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from itertools import islice
 from typing import Iterator, List, Optional, Tuple
 
 from marshy.types import ExternalItemType
@@ -229,3 +230,12 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
                     continue
                 result.copy_from(filtered_result)
         return results
+
+    def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
+        edits = iter(edits)
+        while True:
+            page = list(islice(edits, self.get_storage_meta().batch_size))
+            if not page:
+                break
+            results = self.edit_batch(page)
+            yield from results

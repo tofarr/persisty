@@ -17,14 +17,13 @@ class SchemaValidatingStorage(FilteredStorageABC):
     schema: SchemaABC = None
 
     def __post_init__(self):
-        if self.schema:
-            return
-        storage_meta = self.get_storage().get_storage_meta()
-        schema = ObjectSchema(
-            name=storage_meta.name,
-            properties={f.name: f.schema for f in storage_meta.fields},
-        )
-        object.__setattr__(self, "schema", schema)
+        if not self.schema:
+            storage_meta = self.get_storage().get_storage_meta()
+            schema = ObjectSchema(
+                name=storage_meta.name,
+                properties={f.name: f.schema for f in storage_meta.fields},
+            )
+            object.__setattr__(self, "schema", schema)
 
     def get_storage(self) -> StorageABC:
         return self.storage
@@ -33,8 +32,10 @@ class SchemaValidatingStorage(FilteredStorageABC):
         return self.storage.get_storage_meta()
 
     def filter_create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
-        if not next(self.schema.get_schema_errors(item), None):
-            return item
+        error = next(self.schema.get_schema_errors(item), None)
+        if error:
+            raise PersistyError(error)
+        return item
 
     def filter_update(
         self, old_item: ExternalItemType, updates: ExternalItemType

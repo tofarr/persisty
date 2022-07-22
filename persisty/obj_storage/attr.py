@@ -102,6 +102,7 @@ class Attr:
 
     def to_field(self) -> Field:
         kwargs = {f.name: getattr(self, f.name) for f in fields(Field)}
+        kwargs['type'] = self.field_type
         return Field(**kwargs)
 
     def populate(self, key_config: KeyConfigABC):
@@ -157,8 +158,8 @@ class Attr:
             self.is_sortable = FieldFilterOp.lt in self.permitted_filter_ops
 
     def populate_indexed(self, key_config: KeyConfigABC):
-        if self.is_sortable is None:
-            self.is_sortable = (
+        if self.is_indexed is None:
+            self.is_indexed = (
                 key_config.is_required_field(self.name)
                 or "id" in self.name
                 or "code" in self.name

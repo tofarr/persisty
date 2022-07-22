@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from persisty.key_config.obj_key_config_abc import ObjKeyConfigABC
 from persisty.storage.field.field_type import FieldType
 from persisty.key_config.key_config_abc import KeyConfigABC
+from persisty.util import UNDEFINED
 
 
 @dataclass(frozen=True)
@@ -19,8 +21,10 @@ class FieldKeyConfig(KeyConfigABC, ObjKeyConfigABC):
             value = str(value)
         return value
 
-    def set_key(self, key: str, item):
+    def set_key(self, key: Optional[str], item):
         if key is not None:
+            if key is None or key is UNDEFINED:
+                key = UNDEFINED
             if self.field_type is FieldType.INT:
                 key = int(key)
             elif self.field_type is FieldType.FLOAT:

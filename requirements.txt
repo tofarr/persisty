@@ -4,4 +4,6 @@ validators
 pyaes
 sqlalchemy
 boto3
+botocore
 black
+moto

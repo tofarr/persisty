@@ -2,7 +2,7 @@ from logging import Logger
 from time import time
 from typing import Callable, Optional, TypeVar, FrozenSet
 
-from persisty.util import get_logger
+from persisty.util import get_logger, filter_none
 
 T = TypeVar("T")
 
@@ -27,12 +27,26 @@ def logify(
 
 def logify_callable(name, fn: Callable, logger: Optional[Logger] = None):
     def wrapper(*args, **kwargs):
-        start = int(time())
-        logger.info(f"{name}:start:{args[1:]}:{kwargs}")
-        return_value = fn(*args, **kwargs)
-        end = int(time())
-        time_taken = end - start
-        logger.info(f"{name}:end:{time_taken}")
-        return return_value
+        start = time()
+        error = ""
+        try:
+            return_value = fn(*args, **kwargs)
+            return return_value
+        except Exception as e:
+            error = str(e)
+            raise e
+        finally:
+            end = time()
+            time_taken = round(end - start)
+            msg = filter_none(
+                dict(
+                    name=name,
+                    time=time_taken,
+                    error=error,
+                    args=args[1:],
+                    kwargs=kwargs,
+                )
+            )
+            logger.info(msg)
 
     return wrapper

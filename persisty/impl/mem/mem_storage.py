@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from marshy.types import ExternalItemType
 
+from persisty.access_control.constants import ALL_ACCESS
 from persisty.errors import PersistyError
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
@@ -47,6 +48,7 @@ class MemStorage(StorageABC):
     def update(
         self, item: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
     ) -> Optional[ExternalItemType]:
+        search_filter.validate_for_fields(self.storage_meta.fields)
         key = self.storage_meta.key_config.get_key(item)
         if key is None:
             raise PersistyError(f"missing_key:{item}")
@@ -124,6 +126,7 @@ def mem_storage(
     if storage is None:
         storage = {}
     storage = MemStorage(storage_meta, storage)
-    storage = SecuredStorage(storage)
+    if storage_meta.access_control is not ALL_ACCESS:
+        storage = SecuredStorage(storage)
     storage = SchemaValidatingStorage(storage)
     return storage
