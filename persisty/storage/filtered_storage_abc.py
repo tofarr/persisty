@@ -79,7 +79,9 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
     def update(
         self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
     ) -> Optional[ExternalItemType]:
-        key = self.get_storage_meta().key_config.get_key(updates)
+        key = self.get_storage_meta().key_config.to_key_str(updates)
+        if not key:
+            raise PersistyError(f"missing_key:{updates}")
         old_item = self.read(key)
         if not old_item or not search_filter.match(
             old_item, self.get_storage_meta().fields
@@ -131,7 +133,7 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
                 next_item = next(items, None)
                 if not next_item:
                     return ResultSet([])
-                next_item_key = key_config.get_key(next_item)
+                next_item_key = key_config.to_key_str(next_item)
                 if next_item_key == nested_item_key:
                     nested_item_key = None
 
@@ -141,7 +143,7 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
             elif len(results) > limit:
                 results = results[:limit]
                 return ResultSet(
-                    results, encrypt([nested_page_key, key_config.get_key(results[-1])])
+                    results, encrypt([nested_page_key, key_config.to_key_str(results[-1])])
                 )
             elif not result_set.next_page_key:
                 return ResultSet(results)
@@ -180,7 +182,7 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
         # Load the items that may be needed for filtering
         keys = list(filter(None, (edit.get_key(key_config) for edit in edits)))
         items = self.read_batch(keys)
-        items_by_key = {key_config.get_key(item): item for item in items if item}
+        items_by_key = {key_config.to_key_str(item): item for item in items if item}
 
         results = [BatchEditResult(edit, code="unknown") for edit in edits]
         results_by_id = {result.edit.id: result for result in results}

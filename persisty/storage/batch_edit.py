@@ -21,7 +21,7 @@ class Create(BatchEditABC, Generic[T]):
     id: UUID = field(default_factory=uuid4)
 
     def get_key(self, key_config: KeyConfigABC) -> str:
-        return key_config.get_key(self.item)
+        return key_config.to_key_str(self.item)
 
 
 @dataclass
@@ -30,7 +30,7 @@ class Update(BatchEditABC, Generic[T]):
     id: UUID = field(default_factory=uuid4)
 
     def get_key(self, key_config: KeyConfigABC) -> str:
-        return key_config.get_key(self.updates)
+        return key_config.to_key_str(self.updates)
 
 
 @dataclass

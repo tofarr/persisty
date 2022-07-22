@@ -6,13 +6,14 @@ from marshy.types import ExternalItemType
 from persisty.access_control.constants import NO_ACCESS
 from persisty.errors import PersistyError
 from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.storage.filtered_storage_abc import FilteredStorageABC
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.storage.wrapper_storage_abc import WrapperStorageABC
 
 
 @dataclass(frozen=True)
-class SecuredStorage(WrapperStorageABC):
+class SecuredStorage(FilteredStorageABC):
     storage: StorageABC
     storage_meta: StorageMeta = None
 

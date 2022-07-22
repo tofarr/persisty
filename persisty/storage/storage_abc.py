@@ -74,7 +74,7 @@ class StorageABC(ABC):
         items = list(islice(items, limit))
         page_key = None
         if len(items) == limit:
-            page_key = self.get_storage_meta().key_config.get_key(items[-1])
+            page_key = self.get_storage_meta().key_config.to_key_str(items[-1])
         return ResultSet(items, page_key)
 
     def search_all(
@@ -118,7 +118,7 @@ def skip_to_page(page_key: str, items, key_config):
             next_result = next(items, None)
             if next_result is None:
                 return ResultSet([])
-            key = key_config.get_key(next_result)
+            key = key_config.to_key_str(next_result)
             if key == page_key:
                 return
 
@@ -160,5 +160,5 @@ def search(storage, storage_meta, search_filter, search_order, page_key, limit):
     items = list(islice(items, limit))
     page_key = None
     if len(items) == limit:
-        page_key = storage_meta.key_config.get_key(items[-1])
+        page_key = storage_meta.key_config.to_key_str(items[-1])
     return ResultSet(items, page_key)

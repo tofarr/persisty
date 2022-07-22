@@ -21,7 +21,7 @@ class CompositeStorage(StorageABC):
             object.__setattr__(self, "storage_meta", self.storage[0].storage_meta)
 
     def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
-        key = self.get_storage_meta().key_config.get_key(item)
+        key = self.get_storage_meta().key_config.to_key_str(item)
         if key:
             name, key = decrypt(key)
             storage = next(s for s in self.storage if s.get_storage_meta().name == name)
@@ -45,7 +45,7 @@ class CompositeStorage(StorageABC):
     def update(
         self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
     ) -> Optional[ExternalItemType]:
-        key = self.get_storage_meta().key_config.get_key(updates)
+        key = self.get_storage_meta().key_config.to_key_str(updates)
         name, key = decrypt(key)
         storage = next(s for s in self.storage if s.get_storage_meta().name == name)
         storage.get_storage_meta().key_config.set_key(key, updates)
@@ -87,7 +87,7 @@ class CompositeStorage(StorageABC):
     def _set_key_after_read(
         self, item: ExternalItemType, storage_meta: StorageMeta
     ) -> ExternalItemType:
-        key = storage_meta.key_config.get_key(item)
+        key = storage_meta.key_config.to_key_str(item)
         key = encrypt([storage_meta.name, key])
         self.get_storage_meta().key_config.set_key(key, item)
         return item

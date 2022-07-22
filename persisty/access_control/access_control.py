@@ -1,4 +1,4 @@
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 
 from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.access_control.obj_access_control_abc import ObjAccessControlABC

@@ -4,13 +4,13 @@ from datetime import datetime
 
 from persisty.errors import PersistyError
 from persisty.obj_storage.filter_factory import filter_factory
-from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_field import SearchOrderField
 from persisty.storage.batch_edit import Delete, Update, Create
 from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.storage_abc import StorageABC
 from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULT_DICTS, SuperBowlResult
+from tests.fixtures.number_name import NumberName
 
 
 # noinspection PyUnresolvedReferences
@@ -81,6 +81,9 @@ class StorageTstABC(ABC):
 
     def test_create(self):
         storage = self.new_super_bowl_results_storage()
+        self.spec_for_create(storage)
+
+    def spec_for_create(self, storage):
         item = {
             "code": "c",
             "year": 2067,
@@ -131,6 +134,9 @@ class StorageTstABC(ABC):
 
     def test_update(self):
         storage = self.new_super_bowl_results_storage()
+        self.spec_for_update(storage)
+
+    def spec_for_update(self, storage):
         item = {
             "code": "li",
             "winner_code": "tom_brady_fan_club",
@@ -152,6 +158,9 @@ class StorageTstABC(ABC):
 
     def test_update_missing_key(self):
         storage = self.new_super_bowl_results_storage()
+        self.spec_for_update_missing_key(storage)
+
+    def spec_for_update_missing_key(self, storage):
         item = {
             "code": "not_a_key",
             "year": 1971,
@@ -226,7 +235,8 @@ class StorageTstABC(ABC):
 
     def test_delete(self):
         storage = self.new_super_bowl_results_storage()
-        self.assertTrue(storage.read("lvi"))
+        self.assertTrue(storage.delete("lvi"))
+        self.assertIsNone(storage.read("lvi"))
 
     def test_delete_missing_key(self):
         storage = self.new_super_bowl_results_storage()
@@ -332,3 +342,21 @@ class StorageTstABC(ABC):
             },
         ]
         self.assertEqual(expected_results, results)
+
+    def test_update_no_key(self):
+        storage = self.new_number_name_storage()
+        try:
+            storage.update({}) and self.assertIsTrue(False)
+        except PersistyError:
+            pass
+
+    def test_update_fail_filter(self):
+        storage = self.new_number_name_storage()
+        self.spec_for_update_fail_filter(storage)
+
+    def spec_for_update_fail_filter(self, storage):
+        item = storage.update(
+            dict(id="00000000-0000-0000-0000-000000000001", name="Not One"),
+            filter_factory(NumberName).title.ne("One")
+        )
+        self.assertIsNone(item)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Any
 
 from marshy.types import ExternalItemType
 
@@ -8,11 +8,11 @@ class KeyConfigABC(ABC):
     """General object for sorting items"""
 
     @abstractmethod
-    def get_key(self, item: ExternalItemType) -> str:
+    def to_key_str(self, item: ExternalItemType) -> str:
         """Get the key from the stored given."""
 
     @abstractmethod
-    def set_key(self, key: Optional[str], item: ExternalItemType):
+    def from_key_str(self, key: Optional[str], output: Optional[Any] = None) -> Any:
         """Set the key for the stored given"""
 
     @abstractmethod

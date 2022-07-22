@@ -40,6 +40,3 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
         with table.batch_writer() as batch:
             for result in items:
                 batch.put_item(result)
-
-    def test_edit_all2(self):
-        self.test_edit_all()

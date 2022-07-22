@@ -56,7 +56,7 @@ class TTLCacheStorage(StorageABC):
 
     def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         item = self.storage.create(item)
-        key = self.get_storage_meta().key_config.get_key(item)
+        key = self.get_storage_meta().key_config.to_key_str(item)
         self.store_item_in_cache(key, item)
         return item
 
@@ -77,7 +77,7 @@ class TTLCacheStorage(StorageABC):
             key_config = self.get_storage_meta().key_config
             for item in items:
                 if item:
-                    key = key_config.get_key(item)
+                    key = key_config.to_key_str(item)
                     self.store_item_in_cache(key, item, now)
                     items_by_key[key] = item
         items = [items_by_key.get(key) for key in keys]
@@ -88,7 +88,7 @@ class TTLCacheStorage(StorageABC):
     ) -> Optional[ExternalItemType]:
         item = self.storage.update(updates, search_filter)
         if item:
-            key = self.get_storage_meta().key_config.get_key(item)
+            key = self.get_storage_meta().key_config.to_key_str(item)
             self.store_item_in_cache(key, item)
         return item
 
@@ -127,7 +127,7 @@ class TTLCacheStorage(StorageABC):
         expire_at = int(time()) + self.ttl
         keys = []
         for item in result_set.results:
-            key = key_config.get_key(item)
+            key = key_config.to_key_str(item)
             self.store_item_in_cache(key, item, expire_at)
             keys.append(key)
         entry = dict(keys=keys, next_page_key=result_set.next_page_key)
@@ -141,7 +141,7 @@ class TTLCacheStorage(StorageABC):
                 continue
             edit = result.edit
             if isinstance(edit, Update):
-                key = self.get_storage_meta().key_config.get_key(edit.updates)
+                key = self.get_storage_meta().key_config.to_key_str(edit.updates)
                 self.cache.pop(key, None)
             elif isinstance(edit, Delete):
                 self.cache.pop(edit.key, None)

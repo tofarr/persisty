@@ -21,6 +21,7 @@ from persisty.storage.field.write_transform.uuid_generator import (
     UUID_OPTIONAL_ON_CREATE,
 )
 from persisty.storage.field.write_transform.write_transform_abc import WriteTransformABC
+from persisty.storage.field.write_transform.write_transform_mode import WriteTransformMode
 from persisty.util import UNDEFINED
 from persisty.util.undefined import Undefined
 
@@ -68,8 +69,8 @@ class Attr:
     field_type: Optional[FieldType] = None
     schema: Optional[SchemaABC] = None
     is_readable: bool = True
-    is_creatable: bool = True
-    is_updatable: bool = True
+    is_creatable: Optional[bool] = None
+    is_updatable: Optional[bool] = None
     write_transform: Union[WriteTransformABC, NONE_TYPE, Undefined] = UNDEFINED
     permitted_filter_ops: Optional[Tuple[FieldFilterOp, ...]] = None
     is_sortable: Optional[bool] = None
@@ -113,6 +114,7 @@ class Attr:
         self.populate_permitted_filter_ops()
         self.populate_sortable()
         self.populate_indexed(key_config)
+        self.populate_access()
 
     def populate_field_type(self):
         if self.field_type is not None:
@@ -164,3 +166,16 @@ class Attr:
                 or "id" in self.name
                 or "code" in self.name
             )
+
+    def populate_access(self):
+        t = self.write_transform
+        if self.is_creatable is None:
+            if t and t.mode in (WriteTransformMode.ALWAYS_FOR_CREATE, WriteTransformMode.ALWAYS_FOR_WRITE):
+                self.is_creatable = False
+            else:
+                self.is_creatable = True
+        if self.is_updatable is None:
+            if t and t.mode in (WriteTransformMode.ALWAYS_FOR_UPDATE, WriteTransformMode.ALWAYS_FOR_WRITE):
+                self.is_updatable = False
+            else:
+                self.is_updatable = True

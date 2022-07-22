@@ -1,11 +1,13 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Iterable, Any
 
+from marshy.types import ExternalItemType
 from schemey.schema_abc import SchemaABC
 
 from persisty.storage.field.field_filter import FieldFilterOp
 from persisty.storage.field.field_type import FieldType
 from persisty.storage.field.write_transform.write_transform_abc import WriteTransformABC
+from persisty.util import UNDEFINED
 
 
 @dataclass(frozen=True)
@@ -25,3 +27,28 @@ class Field:
     description: Optional[str] = None
     is_indexed: bool = False
     is_nullable: bool = True
+
+    def get_value_for(self, item: Any):
+        if hasattr(item, '__getitem__'):
+            return item.get(self.name, UNDEFINED)
+        return getattr(item, self.name)
+
+    def set_value_for(self, value: Any, item: Optional[Any]) -> Any:
+        if item is None:
+            item = {}
+        if hasattr(item, '__setitem__'):
+            item.set(self.name, value)
+        else:
+            setattr(item, self.name, value)
+        return item
+
+
+def load_field_values(fields: Iterable[Field], item: ExternalItemType) -> ExternalItemType:
+    result = {}
+    for field_ in fields:
+        if not field_.is_readable:
+            continue
+        value = field_.get_value_for(item)
+        if value is not UNDEFINED:
+            result[field_.name] = value
+    return result

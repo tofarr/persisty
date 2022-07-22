@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.key_config.obj_key_config_abc import ObjKeyConfigABC
@@ -11,21 +11,21 @@ from persisty.util import to_base64, from_base64
 class CompositeKeyConfig(KeyConfigABC, ObjKeyConfigABC):
     fields: Tuple[FieldKeyConfig, ...]
 
-    def get_key(self, item) -> str:
-        keys = [f.get_key(item) for f in self.fields]
+    def to_key_str(self, item) -> str:
+        keys = [f.to_key_str(item) for f in self.fields]
         key = to_base64(keys)
         return key
 
-    def set_key(self, key: Optional[str], item):
+    def from_key_str(self, key: Optional[str], output: Optional[Any] = None) -> Any:
+        if output is None:
+            output = {}
         keys = from_base64(key)
         for field, key in zip(self.fields, keys):
-            field.set_key(key, item)
+            field.from_key_str(key, output)
+        return output
 
     def is_required_field(self, field_name: str) -> bool:
         for field in self.fields:
             if field.is_required_field(field_name):
                 return True
         return False
-
-
-FIELD_KEY_CONFIG = FieldKeyConfig()

@@ -12,6 +12,7 @@ from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex
 from persisty.search_filter.and_filter import And
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.storage.field.field import load_field_values
 from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
@@ -59,11 +60,34 @@ class DynamodbTableStorage(StorageABC):
     @catch_client_error
     def read(self, key: str) -> Optional[ExternalItemType]:
         table = self._dynamodb_table()
-        key_dict = {}
-        self.storage_meta.key_config.set_key(key, key_dict)
+        key_dict = self.storage_meta.key_config.from_key_str(key)
         response = table.get_item(Key=key_dict)
         loaded = self._load(response.get("Item"))
         return loaded
+
+    @catch_client_error
+    def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
+        assert(len(keys) <= self.storage_meta.batch_size)
+        key_config = self.storage_meta.key_config
+        resource = self._dynamodb_resource()
+
+        kwargs = {
+            'RequestItems': {
+                self.table_name: {
+                    'Keys': [key_config.from_key_str(key) for key in set(keys)]
+                }
+            }
+        }
+        results_by_key = {}
+        while True:
+            response = resource.batch_get_item(**kwargs)
+            for item in response['Responses'][self.table_name]:
+                key = key_config.to_key_str(item)
+                results_by_key[key] = self._load(item)
+            unprocessed_keys = response.get('UnprocessedKeys')  # Batch size would have been greater than 16 Mb
+            if not unprocessed_keys:
+                return [results_by_key.get(key) for key in keys]
+            kwargs['RequestItems'] = unprocessed_keys
 
     @catch_client_error
     def update(
@@ -71,7 +95,7 @@ class DynamodbTableStorage(StorageABC):
     ) -> Optional[ExternalItemType]:
         if search_filter is not INCLUDE_ALL:
             search_filter.validate_for_fields(self.storage_meta.fields)
-            item = self.read(self.storage_meta.key_config.get_key(updates))
+            item = self.read(self.storage_meta.key_config.to_key_str(updates))
             if not search_filter.match(item, self.storage_meta.fields):
                 return None
         updates = self._dump(updates, True)
@@ -96,8 +120,7 @@ class DynamodbTableStorage(StorageABC):
     @catch_client_error
     def delete(self, key: str) -> bool:
         table = self._dynamodb_table()
-        key_dict = {}
-        self.storage_meta.key_config.set_key(key, key_dict)
+        key_dict = self.storage_meta.key_config.from_key_str(key)
         response = table.delete_item(Key=key_dict, ReturnValues="ALL_OLD")
         attributes = response.get("Attributes")
         return bool(attributes)
@@ -135,8 +158,7 @@ class DynamodbTableStorage(StorageABC):
             }
         )
         if page_key:
-            exclusive_start_key = query_args["ExclusiveStartKey"] = {}
-            self.storage_meta.key_config.set_key(page_key, exclusive_start_key)
+            query_args["ExclusiveStartKey"] = self.storage_meta.key_config.from_key_str(page_key)
         table = self._dynamodb_table()
         results = []
         while True:
@@ -154,7 +176,7 @@ class DynamodbTableStorage(StorageABC):
             results.extend(items)
             if len(results) >= limit:
                 results = results[:limit]
-                next_page_key = self.storage_meta.key_config.get_key(results[-1])
+                next_page_key = self.storage_meta.key_config.to_key_str(results[-1])
                 return ResultSet(results, next_page_key)
             last_evaluated_key = response.get("LastEvaluatedKey")
             if not last_evaluated_key:
@@ -195,10 +217,16 @@ class DynamodbTableStorage(StorageABC):
             query_args["ExclusiveStartKey"] = last_evaluated_key
 
     def _load(self, item):
+        if item is None:
+            return None
+        item = self._convert_decimals(item)
+        return load_field_values(self.storage_meta.fields, item)
+
+    def _convert_decimals(self, item):
         if isinstance(item, dict):
-            return {k: self._load(v) for k, v in item.items()}
+            return {k: self._convert_decimals(v) for k, v in item.items()}
         elif isinstance(item, list):
-            return [self._load(i) for i in item]
+            return [self._convert_decimals(i) for i in item]
         elif isinstance(item, Decimal):
             int_val = int(item)
             if int_val == item:
@@ -263,12 +291,19 @@ class DynamodbTableStorage(StorageABC):
     def _dynamodb_table(self):
         if hasattr(self, '_table'):
             return self._table
-        kwargs = filter_none(dict(profile_name=self.aws_profile_name, region_name=self.region_name))
-        session = boto3.Session(**kwargs)
-        resource = session.resource("dynamodb")
+        resource = self._dynamodb_resource()
         table = resource.Table(self.table_name)
         object.__setattr__(self, '_table', table)
         return table
+
+    def _dynamodb_resource(self):
+        if hasattr(self, '_resource'):
+            return self._resource
+        kwargs = filter_none(dict(profile_name=self.aws_profile_name, region_name=self.region_name))
+        session = boto3.Session(**kwargs)
+        resource = session.resource("dynamodb")
+        object.__setattr__(self, '_resource', resource)
+        return resource
 
 
 def _build_update(updates: dict):

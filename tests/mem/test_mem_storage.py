@@ -1,13 +1,19 @@
+import dataclasses
 from unittest import TestCase
 
 from marshy import dump
 from moto import mock_dynamodb
 
-from persisty.impl.mem.mem_storage import mem_storage
+from persisty.access_control.access_control import AccessControl
+from persisty.access_control.constants import READ_ONLY
+from persisty.errors import PersistyError
+from persisty.impl.mem.mem_storage import mem_storage, MemStorage
+from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.obj_storage.filter_factory import filter_factory
 from persisty.obj_storage.stored import get_storage_meta
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.storage.storage_abc import StorageABC
+from persisty.storage.storage_meta import StorageMeta
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES
 from tests.fixtures.super_bowl_results import SuperBowlResult, SUPER_BOWL_RESULTS, SUPER_BOWL_RESULT_DICTS
 from tests.fixtures.storage_tst_abc import StorageTstABC
@@ -47,3 +53,62 @@ class TestMemStorage(TestCase, StorageTstABC):
                 )
             ),
         )
+
+    def test_mem_storage_no_dict(self):
+        storage = mem_storage(get_storage_meta(NumberName))
+        created = storage.create(dict(value=1, title="One"))
+        loaded = storage.read(created['id'])
+        self.assertEqual(loaded, created)
+
+    def test_mem_storage_secured(self):
+        storage_meta = StorageMeta(
+            name='read_only_number_name',
+            fields = get_storage_meta(NumberName).fields,
+            access_control=READ_ONLY
+        )
+        storage = mem_storage(storage_meta)
+        storage.read('1')
+        try:
+            storage.create(dict(value=-1, title="Minus One")) and self.assertTrue(False)
+        except PersistyError as e:
+            pass
+
+    def test_mem_storage_delete_missing_key(self):
+        storage = MemStorage(get_storage_meta(NumberName))
+        self.assertFalse(storage.delete("missing_key"))
+
+    def test_mem_storage_update_missing_key(self):
+        # noinspection PyUnresolvedReferences
+        storage = self.new_super_bowl_results_storage().storage
+        self.spec_for_update_missing_key(storage)
+
+    def test_mem_storage_update_fail_filter(self):
+        # noinspection PyUnresolvedReferences
+        storage = self.new_number_name_storage().storage
+        self.spec_for_update_fail_filter(storage)
+
+    def test_mem_storage_create_missing_key(self):
+        storage_meta = get_storage_meta(NumberName)
+        storage_meta = StorageMeta(
+            name=storage_meta.name,
+            fields=tuple(dataclasses.replace(f, write_transform=None, is_creatable=True, is_updatable=True)
+                         for f in storage_meta.fields)
+        )
+        storage = MemStorage(storage_meta)
+        try:
+            storage.create({}) and self.assertTrue(False)
+        except PersistyError:
+            self.assertEqual(0, storage.count())
+
+    def test_mem_storage_update_no_key(self):
+        storage_meta = get_storage_meta(NumberName)
+        storage_meta = StorageMeta(
+            name=storage_meta.name,
+            fields=tuple(dataclasses.replace(f, write_transform=None, is_creatable=True, is_updatable=True)
+                         for f in storage_meta.fields)
+        )
+        storage = MemStorage(storage_meta)
+        try:
+            storage.update(dict(title="foobar")) and self.assertTrue(False)
+        except PersistyError:
+            self.assertEqual(0, storage.count())

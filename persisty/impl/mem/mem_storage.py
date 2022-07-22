@@ -9,6 +9,7 @@ from persisty.errors import PersistyError
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
+from persisty.storage.field.field import load_field_values
 from persisty.storage.schema_validating_storage import SchemaValidatingStorage
 from persisty.storage.secured_storage import SecuredStorage
 from persisty.storage.storage_abc import StorageABC
@@ -31,7 +32,7 @@ class MemStorage(StorageABC):
 
     def create(self, item: ExternalItemType) -> ExternalItemType:
         dumped = self._dump(item)
-        key = self.storage_meta.key_config.get_key(item)
+        key = self.storage_meta.key_config.to_key_str(item)
         if key is None:
             raise PersistyError(f"missing_key:{item}")
         if key in self.storage:
@@ -49,7 +50,7 @@ class MemStorage(StorageABC):
         self, item: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
     ) -> Optional[ExternalItemType]:
         search_filter.validate_for_fields(self.storage_meta.fields)
-        key = self.storage_meta.key_config.get_key(item)
+        key = self.storage_meta.key_config.to_key_str(item)
         if key is None:
             raise PersistyError(f"missing_key:{item}")
         stored = self.storage.get(key)
@@ -88,28 +89,19 @@ class MemStorage(StorageABC):
 
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         search_filter.validate_for_fields(self.storage_meta.fields)
-        if search_filter is None:
+        if search_filter is INCLUDE_ALL:
             return len(self.storage)
         count = sum(1 for _ in self.search_all(search_filter))
         return count
 
     def _load(self, item: ExternalItemType) -> ExternalItemType:
-        result = {}
-        for field_ in self.storage_meta.fields:
-            if not field_.is_readable:
-                continue
-            result[field_.name] = item.get(field_.name, UNDEFINED)
-        return result
+        return load_field_values(self.storage_meta.fields, item)
 
     def _dump(
         self, item: ExternalItemType, is_update: bool = False
     ) -> ExternalItemType:
         result = {}
         for field_ in self.storage_meta.fields:
-            if is_update and not field_.is_updatable:
-                continue
-            if not is_update and not field_.is_creatable:
-                continue
             value = item.get(field_.name, UNDEFINED)
             if field_.write_transform:
                 value = field_.write_transform.transform(value, is_update)

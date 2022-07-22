@@ -1,6 +1,7 @@
 from typing import Type
 from dataclasses import dataclass
 
+from persisty.errors import PersistyError
 from persisty.obj_storage.stored import get_storage_meta
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_field import SearchOrderField
@@ -14,8 +15,11 @@ class ObjFilterFactory:
     storage_meta: StorageMeta
 
     def __getattr__(self, name):
-        field = next(field for field in self.storage_meta.fields if field.name == name)
-        return FieldFilterFactory(field)
+        try:
+            field = next(field for field in self.storage_meta.fields if field.name == name)
+            return FieldFilterFactory(field)
+        except StopIteration:
+            raise PersistyError(f'no_such_field:{name}')
 
 
 @dataclass
