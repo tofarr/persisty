@@ -15,10 +15,7 @@ class FieldKeyConfig(KeyConfigABC, ObjKeyConfigABC):
     field_type: FieldType = FieldType.UUID
 
     def to_key_str(self, item) -> str:
-        if hasattr(item, "__getitem__"):
-            value = item.get(self.field_name)
-        else:
-            value = getattr(item, self.field_name)
+        value = self.get_value_for(item)
         if value:
             value = str(value)
         return value
@@ -41,6 +38,21 @@ class FieldKeyConfig(KeyConfigABC, ObjKeyConfigABC):
 
     def is_required_field(self, field_name: str) -> bool:
         return self.field_name == field_name
+
+    def get_value_for(self, item):
+        if hasattr(item, "__getitem__"):
+            return item.get(self.field_name)
+        else:
+            return getattr(item, self.field_name)
+
+    def set_value_for(self, item, value):
+        if item is None:
+            item = {}
+        if hasattr(item, '__setitem__'):
+            item.__setitem__(self.field_name, value)
+        else:
+            setattr(item, self.field_name, value)
+        return item
 
 
 FIELD_KEY_CONFIG = FieldKeyConfig()

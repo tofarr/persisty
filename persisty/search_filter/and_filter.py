@@ -1,5 +1,5 @@
 from dataclasses import dataclass, Field
-from typing import Tuple, Optional, Any, List, Iterable
+from typing import Tuple, Optional, Any, List
 
 from marshy import ExternalType
 
@@ -12,10 +12,12 @@ from persisty.search_filter.search_filter_abc import SearchFilterABC
 class And(SearchFilterABC):
     search_filters: Tuple[SearchFilterABC, ...]
 
-    def __new__(cls, search_filters: Iterable[SearchFilterABC]):
+    def __new__(cls, search_filters: Tuple[SearchFilterABC, ...]):
         """Strip out nested And logic"""
         if not search_filters:
             return INCLUDE_ALL
+        elif len(search_filters) == 1:
+            return search_filters[0]
         flatten = next((True for f in search_filters if isinstance(f, And)), False)
         if flatten:
             existing = set()

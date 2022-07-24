@@ -16,6 +16,11 @@ from persisty.util.undefined import UNDEFINED
 
 @dataclass(frozen=True)
 class DefaultValueTransform(WriteTransformABC):
+    """
+    A write transform which specifies a default value for a field.
+    This works a little bit differently to datablasses with their
+    field.default_factory - since all implementations deep copy the
+    default_value, a default factory is not required. """
     default_value: Any
 
     @property

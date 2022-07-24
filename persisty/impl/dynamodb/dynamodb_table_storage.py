@@ -44,6 +44,7 @@ class DynamodbTableStorage(StorageABC):
     global_secondary_indexes: Dict[str, DynamodbIndex] = field(default_factory=dict)
     aws_profile_name: Optional[str] = None
     region_name: Optional[str] = None
+    decimal_format: str = '%.9f'
 
     def get_storage_meta(self) -> StorageMeta:
         return self.storage_meta
@@ -79,15 +80,12 @@ class DynamodbTableStorage(StorageABC):
             }
         }
         results_by_key = {}
-        while True:
-            response = resource.batch_get_item(**kwargs)
-            for item in response['Responses'][self.table_name]:
-                key = key_config.to_key_str(item)
-                results_by_key[key] = self._load(item)
-            unprocessed_keys = response.get('UnprocessedKeys')  # Batch size would have been greater than 16 Mb
-            if not unprocessed_keys:
-                return [results_by_key.get(key) for key in keys]
-            kwargs['RequestItems'] = unprocessed_keys
+        response = resource.batch_get_item(**kwargs)
+        for item in response['Responses'][self.table_name]:
+            key = key_config.to_key_str(item)
+            results_by_key[key] = self._load(item)
+        assert not response.get('UnprocessedKeys')  # Batch size would have been greater than 16 Mb
+        return [results_by_key.get(key) for key in keys]
 
     @catch_client_error
     def update(
@@ -135,8 +133,7 @@ class DynamodbTableStorage(StorageABC):
     ) -> ResultSet[ExternalItemType]:
         if limit is None:
             limit = self.storage_meta.batch_size
-        else:
-            assert limit <= self.storage_meta.batch_size
+        assert limit <= self.storage_meta.batch_size
         search_filter.validate_for_fields(self.storage_meta.fields)
         if search_order:
             search_order.validate_for_fields(self.storage_meta.fields)
@@ -163,7 +160,7 @@ class DynamodbTableStorage(StorageABC):
         results = []
         while True:
             if condition:
-                response = table.scan(**query_args)
+                response = table.query(**query_args)
             else:
                 response = table.scan(**query_args)
             items = response["Items"]
@@ -195,7 +192,7 @@ class DynamodbTableStorage(StorageABC):
             logger.warning(f"search_filter_not_handled_by_dynamodb:{search_filter}")
             count = sum(1 for _ in self.search_all(search_filter))
             return count
-        query_args = filter_none(
+        kwargs = filter_none(
             {
                 "KeyConditionExpression": condition,
                 "IndexName": index_name,
@@ -207,26 +204,26 @@ class DynamodbTableStorage(StorageABC):
         count = 0
         while True:
             if condition:
-                response = table.scan(**query_args)
+                response = table.query(**kwargs)
             else:
-                response = table.scan(**query_args)
+                response = table.scan(**kwargs)
             count += response["Count"]  # Items
             last_evaluated_key = response.get("LastEvaluatedKey")
+            kwargs["ExclusiveStartKey"] = last_evaluated_key
             if not last_evaluated_key:
                 return count
-            query_args["ExclusiveStartKey"] = last_evaluated_key
 
     def _load(self, item):
         if item is None:
             return None
-        item = self._convert_decimals(item)
+        item = self._convert_from_decimals(item)
         return load_field_values(self.storage_meta.fields, item)
 
-    def _convert_decimals(self, item):
+    def _convert_from_decimals(self, item):
         if isinstance(item, dict):
-            return {k: self._convert_decimals(v) for k, v in item.items()}
+            return {k: self._convert_from_decimals(v) for k, v in item.items()}
         elif isinstance(item, list):
-            return [self._convert_decimals(i) for i in item]
+            return [self._convert_from_decimals(i) for i in item]
         elif isinstance(item, Decimal):
             int_val = int(item)
             if int_val == item:
@@ -246,8 +243,22 @@ class DynamodbTableStorage(StorageABC):
                 value = field_.write_transform.transform(value, is_update)
                 item[field_.name] = value
             if value is not UNDEFINED:
-                result[field_.name] = value
+                result[field_.name] = self._convert_to_decimals(value)
         return result
+
+    def _convert_to_decimals(self, item):
+        if isinstance(item, dict):
+            return {k: self._convert_to_decimals(v) for k, v in item.items()}
+        elif isinstance(item, list):
+            return [self._convert_to_decimals(i) for i in item]
+        elif isinstance(item, float):
+            int_val = int(item)
+            if int_val == item:
+                return int_val
+            else:
+                return Decimal(self.decimal_format % item)
+        else:
+            return item
 
     def to_dynamodb_filter(
         self, search_filter: SearchFilterABC
@@ -259,22 +270,26 @@ class DynamodbTableStorage(StorageABC):
             )
             return None, None, filter_expression, handled
         index_name, index = self.get_index_for_eq_filters(eq_filters)
+        filter_expression = None
+        handled = False
         if index:
             index_condition, search_filter, index_handled = _separate_index_filters(
                 index, eq_filters
             )
-            filter_expression, handled = search_filter.build_filter_expression(
-                self.storage_meta.fields
-            )
+            if search_filter:
+                filter_expression, handled = search_filter.build_filter_expression(
+                    self.storage_meta.fields
+                )
             return (
                 index_name,
                 index_condition,
                 filter_expression,
                 handled and index_handled,
             )
-        filter_expression, handled = search_filter.build_filter_expression(
-            self.storage_meta.fields
-        )
+        if search_filter:
+            filter_expression, handled = search_filter.build_filter_expression(
+                self.storage_meta.fields
+            )
         return None, None, filter_expression, handled
 
     def get_index_for_eq_filters(
@@ -283,7 +298,7 @@ class DynamodbTableStorage(StorageABC):
         attr_names = {f.name for f in eq_filters}
         if self.index.pk in attr_names:
             return None, self.index
-        for name, index in self.global_secondary_indexes:
+        for name, index in self.global_secondary_indexes.items():
             if index.pk in attr_names:
                 return name, index
         return None, None
@@ -324,7 +339,7 @@ def _get_top_level_eq_filters(search_filter: SearchFilterABC) -> List[FieldFilte
     if _is_eq_filter(search_filter):
         return [search_filter]
     elif isinstance(search_filter, And):
-        return [f for f in search_filter.search_filters if _is_eq_filter(search_filter)]
+        return [f for f in search_filter.search_filters if _is_eq_filter(f)]
     return []
 
 
@@ -339,7 +354,7 @@ def _separate_index_filters(
 ) -> Tuple[ConditionBase, SearchFilterABC, bool]:
     index_filters = [f for f in eq_filters if f.name == index.pk]
     condition = Key(index.pk).eq(index_filters[0].value)
-    non_index_filters = [f for f in eq_filters if f.name != index.pk]
+    non_index_filters = tuple(f for f in eq_filters if f.name != index.pk)
     non_index_filter = None
     if non_index_filters:
         non_index_filter = And(non_index_filters)

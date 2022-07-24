@@ -1,12 +1,20 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from datetime import datetime
+from typing import Tuple
+
+from dataclasses import dataclass
+
+from marshy import ExternalType
 
 from persisty.errors import PersistyError
 from persisty.obj_storage.filter_factory import filter_factory
+from persisty.search_filter.exclude_all import EXCLUDE_ALL
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_field import SearchOrderField
 from persisty.storage.batch_edit import Delete, Update, Create
+from persisty.storage.field.field import Field
 from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.storage_abc import StorageABC
 from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULT_DICTS, SuperBowlResult
@@ -261,6 +269,41 @@ class StorageTstABC(ABC):
         except PersistyError:
             pass
 
+    def test_count_exclude_all(self):
+        storage = self.new_super_bowl_results_storage()
+        self.assertEqual(0, storage.count(EXCLUDE_ALL))
+
+    def test_count_filter_id(self):
+        storage = self.new_number_name_storage()
+        from persisty.obj_storage.filter_factory import filter_factory
+        filters = filter_factory(NumberName)
+        num = storage.count(filters.id.eq('00000000-0000-0000-0000-000000000010') & filters.title.eq('Ten'))
+        self.assertEqual(1, num)
+
+    def test_count_custom_filter(self):
+        @dataclass
+        class StrLenFilter(SearchFilterABC):
+            field_name: str
+            required_length: int
+
+            def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
+                return next((True for f in fields if f.name == self.field_name), False)
+
+            def match(self, item: ExternalType, fields: Tuple[Field, ...]) -> bool:
+                # noinspection PyTypeChecker
+                return len(item[self.field_name]) == self.required_length
+
+        storage = self.new_number_name_storage()
+        from persisty.obj_storage.filter_factory import filter_factory
+        num = storage.count(StrLenFilter('title', 4))
+        self.assertEqual(3, num)  # Four, Five, Nine
+
+    def test_count_non_indexed_filter(self):
+        tag_storage = self.new_number_name_storage()
+        filters = filter_factory(NumberName)
+        count = tag_storage.count(filters.title.eq('Five') & filters.value.eq(5))
+        self.assertEqual(1, count)
+
     def test_search_all(self):
         storage = self.new_super_bowl_results_storage()
         self.assertEqual(SUPER_BOWL_RESULT_DICTS, list(storage.search_all()))
@@ -280,6 +323,22 @@ class StorageTstABC(ABC):
         self.assertEqual(
             [], list(storage.search_all(FieldFilter("year", FieldFilterOp.lt, 1967)))
         )
+
+    def test_search_id(self):
+        storage = self.new_number_name_storage()
+        filters = filter_factory(NumberName)
+        id_ = "00000000-0000-0000-0000-000000000001"
+        loaded = list(storage.search_all(filters.id.eq(id_)))
+        expected = [storage.read(id_)]
+        self.assertEqual(expected, loaded)
+
+    def test_search_id_title(self):
+        storage = self.new_number_name_storage()
+        filters = filter_factory(NumberName)
+        id_ = "00000000-0000-0000-0000-000000000001"
+        loaded = list(storage.search_all(filters.id.eq(id_) & filters.title.contains('One')))
+        expected = [storage.read(id_)]
+        self.assertEqual(expected, loaded)
 
     def test_edit_all(self):
         storage = self.new_number_name_storage()

@@ -84,7 +84,7 @@ class FieldFilter(SearchFilterABC):
         from boto3.dynamodb.conditions import Attr
 
         attr = Attr(self.name)
-        if self.op in {"contains", "eq", "gt", "gte", "lt", "lte", "ne"}:
+        if self.op.name in {"contains", "eq", "gt", "gte", "lt", "lte", "ne"}:
             condition = getattr(attr, self.op.name)(self.value)
             return condition, True
         elif self.op == FieldFilterOp.startswith:

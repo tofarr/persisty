@@ -26,12 +26,31 @@ class DynamodbStorageFactory:
     global_secondary_indexes: Optional[Dict[str, DynamodbIndex]] = None
 
     def sanitize_storage_meta(self):
-        fields = self.storage_meta.fields
-        field = next((f for f in fields if f.is_sortable), None)
-        if field:
+        overrides = []
+        for f in self.storage_meta.fields:
+            override = {}
+            if f.is_sortable:
+                override['is_sortable'] = False
+            is_indexed = False
+            if self.index and self.index.pk == f.name:
+                is_indexed = True
+            if self.global_secondary_indexes:
+                index = next((i for i in self.global_secondary_indexes.values() if i.pk == f.name or i.sk == f.name),
+                             None)
+                is_indexed |= bool(index)
+            if is_indexed != f.is_indexed:
+                override['is_indexed'] = is_indexed
+            overrides.append(override)
+        key_config = self.storage_meta.key_config
+        fields = tuple(dataclasses.replace(f, **v) if v else f for v, f in zip(overrides, self.storage_meta.fields))
+        if self.index:
+            key_config = self.index.key_config_from_fields(fields)
+        overridden = next((True for v in overrides if v), False) or key_config != self.storage_meta.key_config
+        if overridden:
             self.storage_meta = dataclasses.replace(
                 self.storage_meta,
-                fields=tuple(dataclasses.replace(f, is_sortable=False) for f in fields)
+                key_config=key_config,
+                fields=fields
             )
 
     def derive_from_storage_meta(self):
@@ -83,7 +102,7 @@ class DynamodbStorageFactory:
         attrs = [
             _dynamo_attr_to_attr(a) for a in (table.get("AttributeDefinitions") or [])
         ]
-        key_config = self.index.to_key_config(attrs)
+        key_config = self.index.key_config_from_attrs(attrs)
         self.storage_meta = StorageMeta(
             name=self.table_name,
             fields=tuple(a.to_field() for a in attrs),
@@ -93,11 +112,14 @@ class DynamodbStorageFactory:
     def create_table_in_aws(self):
         dynamodb = self.get_session().client("dynamodb")
 
+        attrs = {}
+        self._attrs(self.index, attrs)
+        if self.global_secondary_indexes:
+            for index in self.global_secondary_indexes.values():
+                self._attrs(index, attrs)
+
         kwargs = dict(
-            AttributeDefinitions=[
-                dict(AttributeName=f.name, AttributeType=_FIELD_TYPE_2_DYNAMODB[f.type])
-                for f in self.storage_meta.fields if f.is_indexed
-            ],
+            AttributeDefinitions=list(attrs.values()),
             TableName=self.table_name,
             KeySchema=self.index.to_schema(),
             BillingMode="PAY_PER_REQUEST"  # Ops teams will want to look at these values
@@ -128,6 +150,15 @@ class DynamodbStorageFactory:
         storage = SecuredStorage(storage)
         storage = SchemaValidatingStorage(storage)
         return storage
+
+    def _attrs(self, index: DynamodbIndex, attrs: Dict):
+        attrs[index.pk] = self._attr(index.pk)
+        if index.sk:
+            attrs[index.sk] = self._attr(index.sk)
+
+    def _attr(self, name: str):
+        field = next(f for f in self.storage_meta.fields if f.name == name)
+        return dict(AttributeName=name, AttributeType=_FIELD_TYPE_2_DYNAMODB[field.type])
 
 
 def _remove_index(indexed_fields: Set[str], index: DynamodbIndex):
