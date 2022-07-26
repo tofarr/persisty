@@ -4,11 +4,9 @@ from unittest import TestCase
 from marshy import dump
 from moto import mock_dynamodb
 
-from persisty.access_control.access_control import AccessControl
 from persisty.access_control.constants import READ_ONLY
 from persisty.errors import PersistyError
 from persisty.impl.mem.mem_storage import mem_storage, MemStorage
-from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.obj_storage.filter_factory import filter_factory
 from persisty.obj_storage.stored import get_storage_meta
 from persisty.search_filter.include_all import INCLUDE_ALL
@@ -63,15 +61,17 @@ class TestMemStorage(TestCase, StorageTstABC):
     def test_mem_storage_secured(self):
         storage_meta = StorageMeta(
             name='read_only_number_name',
-            fields = get_storage_meta(NumberName).fields,
+            fields=get_storage_meta(NumberName).fields,
             access_control=READ_ONLY
         )
         storage = mem_storage(storage_meta)
         storage.read('1')
+        error = None
         try:
-            storage.create(dict(value=-1, title="Minus One")) and self.assertTrue(False)
+            storage.create(dict(value=-1, title="Minus One"))
         except PersistyError as e:
-            pass
+            error = e
+        self.assertIsNotNone(error)
 
     def test_mem_storage_delete_missing_key(self):
         storage = MemStorage(get_storage_meta(NumberName))

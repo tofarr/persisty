@@ -360,7 +360,7 @@ class StorageTstABC(ABC):
             Update(dict(id="00000000-0000-0000-0000-000000000001", title="First")),
             Delete("00000000-0000-0000-0002-000000000001"),
         ]
-        now = str(datetime.now())
+        now = datetime.now().isoformat()
         results = [r.success for r in storage.edit_all(edits)]
         self.assertEqual(results, [True, False, True, False])
         results = list(

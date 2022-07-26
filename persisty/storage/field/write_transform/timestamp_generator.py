@@ -27,7 +27,7 @@ class TimestampGenerator(WriteTransformABC):
         if is_update and not self.on_update:
             return UNDEFINED
         else:
-            return str(datetime.now())
+            return datetime.now().isoformat()
 
 
 CREATED_AT_GENERATOR = TimestampGenerator()

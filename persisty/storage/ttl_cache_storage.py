@@ -21,16 +21,16 @@ T = TypeVar("T")
 
 
 @dataclass(frozen=True)
-class TTLEntry(Generic[T]):
+class TtlEntry(Generic[T]):
     value: T
     expire_at: int
 
 
 @dataclass(frozen=True)
-class TTLCacheStorage(StorageABC):
+class TtlCacheStorage(StorageABC):
     storage: StorageABC
-    cache: Dict[str, TTLEntry] = field(default_factory=dict)
-    cached_result_sets: Dict[str, TTLEntry] = field(default_factory=dict)
+    cache: Dict[str, TtlEntry] = field(default_factory=dict)
+    cached_result_sets: Dict[str, TtlEntry] = field(default_factory=dict)
     ttl: int = 30
 
     def clear_cache(self):
@@ -45,7 +45,7 @@ class TTLCacheStorage(StorageABC):
     ):
         if expire_at is None:
             expire_at = int(time()) + self.ttl
-        self.cache[key] = TTLEntry(deepcopy(item), expire_at)
+        self.cache[key] = TtlEntry(deepcopy(item), expire_at)
 
     def load_item_from_cache(self, key: str, now: Optional[int] = None):
         if now is None:
@@ -71,7 +71,7 @@ class TTLCacheStorage(StorageABC):
     def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
         now = int(time())
         items_by_key = {key: self.load_item_from_cache(key, now) for key in keys}
-        keys_to_load = [key for key, item in items_by_key.values() if item is None]
+        keys_to_load = [key for key, item in items_by_key.items() if item is None]
         if keys_to_load:
             items = self.storage.read_batch(keys_to_load)
             key_config = self.get_storage_meta().key_config
@@ -110,7 +110,7 @@ class TTLCacheStorage(StorageABC):
     ) -> ResultSet[ExternalItemType]:
         result_set_key = [
             dump(search_filter, SearchFilterABC),
-            dump(search_order, SearchOrder),
+            dump(search_order, Optional[SearchOrder]),
             page_key,
             limit,
         ]
@@ -131,7 +131,7 @@ class TTLCacheStorage(StorageABC):
             self.store_item_in_cache(key, item, expire_at)
             keys.append(key)
         entry = dict(keys=keys, next_page_key=result_set.next_page_key)
-        self.cached_result_sets[result_set_key] = TTLEntry(entry, expire_at)
+        self.cached_result_sets[result_set_key] = TtlEntry(entry, expire_at)
         return result_set
 
     def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:

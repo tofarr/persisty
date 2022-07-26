@@ -1,5 +1,11 @@
 from abc import ABC
 
+from dataclasses import dataclass
+from typing import Type
+
+from marshy import ExternalType
+from marshy.marshaller.marshaller_abc import MarshallerABC, T
+
 
 class SingletonABC(ABC):
     """Abstract singleton implementation"""
@@ -13,3 +19,17 @@ class SingletonABC(ABC):
 
     def __repr__(self):
         return self.__class__.__name__
+
+    # noinspection PyUnusedLocal
+    @classmethod
+    def __marshaller_factory__(cls, marshaller_context):
+        return SingletonMarshaller(cls)
+
+
+class SingletonMarshaller(MarshallerABC[T]):
+
+    def load(self, item: ExternalType) -> T:
+        return self.marshalled_type()
+
+    def dump(self, item: T) -> ExternalType:
+        return self.marshalled_type.__name__

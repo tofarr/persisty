@@ -10,7 +10,7 @@ from persisty.cache_control.secure_hash_cache_control import SecureHashCacheCont
 
 
 @dataclass(frozen=True)
-class TTLCacheControl(CacheControlABC):
+class TtlCacheControl(CacheControlABC):
     ttl: int
     cache_control: CacheControlABC = SecureHashCacheControl()
 

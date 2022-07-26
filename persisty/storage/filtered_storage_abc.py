@@ -185,47 +185,51 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
         items_by_key = {key_config.to_key_str(item): item for item in items if item}
 
         results = [BatchEditResult(edit, code="unknown") for edit in edits]
-        results_by_id = {result.edit.id: result for result in results}
+        results_by_id = {result.edit.get_id(): result for result in results}
         filtered_edits = []
         for edit in edits:
-            if isinstance(edit, Create):
-                key = edit.get_key(key_config)
-                if key and key in items_by_key:
-                    results_by_id[edit.id].code = "create_existing"
-                    continue
-                item = self.filter_create(edit.item)
-                if not item:
-                    results_by_id[edit.id].code = "fitered_edit"
-                    continue
-                filtered_edits.append(Create(item, edit.id))
-            elif isinstance(edit, Update):
-                key = edit.get_key(key_config)
-                item = items_by_key.get(key)
-                if not item:
-                    results_by_id[edit.id].coee = "item_missing"
-                    continue
-                filtered_updates = self.filter_update(item, edit.updates)
-                if not item:
-                    results_by_id[edit.id].code = "filtered_edit"
-                    continue
-                filtered_edits.append(Update(filtered_updates, edit.id))
-            elif isinstance(edit, Delete):
-                key = edit.get_key(key_config)
-                item = items_by_key.get(key)
-                if not item:
-                    results_by_id[edit.id].code = "item_missing"
-                    continue
-                if not self.allow_delete(item):
-                    results_by_id[edit.id].code = "filtered_edit"
-                    continue
-                filtered_edits.append(edit)
-            else:
-                results_by_id[edit.id].code = "unsupported_edit_type"
-                results_by_id[edit.id].msg = edit.__class__.__name__
+            result = results_by_id[edit.get_id()]
+            try:
+                if isinstance(edit, Create):
+                    key = edit.get_key(key_config)
+                    if key and key in items_by_key:
+                        result.code = "create_existing"
+                        continue
+                    item = self.filter_create(edit.item)
+                    if not item:
+                        result.code = "fitered_edit"
+                        continue
+                    filtered_edits.append(Create(item, edit.id))
+                elif isinstance(edit, Update):
+                    key = edit.get_key(key_config)
+                    item = items_by_key.get(key)
+                    if not item:
+                        result.code = "item_missing"
+                        continue
+                    filtered_updates = self.filter_update(item, edit.updates)
+                    if not item:
+                        result.code = "filtered_edit"
+                        continue
+                    filtered_edits.append(Update(filtered_updates, edit.id))
+                elif isinstance(edit, Delete):
+                    key = edit.get_key(key_config)
+                    item = items_by_key.get(key)
+                    if not item:
+                        result.code = "item_missing"
+                        continue
+                    if not self.allow_delete(item):
+                        result.code = "filtered_edit"
+                        continue
+                    filtered_edits.append(edit)
+                else:
+                    result.code = "unsupported_edit_type"
+                    result.msg = edit.__class__.__name__
+            except PersistyError as e:
+                result.msg = str(e)
         if filtered_edits:
             filtered_results = self.get_storage().edit_batch(filtered_edits)
             for filtered_result in filtered_results:
-                result = results_by_id.get(filtered_result.edit.id)
+                result = results_by_id.get(filtered_result.edit.get_id())
                 if not result:
                     # If result is missing, then the nested storage has not implemented the protocol correctly
                     logger.warning(f"Result missing {filtered_result}")
