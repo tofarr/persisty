@@ -17,9 +17,9 @@ class Not(SearchFilterABC):
         """Strip out direct nested Not"""
         if isinstance(search_filter, Not):
             return search_filter.search_filter
-        elif isinstance(search_filter, EXCLUDE_ALL):
+        elif search_filter is EXCLUDE_ALL:
             return INCLUDE_ALL
-        elif isinstance(search_filter, INCLUDE_ALL):
+        elif search_filter is INCLUDE_ALL:
             return EXCLUDE_ALL
         return super(Not, cls).__new__(cls)
 

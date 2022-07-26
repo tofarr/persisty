@@ -14,6 +14,8 @@ from persisty.storage.field.field_type import FieldType
 from persisty.storage.field.write_transform.default_value_transform import (
     DefaultValueTransform,
 )
+from persisty.storage.field.write_transform.int_sequence_generator import IntSequenceGenerator
+from persisty.storage.field.write_transform.str_sequence_genrator import StrSequenceGenerator
 from persisty.storage.field.write_transform.timestamp_generator import (
     TimestampGenerator,
 )
@@ -133,8 +135,13 @@ class Attr:
     def populate_write_transform(self):
         if self.write_transform is not UNDEFINED:
             return
-        if self.name == "id" and self.field_type == FieldType.UUID:
-            self.write_transform = UUID_OPTIONAL_ON_CREATE
+        if self.name == "id":
+            if self.field_type == FieldType.UUID:
+                self.write_transform = UUID_OPTIONAL_ON_CREATE
+            elif self.field_type == FieldType.INT:
+                self.write_transform = IntSequenceGenerator()
+            elif self.field_type == FieldType.STR:
+                self.write_transform = StrSequenceGenerator()
         elif self.name == "created_at" and self.field_type == FieldType.DATETIME:
             self.write_transform = TimestampGenerator(False)
         elif self.name == "updated_at" and self.field_type == FieldType.DATETIME:

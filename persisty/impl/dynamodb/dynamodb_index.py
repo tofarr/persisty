@@ -5,7 +5,6 @@ from boto3.dynamodb.conditions import Key, And
 from marshy.types import ExternalItemType
 
 from persisty.impl.dynamodb.dynamodb_key_config import DynamodbKeyConfig
-from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.obj_storage.attr import Attr
 from persisty.storage.field.field import Field

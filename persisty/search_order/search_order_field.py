@@ -30,7 +30,10 @@ class SearchOrderField:
             return self.desc, value
 
     def lt(self, a: ExternalItemType, b: ExternalItemType) -> bool:
-        return self.key(a) < self.key(b)
+        if self.desc:
+            return self.key(a) > self.key(b)
+        else:
+            return self.key(a) < self.key(b)
 
     def eq(self, a: ExternalItemType, b: ExternalItemType) -> bool:
         return self.key(a) == self.key(b)
