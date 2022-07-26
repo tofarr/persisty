@@ -4,6 +4,7 @@ from typing import Optional, List, Iterator
 
 from marshy.types import ExternalItemType
 
+from persisty.errors import PersistyError
 from persisty.storage.batch_edit import BatchEditABC, Create, Update, Delete
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
@@ -117,7 +118,7 @@ def skip_to_page(page_key: str, items, key_config):
         while True:
             next_result = next(items, None)
             if next_result is None:
-                return ResultSet([])
+                raise PersistyError('invalid_page_key')  # The item was probably deleted
             key = key_config.to_key_str(next_result)
             if key == page_key:
                 return

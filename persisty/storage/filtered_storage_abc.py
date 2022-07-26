@@ -67,13 +67,14 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
 
     def read(self, key: str) -> Optional[ExternalItemType]:
         item = self.get_storage().read(key)
-        item = self.filter_read(item)
+        if item:
+            item = self.filter_read(item)
         return item
 
     def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
         assert len(keys) <= self.get_storage_meta().batch_size
         items = self.get_storage().read_batch(keys)
-        items = [self.filter_read(item) for item in items]
+        items = [self.filter_read(item) if item else None for item in items]
         return items
 
     def update(
@@ -132,13 +133,15 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
             while nested_item_key:
                 next_item = next(items, None)
                 if not next_item:
-                    return ResultSet([])
+                    raise PersistyError('invalid_page_key')  # The item was probably deleted
                 next_item_key = key_config.to_key_str(next_item)
                 if next_item_key == nested_item_key:
                     nested_item_key = None
 
             results.extend(items)
             if len(results) == limit:
+                if not result_set.next_page_key:
+                    return ResultSet(results)
                 return ResultSet(results, encrypt([result_set.next_page_key, None]))
             elif len(results) > limit:
                 results = results[:limit]
@@ -207,7 +210,7 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
                         result.code = "item_missing"
                         continue
                     filtered_updates = self.filter_update(item, edit.updates)
-                    if not item:
+                    if not filtered_updates:
                         result.code = "filtered_edit"
                         continue
                     filtered_edits.append(Update(filtered_updates, edit.id))
@@ -230,11 +233,9 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
             filtered_results = self.get_storage().edit_batch(filtered_edits)
             for filtered_result in filtered_results:
                 result = results_by_id.get(filtered_result.edit.get_id())
-                if not result:
-                    # If result is missing, then the nested storage has not implemented the protocol correctly
-                    logger.warning(f"Result missing {filtered_result}")
-                    continue
-                result.copy_from(filtered_result)
+                # If result is missing, then the nested storage has not implemented the protocol correctly
+                if result:
+                    result.copy_from(filtered_result)
         return results
 
     def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:

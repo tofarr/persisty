@@ -3,19 +3,23 @@ from copy import deepcopy
 from datetime import datetime
 from typing import Tuple
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from uuid import UUID, uuid4
 
 from marshy import ExternalType
+from marshy.types import ExternalItemType
 
 from persisty.errors import PersistyError
+from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.obj_storage.filter_factory import filter_factory
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_field import SearchOrderField
-from persisty.storage.batch_edit import Delete, Update, Create
+from persisty.storage.batch_edit import Delete, Update, Create, BatchEditABC
 from persisty.storage.field.field import Field
 from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
+from persisty.storage.result_set import ResultSet
 from persisty.storage.storage_abc import StorageABC
 from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULT_DICTS, SuperBowlResult
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES_DICTS
@@ -437,3 +441,72 @@ class StorageTstABC(ABC):
             filter_factory(NumberName).title.ne("One")
         )
         self.assertIsNone(item)
+
+    def test_search_custom_filter_full_result_set(self):
+        storage = self.new_number_name_storage()
+        search_filter = ValueLessThanFilter(21)
+        page_1 = storage.search(search_filter)
+        self.assertEqual(list(range(1, 11)), list(i['value'] for i in page_1.results))
+        page_2 = storage.search(search_filter=search_filter, page_key=page_1.next_page_key)
+        self.assertEqual(list(range(11, 21)), list(i['value'] for i in page_2.results))
+        page_3 = storage.search(search_filter=search_filter, page_key=page_2.next_page_key)
+        self.assertEqual(ResultSet([]), page_3)
+
+    def test_search_custom_filter_unfilled_result_set(self):
+        storage = self.new_number_name_storage()
+        limit = 3
+        for less_than in range(1, 31):
+            kwargs = dict(
+                search_filter=ValueLessThanFilter(less_than),
+                search_order=SearchOrder((SearchOrderField('value'),)),
+                limit=limit,
+            )
+            index = 1
+            while True:
+                page = storage.search(**kwargs)
+                expected_values = [v for v in range(index, min(less_than, index + limit))]
+                values = [r['value'] for r in page.results]
+                self.assertEqual(expected_values, values)
+                if page.next_page_key:
+                    kwargs['page_key'] = page.next_page_key
+                    index += limit
+                else:
+                    break
+
+    def test_edit_batch_errors(self):
+        @dataclass
+        class Mutate(BatchEditABC):
+            """ Here to make trouble! """
+            id: UUID = field(default_factory=uuid4)
+
+            def get_key(self, key_config: KeyConfigABC) -> str:
+                return "Mutate"
+
+            def get_id(self) -> UUID:
+                return self.id
+
+        storage = self.new_number_name_storage()
+        edits = [
+            Create(dict(id=NUMBER_NAMES_DICTS[1]['id'], value=-1, title='New Item')),
+            Update(dict(id=str(uuid4()), value=-2, title='Updated Item')),
+            Delete(str(uuid4())),
+            Mutate()
+        ]
+        results = storage.edit_batch(edits)
+        self.assertFalse(next((True for r in results if r.success), False))
+
+
+@dataclass
+class ValueLessThanFilter(SearchFilterABC):
+    """
+    Custom filter for testing - in reality you would use a FieldFilter
+    for this as storage implementations would more easily be able to turn
+    it into a native condition
+    """
+    value: int
+
+    def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
+        return next((True for f in fields if f.name == 'value'), False)
+
+    def match(self, item: ExternalItemType, fields: Tuple[Field, ...]) -> bool:
+        return item['value'] < self.value
