@@ -5,11 +5,11 @@ from marshy.types import ExternalItemType
 
 from persisty.access_control.constants import NO_ACCESS
 from persisty.errors import PersistyError
+from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.storage.filtered_storage_abc import FilteredStorageABC
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
-from persisty.storage.wrapper_storage_abc import WrapperStorageABC
 
 
 @dataclass(frozen=True)
@@ -52,5 +52,5 @@ class SecuredStorage(FilteredStorageABC):
     ) -> Tuple[SearchFilterABC, bool]:
         access_control = self.get_storage_meta().access_control
         if not access_control.is_searchable():
-            return NO_ACCESS, True
+            return EXCLUDE_ALL, True
         return access_control.transform_search_filter(search_filter)

@@ -18,7 +18,7 @@ from persisty.storage.field.field import Field
 from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.storage_abc import StorageABC
 from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULT_DICTS, SuperBowlResult
-from tests.fixtures.number_name import NumberName
+from tests.fixtures.number_name import NumberName, NUMBER_NAMES_DICTS
 
 
 # noinspection PyUnresolvedReferences
@@ -324,7 +324,17 @@ class StorageTstABC(ABC):
             [], list(storage.search_all(FieldFilter("year", FieldFilterOp.lt, 1967)))
         )
 
-    def test_search_id(self):
+    def test_search(self):
+        storage = self.new_number_name_storage()
+        filters = filter_factory(NumberName)
+        search_filter = filters.value.lt(50)
+        search_order = filters.value.asc()
+        page1 = storage.search(search_filter, search_order, None, 10)
+        self.assertEqual(NUMBER_NAMES_DICTS[:10], page1.results)
+        page2 = storage.search(search_filter, search_order, page1.next_page_key, 10)
+        self.assertEqual(NUMBER_NAMES_DICTS[10:20], page2.results)
+
+    def test_search_all_id(self):
         storage = self.new_number_name_storage()
         filters = filter_factory(NumberName)
         id_ = "00000000-0000-0000-0000-000000000001"
@@ -332,7 +342,7 @@ class StorageTstABC(ABC):
         expected = [storage.read(id_)]
         self.assertEqual(expected, loaded)
 
-    def test_search_id_title(self):
+    def test_search_all_id_title(self):
         storage = self.new_number_name_storage()
         filters = filter_factory(NumberName)
         id_ = "00000000-0000-0000-0000-000000000001"
@@ -401,6 +411,14 @@ class StorageTstABC(ABC):
             },
         ]
         self.assertEqual(expected_results, results)
+
+    def test_edit_batch(self):
+        storage = self.new_number_name_storage()
+        edits = [Delete(n["id"]) for n in storage.search().results]
+        results = list(storage.edit_batch(edits))
+        for result in results:
+            self.assertTrue(result.success)
+        self.assertEqual(89, storage.count())
 
     def test_update_no_key(self):
         storage = self.new_number_name_storage()
