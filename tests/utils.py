@@ -11,7 +11,7 @@ def mock_dynamodb_with_super(cls):
     params = {}
     for c in reversed(inspect.getmro(cls)):
         for k, v in c.__dict__.items():
-            if k.startswith('test') and hasattr(v, '__call__'):
+            if k.startswith("test") and hasattr(v, "__call__"):
                 params[k] = mock_dynamodb(v)
     subclass = type(cls.__name__, (cls,), params)
     return subclass

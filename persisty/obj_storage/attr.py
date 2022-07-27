@@ -14,8 +14,12 @@ from persisty.storage.field.field_type import FieldType
 from persisty.storage.field.write_transform.default_value_transform import (
     DefaultValueTransform,
 )
-from persisty.storage.field.write_transform.int_sequence_generator import IntSequenceGenerator
-from persisty.storage.field.write_transform.str_sequence_genrator import StrSequenceGenerator
+from persisty.storage.field.write_transform.int_sequence_generator import (
+    IntSequenceGenerator,
+)
+from persisty.storage.field.write_transform.str_sequence_genrator import (
+    StrSequenceGenerator,
+)
 from persisty.storage.field.write_transform.timestamp_generator import (
     TimestampGenerator,
 )
@@ -23,7 +27,9 @@ from persisty.storage.field.write_transform.uuid_generator import (
     UUID_OPTIONAL_ON_CREATE,
 )
 from persisty.storage.field.write_transform.write_transform_abc import WriteTransformABC
-from persisty.storage.field.write_transform.write_transform_mode import WriteTransformMode
+from persisty.storage.field.write_transform.write_transform_mode import (
+    WriteTransformMode,
+)
 from persisty.util import UNDEFINED
 from persisty.util.undefined import Undefined
 
@@ -105,7 +111,7 @@ class Attr:
 
     def to_field(self) -> Field:
         kwargs = {f.name: getattr(self, f.name) for f in fields(Field)}
-        kwargs['type'] = self.field_type
+        kwargs["type"] = self.field_type
         return Field(**kwargs)
 
     def populate(self, key_config: KeyConfigABC):
@@ -177,12 +183,18 @@ class Attr:
     def populate_access(self):
         t = self.write_transform
         if self.is_creatable is None:
-            if t and t.mode in (WriteTransformMode.ALWAYS_FOR_CREATE, WriteTransformMode.ALWAYS_FOR_WRITE):
+            if t and t.mode in (
+                WriteTransformMode.ALWAYS_FOR_CREATE,
+                WriteTransformMode.ALWAYS_FOR_WRITE,
+            ):
                 self.is_creatable = False
             else:
                 self.is_creatable = True
         if self.is_updatable is None:
-            if t and t.mode in (WriteTransformMode.ALWAYS_FOR_UPDATE, WriteTransformMode.ALWAYS_FOR_WRITE):
+            if t and t.mode in (
+                WriteTransformMode.ALWAYS_FOR_UPDATE,
+                WriteTransformMode.ALWAYS_FOR_WRITE,
+            ):
                 self.is_updatable = False
             else:
                 self.is_updatable = True

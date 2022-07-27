@@ -5,7 +5,7 @@ from persisty.storage.storage_abc import StorageABC
 from persisty.util.logify import logify
 
 METHODS: FrozenSet[str] = frozenset(
-    name for name in StorageABC.__dict__ if name != "storage_meta"
+    name for name in StorageABC.__dict__ if name != "get_storage_meta"
 )
 
 

@@ -30,27 +30,37 @@ class DynamodbStorageFactory:
         for f in self.storage_meta.fields:
             override = {}
             if f.is_sortable:
-                override['is_sortable'] = False
+                override["is_sortable"] = False
             is_indexed = False
             if self.index and self.index.pk == f.name:
                 is_indexed = True
             if self.global_secondary_indexes:
-                index = next((i for i in self.global_secondary_indexes.values() if i.pk == f.name or i.sk == f.name),
-                             None)
+                index = next(
+                    (
+                        i
+                        for i in self.global_secondary_indexes.values()
+                        if i.pk == f.name or i.sk == f.name
+                    ),
+                    None,
+                )
                 is_indexed |= bool(index)
             if is_indexed != f.is_indexed:
-                override['is_indexed'] = is_indexed
+                override["is_indexed"] = is_indexed
             overrides.append(override)
         key_config = self.storage_meta.key_config
-        fields = tuple(dataclasses.replace(f, **v) if v else f for v, f in zip(overrides, self.storage_meta.fields))
+        fields = tuple(
+            dataclasses.replace(f, **v) if v else f
+            for v, f in zip(overrides, self.storage_meta.fields)
+        )
         if self.index:
             key_config = self.index.key_config_from_fields(fields)
-        overridden = next((True for v in overrides if v), False) or key_config != self.storage_meta.key_config
+        overridden = (
+            next((True for v in overrides if v), False)
+            or key_config != self.storage_meta.key_config
+        )
         if overridden:
             self.storage_meta = dataclasses.replace(
-                self.storage_meta,
-                key_config=key_config,
-                fields=fields
+                self.storage_meta, key_config=key_config, fields=fields
             )
 
     def derive_from_storage_meta(self):
@@ -63,9 +73,10 @@ class DynamodbStorageFactory:
                 self.index = DynamodbIndex(key_config.field_name)
         if self.global_secondary_indexes is None:
             self.global_secondary_indexes = {
-                f'gix__{f.name}': DynamodbIndex(f.name)
-                for f in storage_meta.fields if f.is_indexed and self.index.pk != f.name
-             }
+                f"gix__{f.name}": DynamodbIndex(f.name)
+                for f in storage_meta.fields
+                if f.is_indexed and self.index.pk != f.name
+            }
 
         # We don't really have an effective way of automatically deriving GSIs here
 
@@ -122,17 +133,17 @@ class DynamodbStorageFactory:
             AttributeDefinitions=list(attrs.values()),
             TableName=self.table_name,
             KeySchema=self.index.to_schema(),
-            BillingMode="PAY_PER_REQUEST"  # Ops teams will want to look at these values
+            BillingMode="PAY_PER_REQUEST",  # Ops teams will want to look at these values
         )
 
         if self.global_secondary_indexes:
-            kwargs['GlobalSecondaryIndexes'] = [
-                 {
-                     'IndexName': k,
-                     'KeySchema': i.to_schema(),
-                     'Projection': {'ProjectionType': 'ALL'},
-                 }
-                 for k, i in (self.global_secondary_indexes or {}).items()
+            kwargs["GlobalSecondaryIndexes"] = [
+                {
+                    "IndexName": k,
+                    "KeySchema": i.to_schema(),
+                    "Projection": {"ProjectionType": "ALL"},
+                }
+                for k, i in (self.global_secondary_indexes or {}).items()
             ]
 
         response = dynamodb.create_table(**kwargs)
@@ -158,7 +169,9 @@ class DynamodbStorageFactory:
 
     def _attr(self, name: str):
         field = next(f for f in self.storage_meta.fields if f.name == name)
-        return dict(AttributeName=name, AttributeType=_FIELD_TYPE_2_DYNAMODB[field.type])
+        return dict(
+            AttributeName=name, AttributeType=_FIELD_TYPE_2_DYNAMODB[field.type]
+        )
 
 
 def _remove_index(indexed_fields: Set[str], index: DynamodbIndex):
@@ -174,12 +187,12 @@ _DYNAMODB_2_PYTHON = {
 }
 
 _FIELD_TYPE_2_DYNAMODB = {
-    FieldType.BINARY: 'B',
-    FieldType.STR: 'S',
-    FieldType.FLOAT: 'N',
-    FieldType.INT: 'N',
-    FieldType.DATETIME: 'S',
-    FieldType.UUID: 'S',
+    FieldType.BINARY: "B",
+    FieldType.STR: "S",
+    FieldType.FLOAT: "N",
+    FieldType.INT: "N",
+    FieldType.DATETIME: "S",
+    FieldType.UUID: "S",
 }
 
 

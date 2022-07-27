@@ -16,7 +16,8 @@ class BatchEditABC(ABC):
 
     @abstractmethod
     def get_id(self) -> UUID:
-        """ Get the unique identifier for the edit"""
+        """Get the unique identifier for the edit"""
+
 
 @dataclass
 class Create(BatchEditABC, Generic[T]):

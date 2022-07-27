@@ -29,21 +29,23 @@ class Field:
     is_nullable: bool = True
 
     def get_value_for(self, item: Any):
-        if hasattr(item, '__getitem__'):
+        if hasattr(item, "__getitem__"):
             return item.get(self.name, UNDEFINED)
         return getattr(item, self.name)
 
     def set_value_for(self, value: Any, item: Optional[Any]) -> Any:
         if item is None:
             item = {}
-        if hasattr(item, '__setitem__'):
+        if hasattr(item, "__setitem__"):
             item.set(self.name, value)
         else:
             setattr(item, self.name, value)
         return item
 
 
-def load_field_values(fields: Iterable[Field], item: ExternalItemType) -> ExternalItemType:
+def load_field_values(
+    fields: Iterable[Field], item: ExternalItemType
+) -> ExternalItemType:
     result = {}
     for field_ in fields:
         if not field_.is_readable:

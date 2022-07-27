@@ -16,10 +16,12 @@ class ObjFilterFactory:
 
     def __getattr__(self, name):
         try:
-            field = next(field for field in self.storage_meta.fields if field.name == name)
+            field = next(
+                field for field in self.storage_meta.fields if field.name == name
+            )
             return FieldFilterFactory(field)
         except StopIteration:
-            raise PersistyError(f'no_such_field:{name}')
+            raise PersistyError(f"no_such_field:{name}")
 
 
 @dataclass

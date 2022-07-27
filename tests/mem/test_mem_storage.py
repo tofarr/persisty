@@ -13,13 +13,16 @@ from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES
-from tests.fixtures.super_bowl_results import SuperBowlResult, SUPER_BOWL_RESULTS, SUPER_BOWL_RESULT_DICTS
+from tests.fixtures.super_bowl_results import (
+    SuperBowlResult,
+    SUPER_BOWL_RESULTS,
+    SUPER_BOWL_RESULT_DICTS,
+)
 from tests.fixtures.storage_tst_abc import StorageTstABC
 
 
 @mock_dynamodb
 class TestMemStorage(TestCase, StorageTstABC):
-
     def new_super_bowl_results_storage(self) -> StorageABC:
         storage = mem_storage(
             get_storage_meta(SuperBowlResult),
@@ -55,17 +58,17 @@ class TestMemStorage(TestCase, StorageTstABC):
     def test_mem_storage_no_dict(self):
         storage = mem_storage(get_storage_meta(NumberName))
         created = storage.create(dict(value=1, title="One"))
-        loaded = storage.read(created['id'])
+        loaded = storage.read(created["id"])
         self.assertEqual(loaded, created)
 
     def test_mem_storage_secured(self):
         storage_meta = StorageMeta(
-            name='read_only_number_name',
+            name="read_only_number_name",
             fields=get_storage_meta(NumberName).fields,
-            access_control=READ_ONLY
+            access_control=READ_ONLY,
         )
         storage = mem_storage(storage_meta)
-        storage.read('1')
+        storage.read("1")
         error = None
         try:
             storage.create(dict(value=-1, title="Minus One"))
@@ -91,8 +94,12 @@ class TestMemStorage(TestCase, StorageTstABC):
         storage_meta = get_storage_meta(NumberName)
         storage_meta = StorageMeta(
             name=storage_meta.name,
-            fields=tuple(dataclasses.replace(f, write_transform=None, is_creatable=True, is_updatable=True)
-                         for f in storage_meta.fields)
+            fields=tuple(
+                dataclasses.replace(
+                    f, write_transform=None, is_creatable=True, is_updatable=True
+                )
+                for f in storage_meta.fields
+            ),
         )
         storage = MemStorage(storage_meta)
         try:
@@ -104,8 +111,12 @@ class TestMemStorage(TestCase, StorageTstABC):
         storage_meta = get_storage_meta(NumberName)
         storage_meta = StorageMeta(
             name=storage_meta.name,
-            fields=tuple(dataclasses.replace(f, write_transform=None, is_creatable=True, is_updatable=True)
-                         for f in storage_meta.fields)
+            fields=tuple(
+                dataclasses.replace(
+                    f, write_transform=None, is_creatable=True, is_updatable=True
+                )
+                for f in storage_meta.fields
+            ),
         )
         storage = MemStorage(storage_meta)
         try:

@@ -19,7 +19,9 @@ class DynamodbKeyConfig(KeyConfigABC):
             key = self.pk_field.get_value_for(item)
             key = str(key)
             return key
-        return encrypt([self.pk_field.get_value_for(item), self.sk_field.get_value_for(item)])
+        return encrypt(
+            [self.pk_field.get_value_for(item), self.sk_field.get_value_for(item)]
+        )
 
     def from_key_str(self, key: Optional[str], output: Optional[Any] = None) -> Any:
         if output is None:
@@ -37,4 +39,8 @@ class DynamodbKeyConfig(KeyConfigABC):
         return output
 
     def is_required_field(self, field_name: str) -> bool:
-        return self.pk_field.field_name == field_name or self.sk_field and self.sk_field.field_name == field_name
+        return (
+            self.pk_field.field_name == field_name
+            or self.sk_field
+            and self.sk_field.field_name == field_name
+        )

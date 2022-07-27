@@ -1,6 +1,9 @@
+import inspect
 from logging import Logger
 from time import time
-from typing import Callable, Optional, TypeVar, FrozenSet
+from typing import Callable, Optional, TypeVar, FrozenSet, Any
+
+from attr import dataclass
 
 from persisty.util import get_logger, filter_none
 
@@ -8,27 +11,17 @@ T = TypeVar("T")
 
 
 def logify(
-    obj: T, methods: Optional[FrozenSet[str]] = None, logger: Optional[Logger] = None
+    obj: T,
+    log_methods: Optional[FrozenSet[str]] = None,
+    logger: Optional[Logger] = None,
 ) -> T:
-    cls = obj.__class__
-    if logger is None:
-        logger = get_logger(cls.__name__)
-    attrs = {**cls.__dict__}
-    for name, attr in attrs.items():
-        if methods:
-            if name not in methods:
-                continue
-        elif name.startswith("__"):
-            continue
-        if callable(attr):
-            attrs[name] = logify_callable(name, attr, logger)
-    return type(cls.__name__, tuple(), attrs)()
+    return LoggingWrapper(obj, log_methods, logger)
 
 
 def logify_callable(name, fn: Callable, logger: Optional[Logger] = None):
     def wrapper(*args, **kwargs):
         start = time()
-        error = ""
+        error = None
         try:
             return_value = fn(*args, **kwargs)
             return return_value
@@ -43,10 +36,36 @@ def logify_callable(name, fn: Callable, logger: Optional[Logger] = None):
                     name=name,
                     time=time_taken,
                     error=error,
-                    args=args[1:],
-                    kwargs=kwargs,
+                    args=args if args else None,
+                    kwargs=kwargs if kwargs else None,
                 )
             )
             logger.info(msg)
 
     return wrapper
+
+
+class LoggingWrapper:
+    def __init__(
+        self,
+        wrapped: Any,
+        log_methods: Optional[FrozenSet[str]] = None,
+        logger: Optional[Logger] = None,
+    ):
+        self.wrapped = wrapped
+        if logger is None:
+            logger = get_logger(wrapped.__class__.__name__)
+        self.logger = logger
+        self.log_methods = log_methods
+
+    def __getattr__(self, name: str):
+        ret = getattr(self.wrapped, name)
+        if callable(ret):
+            if self.log_methods:
+                wrap = name in self.log_methods
+            else:
+                wrap = not name.startswith("_")
+            if wrap:
+                ret = logify_callable(name, ret, self.logger)
+                setattr(self, name, ret)
+        return ret

@@ -31,6 +31,7 @@ def catch_client_error(fn):
             return fn(*args, **kwargs)
         except ClientError as e:
             raise PersistyError(e)
+
     return wrapper
 
 
@@ -44,7 +45,7 @@ class DynamodbTableStorage(StorageABC):
     global_secondary_indexes: Dict[str, DynamodbIndex] = field(default_factory=dict)
     aws_profile_name: Optional[str] = None
     region_name: Optional[str] = None
-    decimal_format: str = '%.9f'
+    decimal_format: str = "%.9f"
 
     def get_storage_meta(self) -> StorageMeta:
         return self.storage_meta
@@ -68,23 +69,25 @@ class DynamodbTableStorage(StorageABC):
 
     @catch_client_error
     def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
-        assert(len(keys) <= self.storage_meta.batch_size)
+        assert len(keys) <= self.storage_meta.batch_size
         key_config = self.storage_meta.key_config
         resource = self._dynamodb_resource()
 
         kwargs = {
-            'RequestItems': {
+            "RequestItems": {
                 self.table_name: {
-                    'Keys': [key_config.from_key_str(key) for key in set(keys)]
+                    "Keys": [key_config.from_key_str(key) for key in set(keys)]
                 }
             }
         }
         results_by_key = {}
         response = resource.batch_get_item(**kwargs)
-        for item in response['Responses'][self.table_name]:
+        for item in response["Responses"][self.table_name]:
             key = key_config.to_key_str(item)
             results_by_key[key] = self._load(item)
-        assert not response.get('UnprocessedKeys')  # Batch size would have been greater than 16 Mb
+        assert not response.get(
+            "UnprocessedKeys"
+        )  # Batch size would have been greater than 16 Mb
         return [results_by_key.get(key) for key in keys]
 
     @catch_client_error
@@ -155,7 +158,9 @@ class DynamodbTableStorage(StorageABC):
             }
         )
         if page_key:
-            query_args["ExclusiveStartKey"] = self.storage_meta.key_config.from_key_str(page_key)
+            query_args["ExclusiveStartKey"] = self.storage_meta.key_config.from_key_str(
+                page_key
+            )
         table = self._dynamodb_table()
         results = []
         while True:
@@ -304,20 +309,22 @@ class DynamodbTableStorage(StorageABC):
         return None, None
 
     def _dynamodb_table(self):
-        if hasattr(self, '_table'):
+        if hasattr(self, "_table"):
             return self._table
         resource = self._dynamodb_resource()
         table = resource.Table(self.table_name)
-        object.__setattr__(self, '_table', table)
+        object.__setattr__(self, "_table", table)
         return table
 
     def _dynamodb_resource(self):
-        if hasattr(self, '_resource'):
+        if hasattr(self, "_resource"):
             return self._resource
-        kwargs = filter_none(dict(profile_name=self.aws_profile_name, region_name=self.region_name))
+        kwargs = filter_none(
+            dict(profile_name=self.aws_profile_name, region_name=self.region_name)
+        )
         session = boto3.Session(**kwargs)
         resource = session.resource("dynamodb")
-        object.__setattr__(self, '_resource', resource)
+        object.__setattr__(self, "_resource", resource)
         return resource
 
 

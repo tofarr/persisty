@@ -4,7 +4,6 @@ from persisty.storage.field.field_filter import FieldFilterOp
 
 
 class FieldFilterOpMarshaller(MarshallerABC[FieldFilterOp]):
-
     def __init__(self):
         super().__init__(FieldFilterOp)
 

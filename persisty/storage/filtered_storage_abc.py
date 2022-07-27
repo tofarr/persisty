@@ -133,7 +133,9 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
             while nested_item_key:
                 next_item = next(items, None)
                 if not next_item:
-                    raise PersistyError('invalid_page_key')  # The item was probably deleted
+                    raise PersistyError(
+                        "invalid_page_key"
+                    )  # The item was probably deleted
                 next_item_key = key_config.to_key_str(next_item)
                 if next_item_key == nested_item_key:
                     nested_item_key = None
@@ -146,7 +148,8 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
             elif len(results) > limit:
                 results = results[:limit]
                 return ResultSet(
-                    results, encrypt([nested_page_key, key_config.to_key_str(results[-1])])
+                    results,
+                    encrypt([nested_page_key, key_config.to_key_str(results[-1])]),
                 )
             elif not result_set.next_page_key:
                 return ResultSet(results)

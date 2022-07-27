@@ -48,7 +48,7 @@ class FieldKeyConfig(KeyConfigABC, ObjKeyConfigABC):
     def set_value_for(self, item, value):
         if item is None:
             item = {}
-        if hasattr(item, '__setitem__'):
+        if hasattr(item, "__setitem__"):
             item.__setitem__(self.field_name, value)
         else:
             setattr(item, self.field_name, value)

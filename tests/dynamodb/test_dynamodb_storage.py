@@ -11,7 +11,9 @@ from persisty.obj_storage.attr import Attr
 from persisty.obj_storage.filter_factory import filter_factory
 from persisty.obj_storage.stored import get_storage_meta, stored
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
-from persisty.storage.field.write_transform.default_value_transform import DefaultValueTransform
+from persisty.storage.field.write_transform.default_value_transform import (
+    DefaultValueTransform,
+)
 from persisty.storage.result_set import ResultSet
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.wrapper_storage_abc import WrapperStorageABC
@@ -23,7 +25,6 @@ from tests.utils import mock_dynamodb_with_super
 
 @mock_dynamodb_with_super
 class TestDynamodbStorage(TestCase, StorageTstABC):
-
     def new_super_bowl_results_storage(self) -> StorageABC:
         storage_factory = DynamodbStorageFactory(
             storage_meta=get_storage_meta(SuperBowlResult)
@@ -41,11 +42,13 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
         return storage
 
     @staticmethod
-    def seed_table(storage_factory: DynamodbStorageFactory, items: List[ExternalItemType]):
+    def seed_table(
+        storage_factory: DynamodbStorageFactory, items: List[ExternalItemType]
+    ):
         storage_factory.sanitize_storage_meta()
         storage_factory.derive_from_storage_meta()
         storage_factory.create_table_in_aws()
-        dynamodb = storage_factory.get_session().resource('dynamodb')
+        dynamodb = storage_factory.get_session().resource("dynamodb")
         table = dynamodb.Table(storage_factory.table_name)
         with table.batch_writer() as batch:
             for result in items:
@@ -53,12 +56,12 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
 
     def test_update_with_sk(self):
         tag_storage = self.new_tag_storage()
-        tag = dict(pk=3, sk=5, title='Updated')
+        tag = dict(pk=3, sk=5, title="Updated")
         key = tag_storage.get_storage_meta().key_config.to_key_str(tag)
         item = tag_storage.update(tag)
-        tag['codes'] = ['5']
-        self.assertEqual(round(1/item['weight']), 305)
-        tag['weight'] = item['weight']
+        tag["codes"] = ["5"]
+        self.assertEqual(round(1 / item["weight"]), 305)
+        tag["weight"] = item["weight"]
         self.assertEqual(tag, item)
         loaded = tag_storage.read(key)
         self.assertEqual(loaded, tag)
@@ -86,9 +89,9 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
         kwargs = dict(
             pk=20,
             sk=20,
-            title='Two thousand and twenty',
-            codes=['foo', 'bar'],
-            weight=0.2
+            title="Two thousand and twenty",
+            codes=["foo", "bar"],
+            weight=0.2,
         )
         tag_storage.create(dump(Tag(**kwargs)))
         key = tag_storage.get_storage_meta().key_config.to_key_str(dict(pk=20, sk=20))
@@ -100,9 +103,9 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
         kwargs = dict(
             pk=20,
             sk=20,
-            title='Two thousand and twenty',
-            codes=['foo', 'bar'],
-            weight=1.0
+            title="Two thousand and twenty",
+            codes=["foo", "bar"],
+            weight=1.0,
         )
         tag_storage.create(dump(Tag(**kwargs)))
         key = tag_storage.get_storage_meta().key_config.to_key_str(dict(pk=20, sk=20))
@@ -112,39 +115,36 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
     def test_count_multi_page(self):
         tag_storage = self.new_tag_storage()
         filters = filter_factory(Tag)
-        self.assertEqual(1000, tag_storage.count(filters.title.ne('foobar')))
+        self.assertEqual(1000, tag_storage.count(filters.title.ne("foobar")))
         self.assertEqual(10, tag_storage.count(filters.sk.eq(10)))
 
     def test_convert_to_decimals(self):
-        item = {
-            'some_int': 10,
-            'some_float': 0.5
-        }
+        item = {"some_int": 10, "some_float": 0.5}
         # noinspection PyUnresolvedReferences
         storage = self.new_tag_storage().storage.storage
         converted = storage._convert_to_decimals(item)
-        expected = {
-            'some_int': Decimal('10'),
-            'some_float': Decimal(0.5)
-        }
+        expected = {"some_int": Decimal("10"), "some_float": Decimal(0.5)}
         self.assertEqual(expected, converted)
 
     def new_tag_storage(self) -> StorageABC:
         storage_meta = get_storage_meta(Tag)
         storage_factory = DynamodbStorageFactory(
             storage_meta=storage_meta,
-            index=DynamodbIndex('pk', 'sk'),
-            global_secondary_indexes=dict(
-                gix__sk__pk=DynamodbIndex('sk', 'pk')
-            )
+            index=DynamodbIndex("pk", "sk"),
+            global_secondary_indexes=dict(gix__sk__pk=DynamodbIndex("sk", "pk")),
         )
-        tags = list(dump(Tag(
-            int(i / 100),
-            i % 100,
-            str(i),
-            [str(c) for c in (2, 3, 5) if not i % c],
-            Decimal("%.9f" % (1/i)),
-        )) for i in range(1, 1001))
+        tags = list(
+            dump(
+                Tag(
+                    int(i / 100),
+                    i % 100,
+                    str(i),
+                    [str(c) for c in (2, 3, 5) if not i % c],
+                    Decimal("%.9f" % (1 / i)),
+                )
+            )
+            for i in range(1, 1001)
+        )
         self.seed_table(storage_factory, tags)
         storage = storage_factory.create_storage()
         return storage

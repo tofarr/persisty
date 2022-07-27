@@ -13,7 +13,6 @@ from tests.fixtures.super_bowl_results import SuperBowlResult, SUPER_BOWL_RESULT
 
 
 class TestWrapperStorage(TestCase, StorageTstABC):
-
     def new_super_bowl_results_storage(self) -> StorageABC:
         storage = mem_storage(
             get_storage_meta(SuperBowlResult),
@@ -29,6 +28,7 @@ class TestWrapperStorage(TestCase, StorageTstABC):
             {r["id"]: r for r in number_names},
         )
         return WrapperStorage(storage)
+
 
 @dataclass
 class WrapperStorage(WrapperStorageABC):

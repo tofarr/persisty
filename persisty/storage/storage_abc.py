@@ -118,7 +118,7 @@ def skip_to_page(page_key: str, items, key_config):
         while True:
             next_result = next(items, None)
             if next_result is None:
-                raise PersistyError('invalid_page_key')  # The item was probably deleted
+                raise PersistyError("invalid_page_key")  # The item was probably deleted
             key = key_config.to_key_str(next_result)
             if key == page_key:
                 return

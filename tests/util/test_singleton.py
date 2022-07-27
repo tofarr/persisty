@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from marshy import dump, load
+
 from persisty.util.singleton_abc import SingletonABC
 
 
@@ -16,3 +18,8 @@ class TestSingleton(TestCase):
 
     def test_repr(self):
         self.assertEqual(str(MySingleton()), "MySingleton")
+
+    def test_load_and_dump(self):
+        dumped = dump(MySingleton())
+        loaded = load(MySingleton, dumped)
+        assert loaded is MySingleton()

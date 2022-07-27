@@ -280,8 +280,12 @@ class StorageTstABC(ABC):
     def test_count_filter_id(self):
         storage = self.new_number_name_storage()
         from persisty.obj_storage.filter_factory import filter_factory
+
         filters = filter_factory(NumberName)
-        num = storage.count(filters.id.eq('00000000-0000-0000-0000-000000000010') & filters.title.eq('Ten'))
+        num = storage.count(
+            filters.id.eq("00000000-0000-0000-0000-000000000010")
+            & filters.title.eq("Ten")
+        )
         self.assertEqual(1, num)
 
     def test_count_custom_filter(self):
@@ -299,13 +303,14 @@ class StorageTstABC(ABC):
 
         storage = self.new_number_name_storage()
         from persisty.obj_storage.filter_factory import filter_factory
-        num = storage.count(StrLenFilter('title', 4))
+
+        num = storage.count(StrLenFilter("title", 4))
         self.assertEqual(3, num)  # Four, Five, Nine
 
     def test_count_non_indexed_filter(self):
         tag_storage = self.new_number_name_storage()
         filters = filter_factory(NumberName)
-        count = tag_storage.count(filters.title.eq('Five') & filters.value.eq(5))
+        count = tag_storage.count(filters.title.eq("Five") & filters.value.eq(5))
         self.assertEqual(1, count)
 
     def test_search_all(self):
@@ -350,7 +355,9 @@ class StorageTstABC(ABC):
         storage = self.new_number_name_storage()
         filters = filter_factory(NumberName)
         id_ = "00000000-0000-0000-0000-000000000001"
-        loaded = list(storage.search_all(filters.id.eq(id_) & filters.title.contains('One')))
+        loaded = list(
+            storage.search_all(filters.id.eq(id_) & filters.title.contains("One"))
+        )
         expected = [storage.read(id_)]
         self.assertEqual(expected, loaded)
 
@@ -380,7 +387,7 @@ class StorageTstABC(ABC):
         results = list(
             storage.search_all(search_order=SearchOrder((SearchOrderField("value"),)))
         )
-        results = sorted(results, key=lambda r: r['value'])
+        results = sorted(results, key=lambda r: r["value"])
         self.assertTrue(results[0]["created_at"] >= now)
         self.assertTrue(results[0]["updated_at"] >= now)
         self.assertTrue(results[1]["updated_at"] >= now)
@@ -438,7 +445,7 @@ class StorageTstABC(ABC):
     def spec_for_update_fail_filter(self, storage):
         item = storage.update(
             dict(id="00000000-0000-0000-0000-000000000001", name="Not One"),
-            filter_factory(NumberName).title.ne("One")
+            filter_factory(NumberName).title.ne("One"),
         )
         self.assertIsNone(item)
 
@@ -446,10 +453,14 @@ class StorageTstABC(ABC):
         storage = self.new_number_name_storage()
         search_filter = ValueLessThanFilter(21)
         page_1 = storage.search(search_filter)
-        self.assertEqual(list(range(1, 11)), list(i['value'] for i in page_1.results))
-        page_2 = storage.search(search_filter=search_filter, page_key=page_1.next_page_key)
-        self.assertEqual(list(range(11, 21)), list(i['value'] for i in page_2.results))
-        page_3 = storage.search(search_filter=search_filter, page_key=page_2.next_page_key)
+        self.assertEqual(list(range(1, 11)), list(i["value"] for i in page_1.results))
+        page_2 = storage.search(
+            search_filter=search_filter, page_key=page_1.next_page_key
+        )
+        self.assertEqual(list(range(11, 21)), list(i["value"] for i in page_2.results))
+        page_3 = storage.search(
+            search_filter=search_filter, page_key=page_2.next_page_key
+        )
         self.assertEqual(ResultSet([]), page_3)
 
     def test_search_custom_filter_unfilled_result_set(self):
@@ -458,17 +469,19 @@ class StorageTstABC(ABC):
         for less_than in range(1, 31):
             kwargs = dict(
                 search_filter=ValueLessThanFilter(less_than),
-                search_order=SearchOrder((SearchOrderField('value'),)),
+                search_order=SearchOrder((SearchOrderField("value"),)),
                 limit=limit,
             )
             index = 1
             while True:
                 page = storage.search(**kwargs)
-                expected_values = [v for v in range(index, min(less_than, index + limit))]
-                values = [r['value'] for r in page.results]
+                expected_values = [
+                    v for v in range(index, min(less_than, index + limit))
+                ]
+                values = [r["value"] for r in page.results]
                 self.assertEqual(expected_values, values)
                 if page.next_page_key:
-                    kwargs['page_key'] = page.next_page_key
+                    kwargs["page_key"] = page.next_page_key
                     index += limit
                 else:
                     break
@@ -476,7 +489,8 @@ class StorageTstABC(ABC):
     def test_edit_batch_errors(self):
         @dataclass
         class Mutate(BatchEditABC):
-            """ Here to make trouble! """
+            """Here to make trouble!"""
+
             id: UUID = field(default_factory=uuid4)
 
             def get_key(self, key_config: KeyConfigABC) -> str:
@@ -487,10 +501,10 @@ class StorageTstABC(ABC):
 
         storage = self.new_number_name_storage()
         edits = [
-            Create(dict(id=NUMBER_NAMES_DICTS[1]['id'], value=-1, title='New Item')),
-            Update(dict(id=str(uuid4()), value=-2, title='Updated Item')),
+            Create(dict(id=NUMBER_NAMES_DICTS[1]["id"], value=-1, title="New Item")),
+            Update(dict(id=str(uuid4()), value=-2, title="Updated Item")),
             Delete(str(uuid4())),
-            Mutate()
+            Mutate(),
         ]
         results = storage.edit_batch(edits)
         self.assertFalse(next((True for r in results if r.success), False))
@@ -503,10 +517,11 @@ class ValueLessThanFilter(SearchFilterABC):
     for this as storage implementations would more easily be able to turn
     it into a native condition
     """
+
     value: int
 
     def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
-        return next((True for f in fields if f.name == 'value'), False)
+        return next((True for f in fields if f.name == "value"), False)
 
     def match(self, item: ExternalItemType, fields: Tuple[Field, ...]) -> bool:
-        return item['value'] < self.value
+        return item["value"] < self.value

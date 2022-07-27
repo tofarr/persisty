@@ -16,7 +16,6 @@ from tests.fixtures.super_bowl_results import SuperBowlResult, SUPER_BOWL_RESULT
 
 
 class TestFilteredStorage(TestCase, StorageTstABC):
-
     def new_super_bowl_results_storage(self) -> FilteredStorage:
         storage = mem_storage(
             get_storage_meta(SuperBowlResult),
@@ -28,13 +27,19 @@ class TestFilteredStorage(TestCase, StorageTstABC):
     def new_number_name_storage(self) -> FilteredStorage:
         number_names = [dump(r) for r in NUMBER_NAMES]
         for i in range(100, 150):
-            number_names.append(dump(NumberName(
-                id=UUID("00000000-0000-0000-0000-000000000" + (str(1000 + i)[1:])),
-                title=str(i),
-                value=i,
-                created_at=datetime.fromtimestamp(0),
-                updated_at=datetime.fromtimestamp(0),
-            )))
+            number_names.append(
+                dump(
+                    NumberName(
+                        id=UUID(
+                            "00000000-0000-0000-0000-000000000" + (str(1000 + i)[1:])
+                        ),
+                        title=str(i),
+                        value=i,
+                        created_at=datetime.fromtimestamp(0),
+                        updated_at=datetime.fromtimestamp(0),
+                    )
+                )
+            )
         # noinspection PyTypeChecker
         storage = mem_storage(
             get_storage_meta(NumberName),
@@ -46,21 +51,47 @@ class TestFilteredStorage(TestCase, StorageTstABC):
     def test_edit_batch_filtered(self):
         storage = self.new_number_name_storage()
         edits = [
-            Create(dict(id='00000000-0000-0000-0000-000000000150', value=150, title='One Hundred and Fifty')),
-            Update(dict(id='00000000-0000-0000-0000-000000000101', value=101, title='Updated Item')),
-            Update(dict(id='00000000-0000-0000-0000-000000000098', value=101, title='Updated Item')),
-            Delete('00000000-0000-0000-0000-000000000121')
+            Create(
+                dict(
+                    id="00000000-0000-0000-0000-000000000150",
+                    value=150,
+                    title="One Hundred and Fifty",
+                )
+            ),
+            Update(
+                dict(
+                    id="00000000-0000-0000-0000-000000000101",
+                    value=101,
+                    title="Updated Item",
+                )
+            ),
+            Update(
+                dict(
+                    id="00000000-0000-0000-0000-000000000098",
+                    value=101,
+                    title="Updated Item",
+                )
+            ),
+            Delete("00000000-0000-0000-0000-000000000121"),
         ]
         results = storage.edit_batch(edits)
         self.assertFalse(next((True for r in results if r.success), False))
         with self.assertRaises(PersistyError):
-            storage.update(dict(id='00000000-0000-0000-0000-000000000098',
-                                value=101,
-                                title='Updated Item'))
-        self.assertIsNone(storage.update(dict(
-            id='00000000-0000-0000-0000-000000000101',
-            value=98,
-            title='Updated Item'
-        )))
+            storage.update(
+                dict(
+                    id="00000000-0000-0000-0000-000000000098",
+                    value=101,
+                    title="Updated Item",
+                )
+            )
+        self.assertIsNone(
+            storage.update(
+                dict(
+                    id="00000000-0000-0000-0000-000000000101",
+                    value=98,
+                    title="Updated Item",
+                )
+            )
+        )
         self.assertEqual(99, storage.count())
         self.assertEqual(149, storage.storage.count())

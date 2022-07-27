@@ -12,7 +12,6 @@ from tests.fixtures.number_name import NUMBER_NAMES, NumberName
 
 
 class TestSecuredStorage(TestCase):
-
     @staticmethod
     def new_number_name_storage() -> StorageABC:
         number_names = (dump(r) for r in NUMBER_NAMES)
@@ -27,6 +26,6 @@ class TestSecuredStorage(TestCase):
         storage = self.new_number_name_storage()
         storage = SecuredStorage(
             storage,
-            dataclasses.replace(storage.get_storage_meta(), access_control=NO_ACCESS)
+            dataclasses.replace(storage.get_storage_meta(), access_control=NO_ACCESS),
         )
         self.assertEqual(0, storage.count())

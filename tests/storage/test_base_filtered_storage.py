@@ -20,7 +20,6 @@ from tests.fixtures.super_bowl_results import SuperBowlResult, SUPER_BOWL_RESULT
 
 
 class TestBaseFilteredStorage(TestCase, StorageTstABC):
-
     def new_super_bowl_results_storage(self) -> StorageABC:
         storage = mem_storage(
             get_storage_meta(SuperBowlResult),
@@ -47,17 +46,16 @@ class TestBaseFilteredStorage(TestCase, StorageTstABC):
         limit = 3
         kwargs = dict(
             search_filter=ValueLessThanFilter(10),
-            search_order=SearchOrder((SearchOrderField('value'),)),
+            search_order=SearchOrder((SearchOrderField("value"),)),
             limit=limit,
         )
         page_1 = storage.search(**kwargs)
-        storage.delete(page_1.results[-1]['id'])
-        kwargs['page_key'] = page_1.next_page_key
+        storage.delete(page_1.results[-1]["id"])
+        kwargs["page_key"] = page_1.next_page_key
         with self.assertRaises(PersistyError):
             storage.search(**kwargs)
 
     def test_edit_batch_filtered(self):
-
         @dataclass
         class BatchRejectFilteredStorage(FilteredStorageABC):
             storage: StorageABC
@@ -65,13 +63,15 @@ class TestBaseFilteredStorage(TestCase, StorageTstABC):
             def get_storage(self) -> StorageABC:
                 return self.storage
 
-            def filter_create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
+            def filter_create(
+                self, item: ExternalItemType
+            ) -> Optional[ExternalItemType]:
                 return None
 
             # noinspection PyUnusedLocal
             # noinspection PyTypeChecker
             def filter_update(
-                    self, old_item: ExternalItemType, updates: ExternalItemType
+                self, old_item: ExternalItemType, updates: ExternalItemType
             ) -> ExternalItemType:
                 return None
 
@@ -81,15 +81,33 @@ class TestBaseFilteredStorage(TestCase, StorageTstABC):
 
         storage = BatchRejectFilteredStorage(self.new_number_name_storage())
         edits = [
-            Create(dict(id='00000000-0000-0000-0000-000000000150', value=150, title='One Hundred and Fifty')),
-            Update(dict(id='00000000-0000-0000-0000-000000000098', value=98, title='Updated Item')),
-            Delete('00000000-0000-0000-0000-000000000098')
+            Create(
+                dict(
+                    id="00000000-0000-0000-0000-000000000150",
+                    value=150,
+                    title="One Hundred and Fifty",
+                )
+            ),
+            Update(
+                dict(
+                    id="00000000-0000-0000-0000-000000000098",
+                    value=98,
+                    title="Updated Item",
+                )
+            ),
+            Delete("00000000-0000-0000-0000-000000000098"),
         ]
         results = storage.edit_batch(edits)
         self.assertFalse(next((True for r in results if r.success), False))
-        self.assertIsNone(storage.update(dict(id='00000000-0000-0000-0000-000000000098',
-                                              value=101,
-                                              title='Updated Item')))
+        self.assertIsNone(
+            storage.update(
+                dict(
+                    id="00000000-0000-0000-0000-000000000098",
+                    value=101,
+                    title="Updated Item",
+                )
+            )
+        )
         self.assertEqual(99, storage.count())
 
 

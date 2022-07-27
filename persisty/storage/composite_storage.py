@@ -40,9 +40,11 @@ class CompositeStorage(StorageABC):
 
     def storage_for_key(self, key: str) -> Tuple[StorageABC, str]:
         storage_name, sub_key = self.split_key(key)
-        storage = next((s for s in self.storage if s.get_storage_meta().name == storage_name), None)
+        storage = next(
+            (s for s in self.storage if s.get_storage_meta().name == storage_name), None
+        )
         if not storage:
-            raise PersistyError(f'no_such_storage:{storage_name}')
+            raise PersistyError(f"no_such_storage:{storage_name}")
         return storage, sub_key
 
     def apply_key_to_item(self, storage: StorageABC, item: ExternalItemType):
@@ -51,18 +53,26 @@ class CompositeStorage(StorageABC):
         self.get_storage_meta().key_config.from_key_str(key, item)
         return item
 
-    def search_filter_for_storage(self, search_filter: SearchFilterABC, sub_storage: StorageABC) -> SearchFilterABC:
+    def search_filter_for_storage(
+        self, search_filter: SearchFilterABC, sub_storage: StorageABC
+    ) -> SearchFilterABC:
         if search_filter in (INCLUDE_ALL, EXCLUDE_ALL):
             return search_filter
         elif isinstance(search_filter, And) or isinstance(search_filter, Or):
             return search_filter.__class__(
-                search_filters=tuple(self.search_filter_for_storage(f, sub_storage)
-                                     for f in search_filter.search_filters)
+                search_filters=tuple(
+                    self.search_filter_for_storage(f, sub_storage)
+                    for f in search_filter.search_filters
+                )
             )
         elif isinstance(search_filter, Not):
-            return Not(self.search_filter_for_storage(search_filter.search_filter, sub_storage))
+            return Not(
+                self.search_filter_for_storage(search_filter.search_filter, sub_storage)
+            )
         elif isinstance(search_filter, FieldFilter):
-            if not sub_storage.get_storage_meta().key_config.is_required_field(search_filter.name):
+            if not sub_storage.get_storage_meta().key_config.is_required_field(
+                search_filter.name
+            ):
                 return search_filter
         return TransformedFilter(self, sub_storage, search_filter)
 
@@ -92,7 +102,9 @@ class CompositeStorage(StorageABC):
     ) -> Optional[ExternalItemType]:
         key = self.get_storage_meta().key_config.to_key_str(updates)
         storage, sub_key = self.storage_for_key(key)
-        updates = storage.get_storage_meta().key_config.from_key_str(sub_key, {**updates})
+        updates = storage.get_storage_meta().key_config.from_key_str(
+            sub_key, {**updates}
+        )
         item = storage.update(updates, search_filter)
         if item:
             self.apply_key_to_item(storage, item)
@@ -105,7 +117,9 @@ class CompositeStorage(StorageABC):
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         count = 0
         for sub_storage in self.storage:
-            storage_search_filter = self.search_filter_for_storage(search_filter, sub_storage)
+            storage_search_filter = self.search_filter_for_storage(
+                search_filter, sub_storage
+            )
             count += sub_storage.count(storage_search_filter)
         return count
 
@@ -116,14 +130,23 @@ class CompositeStorage(StorageABC):
     ) -> Iterator[ExternalItemType]:
         if not search_order:
             for sub_storage in self.storage:
-                storage_search_filter = self.search_filter_for_storage(search_filter, sub_storage)
-                items = (self.apply_key_to_item(sub_storage, item)
-                         for item in sub_storage.search_all(storage_search_filter))
+                storage_search_filter = self.search_filter_for_storage(
+                    search_filter, sub_storage
+                )
+                items = (
+                    self.apply_key_to_item(sub_storage, item)
+                    for item in sub_storage.search_all(storage_search_filter)
+                )
                 yield from items
             return
         iterators = [
             SubIterator(
-                self, s, s.search_all(self.search_filter_for_storage(search_filter, s), search_order), search_order
+                self,
+                s,
+                s.search_all(
+                    self.search_filter_for_storage(search_filter, s), search_order
+                ),
+                search_order,
             )
             for s in self.storage
         ]

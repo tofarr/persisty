@@ -41,9 +41,7 @@ class TestLogify(TestCase):
                 {
                     "name": "say_hello",
                     "time": 0,
-                    "error": "",
                     "args": ("Developer",),
-                    "kwargs": {},
                 }
             ]
         )
@@ -59,9 +57,7 @@ class TestLogify(TestCase):
                 {
                     "name": "say_hello_args",
                     "time": 0,
-                    "error": "",
                     "args": ("Developer",),
-                    "kwargs": {},
                 }
             ]
         )
@@ -77,8 +73,6 @@ class TestLogify(TestCase):
                 {
                     "name": "say_hello_kwargs",
                     "time": 0,
-                    "error": "",
-                    "args": (),
                     "kwargs": {"name": "Developer"},
                 }
             ]
@@ -99,8 +93,6 @@ class TestLogify(TestCase):
                     "name": "raise_an_error",
                     "time": 0,
                     "error": "i_dont_like_you",
-                    "args": (),
-                    "kwargs": {},
                 }
             ]
         )
@@ -109,7 +101,9 @@ class TestLogify(TestCase):
     def test_logify_skip(self):
         logger = MockLogger()
         # noinspection PyTypeChecker
-        greeter = logify(Greeter(), methods=frozenset("say_hello_args"), logger=logger)
+        greeter = logify(
+            Greeter(), log_methods=frozenset(("say_hello_args",)), logger=logger
+        )
         greeter.say_hello("Developer")
         expected = MockLogger()
         self.assertEqual(expected, logger)

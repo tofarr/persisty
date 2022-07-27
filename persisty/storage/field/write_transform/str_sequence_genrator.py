@@ -18,6 +18,7 @@ class StrSequenceGenerator(WriteTransformABC):
     filtered storage, it could open a way for attackers to check if an id exists. (By trying to create it)
     Typically sql based keys will generate this value in the database rather than relying on a client.
     """
+
     format = "{value}"
     always: bool = True
     value: int = 1
