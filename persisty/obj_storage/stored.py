@@ -8,7 +8,7 @@ from persisty.storage.storage_meta import StorageMeta
 from persisty.obj_storage.attr import Attr
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
-from persisty.storage.field.write_transform.default_value_transform import (
+from persisty.field.write_transform.default_value_transform import (
     DefaultValueTransform,
 )
 from persisty.util import UNDEFINED, to_snake_case

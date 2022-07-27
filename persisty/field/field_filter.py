@@ -12,7 +12,7 @@ from persisty.errors import PersistyError
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 
 if TYPE_CHECKING:
-    from persisty.storage.field.field import Field
+    from persisty.field.field import Field
 
 
 def _gte(a, b):

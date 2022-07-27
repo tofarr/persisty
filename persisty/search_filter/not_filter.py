@@ -3,7 +3,7 @@ from typing import Tuple
 
 from marshy import ExternalType
 
-from persisty.storage.field.field import Field
+from persisty.field.field import Field
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC

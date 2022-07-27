@@ -12,8 +12,8 @@ from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex
 from persisty.search_filter.and_filter import And
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.field.field import load_field_values
-from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
+from persisty.field.field import load_field_values
+from persisty.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_order.search_order import SearchOrder

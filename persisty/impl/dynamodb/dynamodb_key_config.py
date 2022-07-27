@@ -4,7 +4,7 @@ from typing import Optional, Any
 from marshy.types import ExternalItemType
 
 from persisty.key_config.field_key_config import FieldKeyConfig
-from persisty.storage.field.field_type import FieldType
+from persisty.field.field_type import FieldType
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.util.encrypt_at_rest import decrypt, encrypt
 

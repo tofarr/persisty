@@ -9,7 +9,7 @@ from persisty.errors import PersistyError
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
-from persisty.storage.field.field import load_field_values
+from persisty.field.field import load_field_values
 from persisty.storage.schema_validating_storage import SchemaValidatingStorage
 from persisty.storage.secured_storage import SecuredStorage
 from persisty.storage.storage_abc import StorageABC

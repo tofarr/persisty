@@ -3,7 +3,7 @@ from typing import Any, Tuple, Iterator
 from dataclasses import dataclass
 from marshy.types import ExternalItemType, ExternalType
 
-from persisty.storage.field.field import Field
+from persisty.field.field import Field
 from persisty.util.undefined import UNDEFINED
 
 

@@ -5,8 +5,8 @@ from persisty.errors import PersistyError
 from persisty.obj_storage.stored import get_storage_meta
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_field import SearchOrderField
-from persisty.storage.field.field import Field
-from persisty.storage.field.field_filter import FieldFilterOp, FieldFilter
+from persisty.field.field import Field
+from persisty.field.field_filter import FieldFilterOp, FieldFilter
 from persisty.storage.storage_meta import StorageMeta
 
 

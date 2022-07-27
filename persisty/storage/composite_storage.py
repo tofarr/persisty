@@ -11,8 +11,8 @@ from persisty.search_filter.not_filter import Not
 from persisty.search_filter.or_filter import Or
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
-from persisty.storage.field.field import Field
-from persisty.storage.field.field_filter import FieldFilter
+from persisty.field.field import Field
+from persisty.field.field_filter import FieldFilter
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 

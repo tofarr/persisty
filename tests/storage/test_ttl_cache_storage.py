@@ -5,7 +5,7 @@ from uuid import uuid4
 from persisty.impl.mem.mem_storage import mem_storage
 from persisty.obj_storage.stored import get_storage_meta
 from persisty.storage.batch_edit import Create, Update, Delete
-from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
+from persisty.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.ttl_cache_storage import TtlCacheStorage
 from tests.fixtures.number_name import NumberName
 

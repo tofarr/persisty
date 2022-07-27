@@ -9,7 +9,7 @@ from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex, from_schema
 from persisty.impl.dynamodb.dynamodb_table_storage import DynamodbTableStorage
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.obj_storage.attr import Attr
-from persisty.storage.field.field_type import FieldType
+from persisty.field.field_type import FieldType
 from persisty.storage.schema_validating_storage import SchemaValidatingStorage
 from persisty.storage.secured_storage import SecuredStorage
 from persisty.storage.storage_meta import StorageMeta

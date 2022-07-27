@@ -11,7 +11,7 @@ from persisty.obj_storage.attr import Attr
 from persisty.obj_storage.filter_factory import filter_factory
 from persisty.obj_storage.stored import get_storage_meta, stored
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
-from persisty.storage.field.write_transform.default_value_transform import (
+from persisty.field.write_transform.default_value_transform import (
     DefaultValueTransform,
 )
 from persisty.storage.result_set import ResultSet

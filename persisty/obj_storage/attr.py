@@ -8,26 +8,26 @@ from schemey.schema_context import schema_for_type
 from schemey.string_schema import StringSchema
 
 from persisty.key_config.key_config_abc import KeyConfigABC
-from persisty.storage.field.field import Field
-from persisty.storage.field.field_filter import FieldFilterOp
-from persisty.storage.field.field_type import FieldType
-from persisty.storage.field.write_transform.default_value_transform import (
+from persisty.field.field import Field
+from persisty.field.field_filter import FieldFilterOp
+from persisty.field.field_type import FieldType
+from persisty.field.write_transform.default_value_transform import (
     DefaultValueTransform,
 )
-from persisty.storage.field.write_transform.int_sequence_generator import (
+from persisty.field.write_transform.int_sequence_generator import (
     IntSequenceGenerator,
 )
-from persisty.storage.field.write_transform.str_sequence_genrator import (
+from persisty.field.write_transform.str_sequence_genrator import (
     StrSequenceGenerator,
 )
-from persisty.storage.field.write_transform.timestamp_generator import (
+from persisty.field.write_transform.timestamp_generator import (
     TimestampGenerator,
 )
-from persisty.storage.field.write_transform.uuid_generator import (
+from persisty.field.write_transform.uuid_generator import (
     UUID_OPTIONAL_ON_CREATE,
 )
-from persisty.storage.field.write_transform.write_transform_abc import WriteTransformABC
-from persisty.storage.field.write_transform.write_transform_mode import (
+from persisty.field.write_transform.write_transform_abc import WriteTransformABC
+from persisty.field.write_transform.write_transform_mode import (
     WriteTransformMode,
 )
 from persisty.util import UNDEFINED

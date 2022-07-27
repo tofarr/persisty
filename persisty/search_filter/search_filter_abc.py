@@ -7,7 +7,7 @@ from marshy import ExternalType
 from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
 
 if TYPE_CHECKING:
-    from persisty.storage.field.field import Field
+    from persisty.field.field import Field
 
 
 class SearchFilterABC(SearchFilterFactoryABC, ABC):

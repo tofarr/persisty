@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from marshy.types import ExternalItemType
 
 from persisty.search_order.search_order_field import SearchOrderField
-from persisty.storage.field.field import Field
+from persisty.field.field import Field
 
 
 @dataclass(frozen=True)

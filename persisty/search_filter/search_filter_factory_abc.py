@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 class SearchFilterFactoryABC(ABC):
     def to_search_filter(self) -> SearchFilterABC:
         """Convert this search filter factory to a search filter instance"""
-        from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
+        from persisty.field.field_filter import FieldFilter, FieldFilterOp
 
         search_filters = []
         value = getattr(self, "query", UNDEFINED)

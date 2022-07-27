@@ -17,8 +17,8 @@ from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_field import SearchOrderField
 from persisty.storage.batch_edit import Delete, Update, Create, BatchEditABC
-from persisty.storage.field.field import Field
-from persisty.storage.field.field_filter import FieldFilter, FieldFilterOp
+from persisty.field.field import Field
+from persisty.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.result_set import ResultSet
 from persisty.storage.storage_abc import StorageABC
 from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULT_DICTS, SuperBowlResult

@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional, Any
 
-from marshy.types import ExternalItemType
-
 from persisty.key_config.obj_key_config_abc import ObjKeyConfigABC
-from persisty.storage.field.field_type import FieldType
+from persisty.field.field_type import FieldType
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.util import UNDEFINED
 

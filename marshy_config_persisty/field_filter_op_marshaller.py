@@ -1,6 +1,6 @@
 from marshy.marshaller.marshaller_abc import MarshallerABC
 
-from persisty.storage.field.field_filter import FieldFilterOp
+from persisty.field.field_filter import FieldFilterOp
 
 
 class FieldFilterOpMarshaller(MarshallerABC[FieldFilterOp]):

@@ -9,7 +9,7 @@ from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.util.singleton_abc import SingletonABC
 
 if TYPE_CHECKING:
-    from persisty.storage.field.field import Field
+    from persisty.field.field import Field
 
 
 class ExcludeAll(SearchFilterABC, SingletonABC):

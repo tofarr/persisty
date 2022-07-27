@@ -3,7 +3,7 @@ from typing import Union
 
 from marshy import ExternalType
 
-from persisty.storage.field.write_transform.write_transform_mode import (
+from persisty.field.write_transform.write_transform_mode import (
     WriteTransformMode,
 )
 from persisty.util.undefined import Undefined

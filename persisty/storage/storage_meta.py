@@ -11,7 +11,7 @@ from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
-from persisty.storage.field.field import Field
+from persisty.field.field import Field
 
 
 @dataclass(frozen=True)

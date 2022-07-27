@@ -4,7 +4,7 @@ from typing import Tuple, Optional, Any
 
 from marshy import ExternalType
 
-from persisty.storage.field.field import Field
+from persisty.field.field import Field
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.util.singleton_abc import SingletonABC
 

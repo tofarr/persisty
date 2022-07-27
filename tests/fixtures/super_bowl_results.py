@@ -5,7 +5,7 @@ from schemey.number_schema import NumberSchema
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.obj_storage.attr import Attr
 from persisty.obj_storage.stored import stored
-from persisty.storage.field.field_type import FieldType
+from persisty.field.field_type import FieldType
 
 SUPER_BOWL_RESULT_DICTS = [
     {

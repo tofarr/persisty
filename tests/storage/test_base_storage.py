@@ -10,7 +10,7 @@ from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.obj_storage.stored import get_storage_meta
 from persisty.storage.batch_edit import BatchEditABC, Delete
 from persisty.storage.batch_edit_result import BatchEditResult
-from persisty.storage.field.field_filter import FieldFilterOp, FieldFilter
+from persisty.field.field_filter import FieldFilterOp, FieldFilter
 from persisty.storage.result_set import ResultSet
 from persisty.storage.storage_abc import skip_to_page, edit_batch
 from tests.fixtures.number_name import NumberName
