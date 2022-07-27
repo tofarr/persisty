@@ -150,16 +150,3 @@ def edit_batch(storage, edits: List[BatchEditABC]) -> List[BatchEditResult]:
         except Exception as e:
             results.append(BatchEditResult(edit, False, "exception", str(e)))
     return results
-
-
-def search(storage, storage_meta, search_filter, search_order, page_key, limit):
-    if limit is None:
-        limit = storage_meta.batch_size
-    assert limit <= storage_meta.batch_size
-    items = storage.search_all(search_filter, search_order)
-    skip_to_page(page_key, items, storage_meta.key_config)
-    items = list(islice(items, limit))
-    page_key = None
-    if len(items) == limit:
-        page_key = storage_meta.key_config.to_key_str(items[-1])
-    return ResultSet(items, page_key)
