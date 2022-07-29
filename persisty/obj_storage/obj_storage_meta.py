@@ -1,16 +1,16 @@
 from __future__ import annotations
 from typing import Generic, TypeVar, Type
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from persisty.access_control.constants import ALL_ACCESS
-from persisty.access_control.obj_access_control_abc import ObjAccessControlABC
-from persisty.cache_control.cache_control_abc import CacheControlABC
-from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
-from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
-from persisty.key_config.obj_key_config_abc import ObjKeyConfigABC
+from marshy import get_default_context
+from marshy.marshaller_context import MarshallerContext
+from marshy.types import ExternalItemType
+from schemey import SchemaContext
+
 from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
 from persisty.search_order.search_order_factory_abc import SearchOrderFactoryABC
+from persisty.storage.storage_meta import StorageMeta
 
 T = TypeVar("T")
 F = TypeVar("F", bound=SearchFilterFactoryABC)
@@ -20,16 +20,41 @@ U = TypeVar("U")
 
 
 @dataclass(frozen=True)
-class ObjStorageMeta(Generic[T]):
+class ObjStorageMeta(Generic[T, F, S, C, U]):
     """Storage meta for object storage"""
 
-    name: str
+    storage_meta: StorageMeta
     item_type: Type[T]
     search_filter_factory_type: Type[F]
     search_order_factory_type: Type[S]
     create_input_type: Type[C]
     update_input_type: Type[U]
-    key_config: ObjKeyConfigABC[T] = FIELD_KEY_CONFIG
-    access_control: ObjAccessControlABC[T] = ALL_ACCESS
-    cache_control: CacheControlABC[T] = SecureHashCacheControl()
-    batch_size: int = 100
+    marshaller_context: MarshallerContext = field(default_factory=get_default_context)
+
+    def load_item(self, item: ExternalItemType) -> T:
+        loaded = self.item_marshaller.load(item)
+        return loaded
+
+    @property
+    def item_marshaller(self):
+        return self.marshaller_context.get_marshaller(self.item_type)
+
+    def dump_create_input(self, create_input: C) -> ExternalItemType:
+        dumped = self.create_input_marshaller.dump(create_input)
+        return dumped
+
+    @property
+    def create_input_marshaller(self):
+        return self.marshaller_context.get_marshaller(self.create_input_type)
+
+    def dump_update_input(self, update_input: C) -> ExternalItemType:
+        dumped = self.update_input_marshaller.dump(update_input)
+        return dumped
+
+    @property
+    def update_input_marshaller(self):
+        return self.marshaller_context.get_marshaller(self.update_input_type)
+
+
+def build_obj_storage_meta(storage_meta: StorageMeta, schema_context: SchemaContext) -> ObjStorageMeta:
+    pass

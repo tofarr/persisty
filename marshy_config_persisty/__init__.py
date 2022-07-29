@@ -72,7 +72,7 @@ def configure_write_transforms(context: MarshallerContext):
 
 def configure_access_control(context: MarshallerContext):
     register_impl(AccessControlABC, FieldFilterAccessControl, context)
-    register_impl(WriteTransformABC, AccessControl, context)
+    register_impl(AccessControlABC, AccessControl, context)
 
 
 def configure_cache_control(context: MarshallerContext):

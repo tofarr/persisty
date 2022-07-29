@@ -25,7 +25,7 @@ class MemStorage(StorageABC):
     """
 
     storage_meta: StorageMeta = field()
-    storage: Dict[str, ExternalItemType] = field(default_factory=dict)
+    items: Dict[str, ExternalItemType] = field(default_factory=dict)
 
     def get_storage_meta(self) -> StorageMeta:
         return self.storage_meta
@@ -35,13 +35,13 @@ class MemStorage(StorageABC):
         key = self.storage_meta.key_config.to_key_str(item)
         if key is None:
             raise PersistyError(f"missing_key:{item}")
-        if key in self.storage:
+        if key in self.items:
             raise PersistyError(f"existing_value:{item}")
-        self.storage[key] = dumped
+        self.items[key] = dumped
         return self._load(item)
 
     def read(self, key: str) -> Optional[ExternalItemType]:
-        item = self.storage.get(key)
+        item = self.items.get(key)
         if item:
             item = self._load(item)
         return item
@@ -53,7 +53,7 @@ class MemStorage(StorageABC):
         key = self.storage_meta.key_config.to_key_str(item)
         if key is None:
             raise PersistyError(f"missing_key:{item}")
-        stored = self.storage.get(key)
+        stored = self.items.get(key)
         if not stored or not search_filter.match(stored, self.storage_meta.fields):
             return None
         dumped = self._dump(item, True)
@@ -62,9 +62,9 @@ class MemStorage(StorageABC):
         return item
 
     def delete(self, key: str) -> bool:
-        if key not in self.storage:
+        if key not in self.items:
             return False
-        result = self.storage.pop(key, UNDEFINED)
+        result = self.items.pop(key, UNDEFINED)
         return result is not UNDEFINED
 
     def search_all(
@@ -75,7 +75,7 @@ class MemStorage(StorageABC):
         search_filter.validate_for_fields(self.storage_meta.fields)
         if search_order:
             search_order.validate_for_fields(self.storage_meta.fields)
-        items = list(self.storage.values())  # Copy to list prevents iterator bugs
+        items = list(self.items.values())  # Copy to list prevents iterator bugs
         if search_filter is not INCLUDE_ALL:
             items = (
                 item
@@ -90,7 +90,7 @@ class MemStorage(StorageABC):
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         search_filter.validate_for_fields(self.storage_meta.fields)
         if search_filter is INCLUDE_ALL:
-            return len(self.storage)
+            return len(self.items)
         count = sum(1 for _ in self.search_all(search_filter))
         return count
 

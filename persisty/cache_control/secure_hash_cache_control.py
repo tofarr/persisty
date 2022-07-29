@@ -8,7 +8,7 @@ from persisty.util import secure_hash
 
 
 @dataclass(frozen=True)
-class SecureHashCacheControl(CacheControlABC[ExternalItemType]):
+class SecureHashCacheControl(CacheControlABC):
     private: bool = True
 
     def get_cache_header(self, item: ExternalItemType) -> CacheHeader:

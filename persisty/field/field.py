@@ -1,8 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Tuple, Iterable, Any
 
 from marshy.types import ExternalItemType
-from schemey.schema_abc import SchemaABC
+from schemey import Schema
 
 from persisty.field.field_filter import FieldFilterOp
 from persisty.field.field_type import FieldType
@@ -14,7 +14,9 @@ from persisty.util import UNDEFINED
 class Field:
     name: str
     type: FieldType
-    schema: SchemaABC
+    schema: Schema = field(
+        metadata=dict(schemey=Schema({}, Schema))
+    )  # We arent validating the schema on fields for now
     is_readable: bool = True
     is_creatable: bool = True
     is_updatable: bool = True

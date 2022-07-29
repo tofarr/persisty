@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+
+from marshy.types import ExternalItemType
 
 from persisty.cache_control.cache_header import CacheHeader
 
-T = TypeVar("T")
 
-
-class CacheControlABC(ABC, Generic[T]):
+class CacheControlABC(ABC):
     @abstractmethod
-    def get_cache_header(self, item: T) -> CacheHeader:
+    def get_cache_header(self, item: ExternalItemType) -> CacheHeader:
         """Get the cache header for the stored given"""

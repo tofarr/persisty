@@ -3,9 +3,8 @@ from datetime import datetime
 from typing import Optional, Tuple, Type, get_type_hints, Union
 from uuid import UUID
 
-from schemey.schema_abc import SchemaABC
-from schemey.schema_context import schema_for_type
-from schemey.string_schema import StringSchema
+from schemey import Schema, schema_from_type
+from schemey.schema import str_schema
 
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.field.field import Field
@@ -75,7 +74,7 @@ class Attr:
     name: Optional[str] = None
     type: Optional[Type] = None
     field_type: Optional[FieldType] = None
-    schema: Optional[SchemaABC] = None
+    schema: Optional[Schema] = None
     is_readable: bool = True
     is_creatable: Optional[bool] = None
     is_updatable: Optional[bool] = None
@@ -106,7 +105,7 @@ class Attr:
         return value
 
     def __set__(self, instance, value):
-        self.schema.validate(value, [self.name])
+        self.schema.validate(value)
         instance.__dict__[self.name] = value
 
     def to_field(self) -> Field:
@@ -123,6 +122,7 @@ class Attr:
         self.populate_sortable()
         self.populate_indexed(key_config)
         self.populate_access()
+        return self
 
     def populate_field_type(self):
         if self.field_type is not None:
@@ -134,9 +134,9 @@ class Attr:
         if self.schema is not None:
             return
         elif self.type is str:
-            self.schema = StringSchema(max_length=255)
+            self.schema = str_schema(max_length=255)
         else:
-            self.schema = schema_for_type(self.type).json_schema
+            self.schema = schema_from_type(self.type)
 
     def populate_write_transform(self):
         if self.write_transform is not UNDEFINED:

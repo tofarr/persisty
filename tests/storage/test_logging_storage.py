@@ -11,7 +11,6 @@ from tests.util.test_logify import MockLogger
 
 
 class TestLoggingStorage(TestCase):
-
     @staticmethod
     def new_number_name_storage(logger: Optional[Logger] = None) -> StorageABC:
         # noinspection PyTypeChecker
@@ -27,7 +26,7 @@ class TestLoggingStorage(TestCase):
         read = storage.read(item["id"])
         self.assertEqual(item, read)
         self.assertEqual(2, len(logger.infos))
-        self.assertEqual("create", logger.infos[0]['name'])
-        self.assertEqual("read", logger.infos[1]['name'])
-        self.assertEqual("One", logger.infos[0]['args'][0]['title'])
-        self.assertEqual(logger.infos[1]['args'][0], logger.infos[0]['args'][0]['id'])
+        self.assertEqual("create", logger.infos[0]["name"])
+        self.assertEqual("read", logger.infos[1]["name"])
+        self.assertEqual("One", logger.infos[0]["args"][0]["title"])
+        self.assertEqual(logger.infos[1]["args"][0], logger.infos[0]["args"][0]["id"])

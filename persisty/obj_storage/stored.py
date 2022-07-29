@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, Field
+from typing import get_type_hints
 
 from persisty.access_control.constants import ALL_ACCESS
 from persisty.access_control.access_control_abc import AccessControlABC
@@ -27,20 +28,25 @@ def stored(
     def wrapper(cls_):
         cls_dict = cls_.__dict__
         params = {k: v for k, v in cls_dict.items() if not k.startswith("__")}
-        annotations = {**cls_dict["__annotations__"]}
+        annotations = get_type_hints(cls_)
         fields = []
         for name, type_ in annotations.items():
             if name.startswith("__"):
                 continue
             attr = cls_dict.get(name, UNDEFINED)
             if not isinstance(attr, Attr):
+                schema = None
+                if isinstance(attr, Field):
+                    schema = attr.metadata.get("schemey")
                 attr = Attr(
                     name=name,
                     type=annotations[name],
+                    schema=schema,
                     write_transform=UNDEFINED
                     if attr is UNDEFINED
                     else DefaultValueTransform(attr),
                 )
+
             attr.populate(key_config)
             fields.append(attr.to_field())
             params[name] = UNDEFINED

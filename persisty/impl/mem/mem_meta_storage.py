@@ -1,92 +1,101 @@
 from dataclasses import field, dataclass
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Iterator
 
-from persisty.access_control.obj_access_control_abc import ObjAccessControlABC
-from persisty.context.meta_storage import meta_result_set
-from persisty.context.obj_storage_meta import (
+from marshy.marshaller.marshaller_abc import MarshallerABC
+from marshy.types import ExternalItemType
+
+from persisty.context.meta_storage_abc import (
     MetaStorageABC,
-    CreateStorageMetaInput,
-    UpdateStorageMetaInput,
-    StorageMetaSearchFilter,
-    StorageMetaSearchOrder,
+    STORAGE_META_MARSHALLER,
+    STORED_STORAGE_META,
 )
-from persisty.errors import PersistyError
-from persisty.impl.mem.mem_storage import MemStorage
-from persisty.storage.result_set import ResultSet
+from persisty.impl.mem.mem_storage import mem_storage, MemStorage
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.storage.batch_edit import BatchEditABC, Update, Delete
+from persisty.storage.batch_edit_result import BatchEditResult
+from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
-from persisty.util import dataclass_to_params
+from persisty.storage.wrapper_storage_abc import WrapperStorageABC
 
 
 @dataclass
-class MemMetaStorage(MetaStorageABC):
-    access_control: ObjAccessControlABC[
-        StorageMeta,
-        StorageMetaSearchFilter,
-        CreateStorageMetaInput,
-        UpdateStorageMetaInput,
-    ]
-    storage: Dict[str, MemStorage] = field(default_factory=dict)
+class MemMetaStorage(MetaStorageABC, WrapperStorageABC):
+    """
+    Meta storage which relies on another storage object and dynamically initializes them as requested
+    """
 
-    @property
-    def batch_size(self) -> int:
-        return 100
+    meta_storage: StorageABC = field(
+        default_factory=lambda: mem_storage(STORED_STORAGE_META)
+    )
+    item_storage: Dict[str, StorageABC] = field(default_factory=dict)
+    storage_meta_marshaller: MarshallerABC[StorageMeta] = field(
+        default=STORAGE_META_MARSHALLER
+    )
 
-    def create(self, item: CreateStorageMetaInput) -> StorageMeta:
-        if self.access_control.is_creatable(item):
-            raise PersistyError("create_forbidden")
-        params = dataclass_to_params(item)
-        storage_meta = StorageMeta(**params)
-        if storage_meta.name in self.storage:
-            raise PersistyError(f"existing_value:{storage_meta.name}")
-        storage = MemStorage(storage_meta)
-        self.storage[storage_meta.name] = storage
-        return storage_meta
+    def storage_from_meta(self, storage_meta: StorageMeta):
+        return mem_storage(storage_meta)
 
-    def read(self, key: str) -> Optional[StorageMeta]:
-        storage = self.get_storage().get(key)
-        if not storage or not self.access_control.is_readable(storage.storage_meta):
-            return None
-        return storage.storage_meta
+    def get_item_storage(self, name: str) -> Optional[StorageABC]:
+        storage = self.item_storage.get(name)
+        if storage:
+            return storage
+        storage_meta = self.meta_storage.read(name)
+        if storage_meta:
+            storage_meta = self.storage_meta_marshaller.load(storage_meta)
+            storage = self.storage_from_meta(storage_meta)
+            self.item_storage[storage_meta.name] = storage
+            return storage
 
-    def update(self, updates: UpdateStorageMetaInput) -> Optional[StorageMeta]:
-        storage = self.get_storage().get(updates.name)
-        if not storage or self.access_control.is_updatable(
-            storage.storage_meta, updates
-        ):
-            return None
-        params = dataclass_to_params(storage.storage_meta)
-        params.update(**dataclass_to_params(updates))
-        storage_meta = StorageMeta(**params)
-        storage.storage_meta = (
-            storage_meta  # TOOD: What happens if we add a new non nullable field?
-        )
-        return storage_meta
+    def get_storage(self) -> StorageABC:
+        return self.meta_storage
+
+    def update(
+        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    ) -> Optional[ExternalItemType]:
+        new_item = self.get_storage().update(updates, search_filter)
+        return new_item
+
+    def after_update(self, new_item: ExternalItemType):
+        if new_item:
+            storage_meta = self.storage_meta_marshaller.load(new_item)
+            storage = self.item_storage.get(storage_meta.name)
+            if storage:
+                storage = _unnest(storage)
+                storage.storage_meta = storage_meta
 
     def delete(self, key: str) -> bool:
-        return bool(self.get_storage().pop(key, None))
+        result = self.get_storage().delete(key)
+        if result:
+            self.after_delete(key)
+        return result
 
-    def search(
-        self,
-        search_filter_factory: Optional[StorageMetaSearchFilter] = None,
-        search_order_factory: Optional[StorageMetaSearchOrder] = None,
-        page_key: Optional[str] = None,
-        limit: Optional[int] = None,
-    ) -> ResultSet[StorageMeta]:
-        search_filter_factory = self.access_control.transform_search_filter(
-            search_filter_factory
-        )
-        items = iter(self.get_storage().values())
-        items = (
-            i.storage_meta
-            for i in items
-            if self.access_control.is_readable(i.storage_meta)
-        )
-        return meta_result_set(
-            items, search_filter_factory, search_order_factory, page_key, limit
-        )
+    def after_delete(self, key: str):
+        storage = self.item_storage.pop(key, None)
+        if storage:
+            storage = _unnest(storage)
+            storage.items = None  # Trash the storage to prevent future use
 
-    def count(self, search_filter: Optional[StorageMetaSearchFilter] = None) -> int:
-        if not search_filter:
-            return len(self.storage)
-        count = sum(1 for _ in self.search_all(search_filter))
-        return count
+    def edit_batch(self, edits: List[BatchEditABC]):
+        results = self.get_storage().edit_batch(edits)
+        for result in results:
+            self.after_batch_edit(result)
+        return results
+
+    def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
+        for result in self.get_storage().edit_all(edits):
+            self.after_batch_edit(result)
+            yield result
+
+    def after_batch_edit(self, result: BatchEditResult):
+        if result.success:
+            if isinstance(result.edit, Update):
+                self.after_update(result.edit.updates)
+            elif isinstance(result.edit, Delete):
+                self.after_delete(result.edit.key)
+
+
+def _unnest(storage: StorageABC) -> MemStorage:
+    while hasattr(storage, "storage"):  # Un-nest to get MemStorage instance...
+        storage = storage.storage
+    return storage

@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from schemey.number_schema import NumberSchema
+from schemey.schema import int_schema
 
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.obj_storage.attr import Attr
@@ -518,7 +518,7 @@ SUPER_BOWL_RESULT_DICTS = [
 @stored(key_config=FieldKeyConfig("code", FieldType.STR))
 class SuperBowlResult:
     code: str = Attr()
-    year: int = Attr(schema=NumberSchema(minimum=1967))
+    year: int = Attr(schema=int_schema(minimum=1967))
     date: datetime
     winner_code: str
     runner_up_code: str

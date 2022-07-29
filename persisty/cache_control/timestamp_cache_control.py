@@ -8,7 +8,7 @@ from persisty.cache_control.secure_hash_cache_control import SecureHashCacheCont
 
 
 @dataclass(frozen=True)
-class TimestampCacheControl(CacheControlABC[ExternalItemType]):
+class TimestampCacheControl(CacheControlABC):
     cache_control: CacheControlABC = SecureHashCacheControl()
     updated_at_attr: str = "updated_at"
 
