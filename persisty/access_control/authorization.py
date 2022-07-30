@@ -58,3 +58,7 @@ class Authorization:
             raise AuthorizationError(
                 f"missing_all:{self.permissions.difference(permissions)}"
             )
+
+
+# A default ROOT permission - rules may be adjusted to remove root access
+ROOT = Authorization(None, frozenset(("root",)), None, None)

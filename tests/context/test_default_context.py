@@ -19,5 +19,4 @@ class TestDefaultContext(TestCase):
 
         number_name_storage = context.get_storage(storage_meta.name)
 
-
         print(context)

@@ -11,7 +11,7 @@ from typing import Any
 import pyaes
 
 
-KEY_PARAM = "USERY_SECRET_KEY"
+KEY_PARAM = "PERSISTY_SECRET_KEY"
 logger = logging.getLogger(__name__)
 _KEY = os.environ.get(KEY_PARAM)
 if not _KEY:

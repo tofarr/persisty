@@ -10,6 +10,7 @@ from marshy.types import ExternalItemType
 
 from persisty.errors import PersistyError
 from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.util import UNDEFINED
 
 if TYPE_CHECKING:
     from persisty.field.field import Field
@@ -39,6 +40,14 @@ def _oneof(a, b):
     return a in b
 
 
+def _exists(a, _):
+    return a not in (None, UNDEFINED)
+
+
+def _not_exists(a, _):
+    return a in (None, UNDEFINED)
+
+
 class FieldFilterOp(Enum):
     """
     Operations which attr search_filter supports. Provides a definitive set of limited attributes that storage
@@ -48,11 +57,13 @@ class FieldFilterOp(Enum):
     contains = partial(_contains)
     endswith = partial(_endswith)
     eq = operator.eq
+    exists = partial(_exists)
     gt = operator.gt
     gte = partial(_gte)
     lt = operator.lt
     lte = partial(_lte)
     ne = operator.ne
+    not_exists = partial(_not_exists)
     oneof = partial(_oneof)
     startswith = partial(_startswith)
 
@@ -89,5 +100,9 @@ class FieldFilter(SearchFilterABC):
             return condition, True
         elif self.op == FieldFilterOp.startswith:
             return attr.begins_with(self.value), True
+        elif self.op == FieldFilterOp.exists:
+            return attr.exists()
+        elif self.op == FieldFilterOp.not_exists:
+            return attr.not_exists()
         else:
             return None, False

@@ -4,13 +4,12 @@ from typing import Tuple, Optional, Any, TYPE_CHECKING
 
 from marshy import ExternalType
 
-from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
 
 if TYPE_CHECKING:
     from persisty.field.field import Field
 
 
-class SearchFilterABC(SearchFilterFactoryABC, ABC):
+class SearchFilterABC(ABC):
     @abstractmethod
     def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
         """Validate that this search_filter is applicable for the fields given"""
@@ -45,6 +44,3 @@ class SearchFilterABC(SearchFilterFactoryABC, ABC):
         Build a dynamodb filter expression from this search filter if possible, and return it. Return True if this
         filter was completely represented by the condition, False otherwise"""
         return None, False
-
-    def to_search_filter(self) -> SearchFilterABC:
-        return self

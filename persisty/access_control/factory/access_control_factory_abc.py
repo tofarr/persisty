@@ -4,9 +4,7 @@ from persisty.access_control.authorization import Authorization
 
 
 class AccessControlFactoryABC(ABC):
-    @abstractmethod
-    def priority(self) -> int:
-        """Get the priority for this factory"""
+    priority: int = 100
 
     @abstractmethod
     def create_access_control(self, storage_name: str, authorization: Authorization):

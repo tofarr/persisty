@@ -23,7 +23,9 @@ class Field:
     write_transform: Optional[WriteTransformABC] = None
     permitted_filter_ops: Tuple[FieldFilterOp, ...] = (
         FieldFilterOp.eq,
+        FieldFilterOp.exists,
         FieldFilterOp.ne,
+        FieldFilterOp.not_exists,
     )
     is_sortable: bool = True  # Note: dynamodb is not generally sortable!
     description: Optional[str] = None

@@ -8,8 +8,8 @@ from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
 from schemey import SchemaContext
 
-from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
-from persisty.search_order.search_order_factory_abc import SearchOrderFactoryABC
+from persisty.search_filter.search_filter_factory import SearchFilterFactoryABC
+from persisty.search_order.search_order_factory import SearchOrderFactoryABC
 from persisty.storage.storage_meta import StorageMeta
 
 T = TypeVar("T")
@@ -56,5 +56,7 @@ class ObjStorageMeta(Generic[T, F, S, C, U]):
         return self.marshaller_context.get_marshaller(self.update_input_type)
 
 
-def build_obj_storage_meta(storage_meta: StorageMeta, schema_context: SchemaContext) -> ObjStorageMeta:
+def build_obj_storage_meta(
+    storage_meta: StorageMeta, schema_context: SchemaContext
+) -> ObjStorageMeta:
     pass

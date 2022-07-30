@@ -32,7 +32,12 @@ from persisty.field.write_transform.write_transform_mode import (
 from persisty.util import UNDEFINED
 from persisty.util.undefined import Undefined
 
-FILTER_OPS = (FieldFilterOp.eq, FieldFilterOp.ne)
+FILTER_OPS = (
+    FieldFilterOp.eq,
+    FieldFilterOp.exists,
+    FieldFilterOp.ne,
+    FieldFilterOp.not_exists,
+)
 SORTABLE_FILTER_OPS = FILTER_OPS + (
     FieldFilterOp.gt,
     FieldFilterOp.gte,

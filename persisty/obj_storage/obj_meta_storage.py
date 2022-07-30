@@ -11,8 +11,8 @@ from persisty.context.meta_storage_abc import STORED_STORAGE_META
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.obj_storage.obj_storage import ObjStorage
 from persisty.obj_storage.obj_storage_meta import ObjStorageMeta
-from persisty.search_filter.search_filter_factory_abc import SearchFilterFactoryABC
-from persisty.search_order.search_order_factory_abc import SearchOrderFactoryABC
+from persisty.search_filter.search_filter_factory import SearchFilterFactoryABC
+from persisty.search_order.search_order_factory import SearchOrderFactoryABC
 from persisty.obj_storage.with_undefined_state import with_undefined_state
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
