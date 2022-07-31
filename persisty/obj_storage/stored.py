@@ -58,6 +58,7 @@ def stored(
             access_control=access_control,
             cache_control=cache_control,
             batch_size=batch_size,
+            description=cls_.__doc__,
         )
         attrs = {
             **params,

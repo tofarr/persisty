@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional, Tuple, Type, get_type_hints, Union
 from uuid import UUID
 
+from marshy.factory.optional_marshaller_factory import get_optional_type
 from schemey import Schema, schema_from_type
 from schemey.schema import str_schema
 
@@ -88,7 +89,6 @@ class Attr:
     is_sortable: Optional[bool] = None
     description: Optional[str] = None
     is_indexed: Optional[bool] = None
-    is_nullable: Optional[bool] = None
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -122,11 +122,10 @@ class Attr:
         self.populate_field_type()
         self.populate_schema()
         self.populate_write_transform()
-        self.populate_nullable(key_config)
         self.populate_permitted_filter_ops()
         self.populate_sortable()
         self.populate_indexed(key_config)
-        self.populate_access()
+        self.populate_access(key_config)
         return self
 
     def populate_field_type(self):
@@ -157,17 +156,10 @@ class Attr:
             self.write_transform = TimestampGenerator(False)
         elif self.name == "updated_at" and self.field_type == FieldType.DATETIME:
             self.write_transform = TimestampGenerator(True)
-        elif self.is_nullable:
+        elif get_optional_type(self.schema.python_type):
             self.write_transform = DefaultValueTransform(None)
         else:
             self.write_transform = None
-
-    def populate_nullable(self, key_config: KeyConfigABC):
-        if self.is_nullable is None:
-            if key_config.is_required_field(self.name):
-                self.is_nullable = False
-            elif not self.write_transform:
-                self.is_nullable = True
 
     def populate_permitted_filter_ops(self):
         if self.permitted_filter_ops is None:
@@ -185,21 +177,17 @@ class Attr:
                 or "code" in self.name
             )
 
-    def populate_access(self):
+    def populate_access(self, key_config: KeyConfigABC):
         t = self.write_transform
         if self.is_creatable is None:
-            if t and t.mode in (
-                WriteTransformMode.ALWAYS_FOR_CREATE,
-                WriteTransformMode.ALWAYS_FOR_WRITE,
-            ):
+            if t and t.get_create_mode() == WriteTransformMode.GENERATED:
                 self.is_creatable = False
             else:
                 self.is_creatable = True
         if self.is_updatable is None:
-            if t and t.mode in (
-                WriteTransformMode.ALWAYS_FOR_UPDATE,
-                WriteTransformMode.ALWAYS_FOR_WRITE,
-            ):
+            if key_config.is_required_field(self.name):
+                self.is_updatable = True
+            elif t and t.get_update_mode() == WriteTransformMode.GENERATED:
                 self.is_updatable = False
             else:
                 self.is_updatable = True

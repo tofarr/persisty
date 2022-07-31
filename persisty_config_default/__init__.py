@@ -1,9 +1,12 @@
+from marshy.factory.dataclass_marshaller_factory import DataclassMarshallerFactory
+
 from persisty.access_control.factory.access_control_factory import AccessControlFactory
 from persisty.access_control.factory.permission_access_control_factory import (
     PermissionAccessControlFactory,
 )
 from persisty.context import PersistyContext
 from persisty.impl.mem.mem_meta_storage import MemMetaStorage
+from persisty.util import UNDEFINED
 
 priority = 100
 
@@ -20,6 +23,9 @@ def configure_context(persisty_context: PersistyContext):
     persisty_context.register_access_control_factory(
         PermissionAccessControlFactory("root")
     )
+
+    # We do this here to affect only the marshallers associated with schemey
+    persisty_context.schema_context.marshaller_context.register_factory(DataclassMarshallerFactory(101, (UNDEFINED,)))
 
     # TODO: Delete me! This is so wrong - it will probably fail on non mem databases anyway
     from tests.fixtures.number_name import NumberName

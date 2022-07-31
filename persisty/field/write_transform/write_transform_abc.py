@@ -12,9 +12,12 @@ T = Union[Undefined, ExternalType]
 
 
 class WriteTransformABC(ABC):
-    @property
     @abstractmethod
-    def mode(self) -> WriteTransformMode:
+    def get_create_mode(self) -> WriteTransformMode:
+        """Get the mode for this generator"""
+
+    @abstractmethod
+    def get_update_mode(self) -> WriteTransformMode:
         """Get the mode for this generator"""
 
     @abstractmethod

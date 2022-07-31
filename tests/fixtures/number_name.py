@@ -8,6 +8,7 @@ from persisty.obj_storage.stored import stored
 
 @stored(batch_size=10)
 class NumberName:
+    """ Item linking a string representing a number with an integer value. Also has a uuid, and timestamps. """
     id: UUID
     title: str
     value: int

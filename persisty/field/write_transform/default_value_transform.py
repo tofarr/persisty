@@ -26,9 +26,11 @@ class DefaultValueTransform(WriteTransformABC):
 
     default_value: ExternalType
 
-    @property
-    def mode(self) -> WriteTransformMode:
-        return WriteTransformMode.OPTIONAL_FOR_CREATE
+    def get_create_mode(self) -> WriteTransformMode:
+        return WriteTransformMode.OPTIONAL
+
+    def get_update_mode(self) -> WriteTransformMode:
+        return WriteTransformMode.OPTIONAL
 
     def transform(self, specified_value: T, is_update: bool = False) -> ExternalType:
         if not is_update and specified_value is UNDEFINED:

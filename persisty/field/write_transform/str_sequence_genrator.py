@@ -22,12 +22,13 @@ class StrSequenceGenerator(WriteTransformABC):
     value: int = 1
     step: int = 1
 
-    def mode(self) -> WriteTransformMode:
+    def get_create_mode(self) -> WriteTransformMode:
         return (
-            WriteTransformMode.ALWAYS_FOR_CREATE
-            if self.always
-            else WriteTransformMode.OPTIONAL_FOR_CREATE
+            WriteTransformMode.GENERATED if self.always else WriteTransformMode.OPTIONAL
         )
+
+    def get_update_mode(self) -> WriteTransformMode:
+        return WriteTransformMode.OPTIONAL
 
     def transform(self, specified_value: T, is_update: bool = False) -> T:
         if is_update:

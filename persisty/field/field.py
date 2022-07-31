@@ -30,7 +30,6 @@ class Field:
     is_sortable: bool = True  # Note: dynamodb is not generally sortable!
     description: Optional[str] = None
     is_indexed: bool = False
-    is_nullable: bool = True
 
     def get_value_for(self, item: Any):
         if hasattr(item, "__getitem__"):

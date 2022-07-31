@@ -15,13 +15,21 @@ from persisty.util.undefined import UNDEFINED
 class TimestampGenerator(WriteTransformABC):
 
     on_update: bool = False
+    allow_override: bool = False
 
-    def mode(self) -> WriteTransformMode:
-        return (
-            WriteTransformMode.ALWAYS_FOR_WRITE
-            if self.on_update
-            else WriteTransformMode.ALWAYS_FOR_UPDATE
-        )
+    def get_create_mode(self) -> WriteTransformMode:
+        if self.allow_override:
+            return WriteTransformMode.OPTIONAL
+        else:
+            return WriteTransformMode.GENERATED
+
+    def get_update_mode(self) -> WriteTransformMode:
+        if not self.on_update:
+            return WriteTransformMode.SPECIFIED
+        if self.allow_override:
+            return WriteTransformMode.OPTIONAL
+        else:
+            return WriteTransformMode.GENERATED
 
     def transform(self, specified_value: T, is_update: bool = False) -> T:
         if is_update and not self.on_update:

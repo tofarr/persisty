@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Tuple
+from typing import Tuple, Optional
 
 from dataclasses import dataclass, field
 
@@ -26,6 +26,7 @@ class StorageMeta:
     access_control: AccessControlABC = ALL_ACCESS
     cache_control: CacheControlABC = SecureHashCacheControl()
     batch_size: int = 100
+    description: Optional[str] = None
 
     def to_schema(self) -> Schema:
         properties = {

@@ -1,4 +1,6 @@
 from marshy.factory.impl_marshaller_factory import register_impl
+from marshy.marshaller.obj_marshaller import AttrConfig
+from marshy.marshaller.property_marshaller import PropertyConfig
 from marshy.marshaller_context import MarshallerContext
 
 from marshy_config_persisty.field_filter_op_marshaller import FieldFilterOpMarshaller
@@ -34,11 +36,16 @@ from persisty.field.write_transform.timestamp_generator import (
 )
 from persisty.field.write_transform.uuid_generator import UuidGenerator
 from persisty.field.write_transform.write_transform_abc import WriteTransformABC
+from persisty.util import UNDEFINED
 
 priority = 100
 
 
 def configure(context: MarshallerContext):
+    # A bit hacky, but we want NONE in output, but NOT undefined
+    AttrConfig.filter_dumped_values = (UNDEFINED,)
+    PropertyConfig.filter_dumped_values = (UNDEFINED,)
+
     context.register_marshaller(FieldFilterOpMarshaller())
     configure_search_filters(context)
     configure_key_configs(context)
