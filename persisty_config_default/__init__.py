@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from marshy.factory.dataclass_marshaller_factory import DataclassMarshallerFactory
 
 from persisty.access_control.factory.access_control_factory import AccessControlFactory
@@ -6,7 +8,7 @@ from persisty.access_control.factory.permission_access_control_factory import (
 )
 from persisty.context import PersistyContext
 from persisty.impl.mem.mem_meta_storage import MemMetaStorage
-from persisty.util import UNDEFINED
+from persisty.util import UNDEFINED, get_logger
 
 priority = 100
 
@@ -38,9 +40,10 @@ def configure_context(persisty_context: PersistyContext):
     persisty_context.get_meta_storage(ROOT).create(dump(storage_meta))
 
     storage = persisty_context.get_storage(storage_meta.name, ROOT)
-    storage.edit_batch(
+    results = storage.edit_batch(
         [
-            Create(dict(title=t, value=v))
+            Create(dict(id="00000000-0000-0000-0000-000000000" + (str(1000 + v)[1:]), title=t, value=v))
             for v, t in enumerate(("Zero", "One", "Two", "Three", "Four", "Five"))
         ]
     )
+    get_logger(__name__).info(f"{sum(1 for r in results if r.success)} items created...")

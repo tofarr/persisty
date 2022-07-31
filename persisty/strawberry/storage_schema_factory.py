@@ -1,11 +1,12 @@
 import dataclasses
 import inspect
 from enum import Enum
-from typing import Callable, Optional, Type, List, Dict
+from typing import Callable, Optional, Type, List, Dict, Tuple
 
 import strawberry
 import typing_inspect
 from marshy.marshaller.marshaller_abc import MarshallerABC
+from strawberry.dataloader import DataLoader
 from strawberry.field import StrawberryField
 from strawberry.types import Info
 
@@ -39,7 +40,7 @@ class StorageSchemaFactory:
             mutation: Dict[str, StrawberryField],
     ):
         _add_field(self.create_read_field(), query)
-        _add_field(self.create_read_all_field(), query)
+        _add_field(self.create_read_batch_field(), query)
         _add_field(self.create_search_field(), query)
         _add_field(self.create_count_field(), query)
         _add_field(self.create_create_field(), mutation)
@@ -97,17 +98,25 @@ class StorageSchemaFactory:
         item_type = self.get_item_type()
         marshaller = self.get_marshaller_for_type(item_type)
 
-        def resolver(key: str, info: Info) -> Optional[item_type]:
-            authorization = self.get_authorization(info)
+        async def read(reads: List[Tuple[str, Authorization]]) -> List[item_type]:
+            # Because the signature for this only takes one key at a time, we bundle the auth with the key
+            # But all auth items should be the same, so we just use the first to get the storage
+            authorization = reads[0][1]
+            keys = [r[0] for r in reads]
             storage = self.get_storage(authorization)
-            read = storage.read(key)
-            if read:
-                loaded = marshaller.load(read)
-                return loaded
+            items = storage.read_all(keys)
+            loaded = [marshaller.load(r) if r else None for r in items]
+            return loaded
+
+        loader = DataLoader(load_fn=read)
+
+        async def resolver(key: str, info: Info) -> Optional[item_type]:
+            authorization = self.get_authorization(info)
+            return await loader.load((key, authorization))
 
         return _strawberry_field(f"read_{self.storage_meta.name}", resolver)
 
-    def create_read_all_field(self) -> StrawberryField:
+    def create_read_batch_field(self) -> StrawberryField:
         item_type = self.get_item_type()
         marshaller = self.get_marshaller_for_type(item_type)
 
@@ -116,11 +125,11 @@ class StorageSchemaFactory:
         ) -> List[Optional[item_type]]:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
-            read = storage.read_all(keys)
+            read = storage.read_batch(keys)
             loaded = [marshaller.load(r) if r else None for r in read]
             return loaded
 
-        return _strawberry_field(f"read_all_{self.storage_meta.name}", resolver)
+        return _strawberry_field(f"read_batch_{self.storage_meta.name}", resolver)
 
     def create_create_field(self) -> StrawberryField:
         item_type = self.get_item_type()
