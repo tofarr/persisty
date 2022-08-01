@@ -26,7 +26,7 @@ class Entity:
     __marshaller__: MarshallerABC
 
     def __init__(self, authorization, local_values=None, remote_values=None, **kwargs):
-        self.authorization = authorization
+        self.__authorization__ = authorization
         if not local_values:
             if remote_values:
                 local_values = dataclasses.replace(remote_values)
@@ -87,7 +87,7 @@ class Entity:
         key = self.get_key()
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
-        storage = context.get_storage(storage_meta.name, self.authorization)
+        storage = context.get_storage(storage_meta.name, self.__authorization__)
         item = storage.read(key)
         self.__remote_values__ = self.get_marshaller().load(item)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
@@ -106,7 +106,7 @@ class Entity:
     def create(self) -> T:
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
-        storage = context.get_storage(storage_meta.name, self.authorization)
+        storage = context.get_storage(storage_meta.name, self.__authorization__)
         created = storage.create(self.dump())
         self.__remote_values__ = self.get_marshaller().load(created)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
@@ -115,7 +115,7 @@ class Entity:
     def update(self) -> T:
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
-        storage = context.get_storage(storage_meta.name, self.authorization)
+        storage = context.get_storage(storage_meta.name, self.__authorization__)
         created = storage.update(self.dump())
         self.__remote_values__ = self.get_marshaller().load(created)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
@@ -129,7 +129,7 @@ class Entity:
         key = self.get_key()
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
-        storage = context.get_storage(storage_meta.name, self.authorization)
+        storage = context.get_storage(storage_meta.name, self.__authorization__)
         result = storage.delete(key)
         return result
 

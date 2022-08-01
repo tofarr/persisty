@@ -40,8 +40,8 @@ class Message:
     to_user_id: UUID
     created_at: datetime
     updated_at: datetime
-    from_user: User = BelongsTo()
-    to_user: User = BelongsTo()
+    from_user: User = BelongsTo(entity_name='User')
+    to_user: User = BelongsTo(entity_name='User')
 
 
 UserEntity: Optional[Union[Type[User], Type[Entity]]] = None

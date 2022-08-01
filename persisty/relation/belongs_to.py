@@ -43,11 +43,11 @@ class BelongsToPropertyDescriptor:
         value = getattr(instance, self.private_name, UNDEFINED)
         if value is not UNDEFINED:
             return value
-        key = getattr(instance, self.id_field_name, None)
+        key = instance.get_key()
         if not key:
             return None
         entity_type = get_named_entity_type(self.entity_name)
-        value = entity_type.read(key)
+        value = entity_type.read(key, instance.__authorization__)
         if value:
             setattr(instance, self.private_name, value)
         return value

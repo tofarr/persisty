@@ -56,7 +56,7 @@ def create_entity_type(
     marshaller_context = persisty_context.schema_context.marshaller_context
     params["__marshaller__"] = marshaller_context.get_marshaller(params["__persisty_dataclass_type__"])
     entity_type = type(type_.__name__, (Entity,), params)
-    _entity_types[type_] = entity_type
+    _entity_types[type_.__name__] = entity_type
     return entity_type
 
 
