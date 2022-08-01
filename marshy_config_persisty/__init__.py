@@ -15,6 +15,8 @@ from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.relation.belongs_to import BelongsTo
+from persisty.relation.has_count import HasCount
+from persisty.relation.has_many import HasMany
 from persisty.relation.relation_abc import RelationABC
 from persisty.search_filter.and_filter import And
 from persisty.search_filter.exclude_all import ExcludeAll
@@ -93,3 +95,5 @@ def configure_cache_control(context: MarshallerContext):
 
 def configure_relations(context: MarshallerContext):
     register_impl(RelationABC, BelongsTo, context)
+    register_impl(RelationABC, HasMany, context)
+    register_impl(RelationABC, HasCount, context)

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, get_type_hints, Any
 
+import typing_inspect
 from marshy.factory.optional_marshaller_factory import get_optional_type
 
 from persisty.entity.entity_context import get_named_entity_type
@@ -13,14 +14,21 @@ class BelongsTo(RelationABC):
     name: Optional[str] = None  # Allows None so __set_name__ can exist
     storage_name: Optional[str] = None
     id_field_name: Optional[str] = None
+    optional: Optional[bool] = None
 
     def __set_name__(self, owner, name):
         self.name = name
+        annotations = get_type_hints(owner, None, {owner.__name__: owner})
+        type_ = annotations[name]
+        if self.optional is None:
+            optional_type = get_optional_type(type_)
+            self.optional = bool(optional_type)
+            if optional_type:
+                type_ = optional_type
         if not self.storage_name:
-            self.storage_name = self.name
+            self.storage_name = to_snake_case(type_.__name__)
         if self.id_field_name is None:
-            self.id_field_name = f"{to_snake_case(self.name)}_id"
-        annotations = get_type_hints(owner)
+            self.id_field_name = f"{self.name}_id"
         assert annotations[self.id_field_name]
 
     def get_name(self) -> str:

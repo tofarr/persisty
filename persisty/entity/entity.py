@@ -200,3 +200,15 @@ class Entity:
         items = storage.search_all(search_filter, search_order)
         items = (cls(authorization, None, marshaller.load(item)) for item in items)
         return items
+
+    @classmethod
+    def count(
+        cls: Type[T],
+        authorization: Authorization,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
+    ) -> int:
+        storage_meta = cls.get_storage_meta()
+        context = cls.__persisty_context__
+        storage = context.get_storage(storage_meta.name, authorization)
+        count = storage.count(search_filter)
+        return count
