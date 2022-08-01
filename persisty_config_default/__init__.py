@@ -27,23 +27,6 @@ def configure_context(persisty_context: PersistyContext):
     )
 
     # We do this here to affect only the marshallers associated with schemey
-    persisty_context.schema_context.marshaller_context.register_factory(DataclassMarshallerFactory(101, (UNDEFINED,)))
-
-    # TODO: Delete me! This is so wrong - it will probably fail on non mem databases anyway
-    from tests.fixtures.number_name import NumberName
-    from persisty.obj_storage.stored import get_storage_meta
-    from marshy import dump
-    from persisty.storage.batch_edit import Create
-    from persisty.access_control.authorization import ROOT
-
-    storage_meta = get_storage_meta(NumberName)
-    persisty_context.get_meta_storage(ROOT).create(dump(storage_meta))
-
-    storage = persisty_context.get_storage(storage_meta.name, ROOT)
-    results = storage.edit_batch(
-        [
-            Create(dict(id="00000000-0000-0000-0000-000000000" + (str(1000 + v)[1:]), title=t, value=v))
-            for v, t in enumerate(("Zero", "One", "Two", "Three", "Four", "Five"))
-        ]
+    persisty_context.schema_context.marshaller_context.register_factory(
+        DataclassMarshallerFactory(101, (UNDEFINED,))
     )
-    get_logger(__name__).info(f"{sum(1 for r in results if r.success)} items created...")

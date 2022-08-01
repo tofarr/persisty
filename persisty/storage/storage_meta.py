@@ -14,6 +14,8 @@ from persisty.cache_control.secure_hash_cache_control import SecureHashCacheCont
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.field.field import Field
+from persisty.relation.relation_abc import RelationABC
+from persisty.util import to_camel_case
 
 
 @dataclass(frozen=True)
@@ -27,6 +29,7 @@ class StorageMeta:
     cache_control: CacheControlABC = SecureHashCacheControl()
     batch_size: int = 100
     description: Optional[str] = None
+    relations: Tuple[RelationABC] = tuple()
 
     def to_schema(self) -> Schema:
         properties = {

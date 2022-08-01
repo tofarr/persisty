@@ -70,5 +70,9 @@ def dataclass_to_params(dataclass):
     return items
 
 
-def to_snake_case(name: str):
+def to_snake_case(name: str) -> str:
     return _PATTERN.sub("_", name).lower()
+
+
+def to_camel_case(name: str) -> str:
+    return "".join(n.title() for n in name.split("_"))

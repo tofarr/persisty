@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Optional, List, Dict, Union
+from typing import Optional, List
 
 from dataclasses import dataclass, field
 
@@ -14,6 +14,7 @@ from persisty.access_control.authorization import Authorization
 from persisty.errors import PersistyError
 from persisty.storage.secured_storage import SecuredStorage
 from persisty.storage.storage_abc import StorageABC
+from persisty.storage.storage_meta import StorageMeta
 
 
 @dataclass(frozen=True)
@@ -43,6 +44,12 @@ class PersistyContext:
             storage.get_storage_meta(), access_control=access_control
         )
         return SecuredStorage(storage, storage_meta)
+
+    def create_storage(self, storage_meta: StorageMeta, authorization: Authorization):
+        dumped = self.schema_context.marshaller_context.dump(storage_meta, StorageMeta)
+        self.get_meta_storage(authorization).create(dumped)
+        storage = self.get_storage(storage_meta.name, authorization)
+        return storage
 
     def get_meta_storage(self, authorization: Authorization) -> StorageABC:
         access_control = self.create_access_control("meta", authorization)

@@ -32,7 +32,7 @@ def new_default_persisty_context() -> PersistyContext:
 
 
 def _configure_context(context: PersistyContext, modules):
-    modules.sort(key=lambda m: m.priority)
+    modules.sort(key=lambda m: m.priority, reverse=True)
     for module in modules:
         if hasattr(module, "configure_context"):
             getattr(module, "configure_context")(context)

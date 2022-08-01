@@ -4,12 +4,12 @@ from marshy import ExternalType
 from marshy.types import ExternalItemType
 
 from persisty.access_control.authorization import Authorization
-from persisty.field.field_filter import FieldFilter, FieldFilterOp
+from persisty.field.field_filter import FieldFilterOp, FieldFilter
 from persisty.relation.relation_abc import RelationABC, PersistyContext
 
 
 @dataclass(frozen=True)
-class HasMany(RelationABC):
+class HasCount(RelationABC):
     name: str
     storage_name: str
     id_field_name: str
@@ -28,7 +28,5 @@ class HasMany(RelationABC):
         if not key:
             return
         storage = context.get_storage(self.storage_name, authorization)
-        result_set = storage.search(
-            FieldFilter(self.filter_attr_name, FieldFilterOp.eq, key)
-        )
-        item[self.name] = result_set
+        count = storage.count(FieldFilter(self.filter_attr_name, FieldFilterOp.eq, key))
+        item[self.name] = count

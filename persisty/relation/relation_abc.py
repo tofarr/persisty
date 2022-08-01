@@ -1,17 +1,19 @@
 from abc import ABC, abstractmethod
 
-from marshy.types import ExternalItemType, ExternalType
-
-from persisty.persisty_context import PersistyContext
-
 
 class RelationABC(ABC):
-    @abstractmethod
-    def get_name(self):
-        """Get the name for this relation"""
+    """
+    A relation represents something external to a stored item but related to it.
+    """
 
     @abstractmethod
-    def resolve_for(
-        self, item: ExternalItemType, context: PersistyContext
-    ) -> ExternalType:
-        """Resolve this relation for the item given"""
+    def __set_name__(self, owner, name):
+        """Called when a relation is set as a value for a @stored entity."""
+
+    @abstractmethod
+    def get_name(self) -> str:
+        """Get the name of this relation"""
+
+    @abstractmethod
+    def to_property_descriptor(self):
+        """Create a property descriptor for this relation"""

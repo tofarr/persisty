@@ -35,9 +35,9 @@ class StorageSchemaFactory:
     update_input_type: Optional[Type] = None
 
     def add_to_schema(
-            self,
-            query: Dict[str, StrawberryField],
-            mutation: Dict[str, StrawberryField],
+        self,
+        query: Dict[str, StrawberryField],
+        mutation: Dict[str, StrawberryField],
     ):
         _add_field(self.create_read_field(), query)
         _add_field(self.create_read_batch_field(), query)
@@ -61,20 +61,18 @@ class StorageSchemaFactory:
         item_marshaller = self.get_marshaller_for_type(self.get_item_type())
 
         def resolver(
-                info: Info,
-                search_filter: Optional[search_filter_factory_type] = None,
-                search_order: Optional[search_order_factory_type] = None,
-                page_key: Optional[str] = None,
-                limit: int = self.storage_meta.batch_size,
+            info: Info,
+            search_filter: Optional[search_filter_factory_type] = None,
+            search_order: Optional[search_order_factory_type] = None,
+            page_key: Optional[str] = None,
+            limit: int = self.storage_meta.batch_size,
         ) -> strawberry_result_set_type:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
             search_filter = self.create_search_filter(search_filter)
             search_order = self.create_search_order(search_order)
             result_set = storage.search(search_filter, search_order, page_key, limit)
-            result_set.results = [
-                item_marshaller.load(r) for r in result_set.results
-            ]
+            result_set.results = [item_marshaller.load(r) for r in result_set.results]
             return result_set
 
         return _strawberry_field(f"search_{self.storage_meta.name}", resolver)
@@ -83,8 +81,7 @@ class StorageSchemaFactory:
         search_filter_factory_type = self.get_search_filter_factory_type()
 
         def resolver(
-                info: Info,
-                search_filter: Optional[search_filter_factory_type] = None
+            info: Info, search_filter: Optional[search_filter_factory_type] = None
         ) -> int:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
@@ -120,9 +117,7 @@ class StorageSchemaFactory:
         item_type = self.get_item_type()
         marshaller = self.get_marshaller_for_type(item_type)
 
-        async def resolver(
-                keys: List[str], info: Info
-        ) -> List[Optional[item_type]]:
+        async def resolver(keys: List[str], info: Info) -> List[Optional[item_type]]:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
             read = storage.read_batch(keys)
@@ -154,9 +149,13 @@ class StorageSchemaFactory:
         input_marshaller = self.get_marshaller_for_type(update_input_type)
         item_marshaller = self.get_marshaller_for_type(item_type)
 
-        def resolver(item: update_input_type, search_filter: search_filter_type, info: Info) -> Optional[item_type]:
+        def resolver(
+            item: update_input_type, search_filter: search_filter_type, info: Info
+        ) -> Optional[item_type]:
             authorization = self.get_authorization(info)
-            storage = self.persisty_context.get_storage(self.storage_meta.name, authorization)
+            storage = self.persisty_context.get_storage(
+                self.storage_meta.name, authorization
+            )
             item = input_marshaller.dump(item)
             search_filter = self.create_search_filter(search_filter)
             updated = storage.update(item, search_filter)
@@ -167,19 +166,21 @@ class StorageSchemaFactory:
         return _strawberry_field(f"update_{self.storage_meta.name}", resolver)
 
     def create_delete_field(self) -> Optional[StrawberryField]:
-        if getattr(self.storage_meta.access_control, 'deletable', True) is False:
+        if getattr(self.storage_meta.access_control, "deletable", True) is False:
             return
 
         def resolver(key: str, info: Info) -> bool:
             authorization = self.get_authorization(info)
-            storage = self.persisty_context.get_storage(self.storage_meta.name, authorization)
+            storage = self.persisty_context.get_storage(
+                self.storage_meta.name, authorization
+            )
             result = storage.delete(key)
             return result
 
         return _strawberry_field(f"delete_{self.storage_meta.name}", resolver)
 
     def get_item_type(self) -> Type:
-        """ Get / Create a TypeDefinition for items within the storage to be returned """
+        """Get / Create a TypeDefinition for items within the storage to be returned"""
         if self.item_type:
             return self.item_type
         annotations = {}
@@ -192,7 +193,9 @@ class StorageSchemaFactory:
             type(
                 _type_name(self.storage_meta.name),
                 (),
-                dict(__annotations__=annotations, __doc__=self.storage_meta.description),
+                dict(
+                    __annotations__=annotations, __doc__=self.storage_meta.description
+                ),
             )
         )
         self.item_type = type_
@@ -203,7 +206,10 @@ class StorageSchemaFactory:
             return self.result_set_type
         name = _type_name(f"{self.storage_meta.name}_result_set")
         params = {
-            "__annotations__": {"results": List[self.get_item_type()], "next_page_key": Optional[str]}
+            "__annotations__": {
+                "results": List[self.get_item_type()],
+                "next_page_key": Optional[str],
+            }
         }
         type_ = strawberry.type(type(name, (), params))
         return type_
@@ -225,7 +231,9 @@ class StorageSchemaFactory:
             "__init__": _init,
             "__annotations__": annotations,
         }
-        type_ = strawberry.input(type(_type_name(f"{self.storage_meta.name}_search_filter"), (), params))
+        type_ = strawberry.input(
+            type(_type_name(f"{self.storage_meta.name}_search_filter"), (), params)
+        )
         self.search_filter_factory_type = type_
         return type_
 
@@ -238,7 +246,9 @@ class StorageSchemaFactory:
                     value = getattr(obj, filter_name)
                     if value is not UNDEFINED:
                         # noinspection PyTypeChecker
-                        value = self.get_marshaller_for_type(field.schema.python_type).load(value)
+                        value = self.get_marshaller_for_type(
+                            field.schema.python_type
+                        ).load(value)
                         field_filter = FieldFilter(field.name, op, value)
                         search_filter &= field_filter
         return search_filter
@@ -253,11 +263,15 @@ class StorageSchemaFactory:
             "desc": False,
             "__init__": _init,
             "__annotations__": {
-                "field": strawberry.enum(Enum(_type_name(f"{self.storage_meta.name}_search_field"), fields)),
+                "field": strawberry.enum(
+                    Enum(_type_name(f"{self.storage_meta.name}_search_field"), fields)
+                ),
                 "desc": Optional[bool],
             },
         }
-        type_ = strawberry.input(type(_type_name(f"{self.storage_meta.name}_search_order"), (), params))
+        type_ = strawberry.input(
+            type(_type_name(f"{self.storage_meta.name}_search_order"), (), params)
+        )
         return type_
 
     def create_search_order(self, obj) -> Optional[SearchOrder]:
@@ -279,8 +293,10 @@ class StorageSchemaFactory:
             mode = WriteTransformMode.SPECIFIED
             if field.write_transform:
                 mode = field.write_transform.get_create_mode()
-                if isinstance(field.write_transform,
-                              DefaultValueTransform) and field.write_transform.default_value is None:
+                if (
+                    isinstance(field.write_transform, DefaultValueTransform)
+                    and field.write_transform.default_value is None
+                ):
                     params[field.name] = None
 
             if mode == WriteTransformMode.GENERATED:
@@ -290,9 +306,11 @@ class StorageSchemaFactory:
 
             annotations[field.name] = type_
 
-        params['__init__'] = _init
+        params["__init__"] = _init
         params["__annotations__"] = annotations
-        type_ = strawberry.input(type(_type_name(f"create_{self.storage_meta.name}_input"), (), params))
+        type_ = strawberry.input(
+            type(_type_name(f"create_{self.storage_meta.name}_input"), (), params)
+        )
         self.create_input_type = type_
         return type_
 
@@ -316,24 +334,27 @@ class StorageSchemaFactory:
             annotations[field.name] = type_
 
         name = _type_name(f"update_{self.storage_meta.name}_input")
-        params = {
-            '__init__': _init,
-            '__annotations__': annotations
-        }
+        params = {"__init__": _init, "__annotations__": annotations}
         type_ = strawberry.input(type(name, (), params))
         self.update_input_type = type
         return type_
 
     def get_marshaller_for_type(self, type_: Type) -> MarshallerABC:
-        marshaller = self.persisty_context.schema_context.marshaller_context.get_marshaller(type_)
+        marshaller = (
+            self.persisty_context.schema_context.marshaller_context.get_marshaller(
+                type_
+            )
+        )
         return marshaller
 
     def wrap_type_for_strawberry(self, type_: Type):
-        """ Wrap a nested dataclass structure in strawberry types """
+        """Wrap a nested dataclass structure in strawberry types"""
         origin = typing_inspect.get_origin(type_)
         if origin:
             origin = self.wrap_type_for_strawberry(type_)
-            args = tuple(self.wrap_type_for_strawberry(a) for a in typing_inspect.get_args(type_))
+            args = tuple(
+                self.wrap_type_for_strawberry(a) for a in typing_inspect.get_args(type_)
+            )
             return origin[args]
         if dataclasses.is_dataclass(type_):
             return strawberry.type(type_, description=type_.__doc__)
@@ -352,7 +373,7 @@ def _strawberry_field(name: str, resolver: Callable) -> StrawberryField:
 
 
 def _type_name(name: str) -> str:
-    return "".join(p[:1].upper()+p[1:] for p in name.split('_'))
+    return "".join(p[:1].upper() + p[1:] for p in name.split("_"))
 
 
 def _init(self, *_, **kwargs):
