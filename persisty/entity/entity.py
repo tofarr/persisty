@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Optional, Type, TypeVar, Iterator
+from typing import Optional, Type, TypeVar, Iterator, Dict
 
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
+from schemey import Schema
 
 from persisty.access_control.authorization import Authorization
 from persisty.cache_control.cache_header import CacheHeader
@@ -24,6 +25,7 @@ class Entity:
     __persisty_context__: PersistyContext_
     __persisty_dataclass_type__: Type
     __marshaller__: MarshallerABC
+    __schema__: Schema
 
     def __init__(self, authorization, local_values=None, remote_values=None, **kwargs):
         self.__authorization__ = authorization
@@ -34,6 +36,24 @@ class Entity:
                 local_values = self.__persisty_dataclass_type__(**kwargs)
         self.__local_values__ = local_values
         self.__remote_values__ = remote_values
+        self.__trigger_descriptors__('on_init')
+
+    def __trigger_descriptors__(self, event_type: str, kwargs: Optional[Dict] = None):
+        if not kwargs:
+            kwargs = dict(instance=self)
+        for descriptor in self.__class__.__dict__.values():
+            if hasattr(descriptor, event_type):
+                callable_ = getattr(descriptor, event_type)
+                callable_(**kwargs)
+
+    def __setattr__(self, key, value):
+        if key.startswith('_'):
+            object.__setattr__(self, key, value)
+            return
+        kwargs = dict(instance=self, key=key, old_value=getattr(self, key), new_value=value)
+        self.__trigger_descriptors__('before_set_attr', kwargs=kwargs)
+        object.__setattr__(self, key, value)
+        self.__trigger_descriptors__('after_set_attr', kwargs=kwargs)
 
     def __repr__(self):
         s = ((f.name, getattr(self, f.name)) for f in self.__persisty_storage_meta__.fields)
@@ -72,6 +92,16 @@ class Entity:
         cache_header = self.get_storage_meta().cache_control.get_cache_header(self.dump())
         return cache_header
 
+    @classmethod
+    def get_schema(cls):
+        return cls.__schema__
+
+    def validate(self):
+        self.__schema__.validate(self.dump())
+
+    def iter_errors(self):
+        return self.__schema__.iter_errors(self.dump())
+
     def get_differences(self) -> ExternalItemType:
         local_values = self.dump()
         remote_values = self.__remote_values__
@@ -91,6 +121,7 @@ class Entity:
         item = storage.read(key)
         self.__remote_values__ = self.get_marshaller().load(item)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
+        self.__trigger_descriptors__('on_init')
         return self
 
     @classmethod
@@ -104,21 +135,25 @@ class Entity:
         return entity
 
     def create(self) -> T:
+        self.__trigger_descriptors__('before_create')
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
         storage = context.get_storage(storage_meta.name, self.__authorization__)
         created = storage.create(self.dump())
         self.__remote_values__ = self.get_marshaller().load(created)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
+        self.__trigger_descriptors__('after_create')
         return self
 
     def update(self) -> T:
+        self.__trigger_descriptors__('before_update')
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
         storage = context.get_storage(storage_meta.name, self.__authorization__)
         created = storage.update(self.dump())
         self.__remote_values__ = self.get_marshaller().load(created)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
+        self.__trigger_descriptors__('after_update')
         return self
 
     def save(self) -> T:
@@ -126,11 +161,14 @@ class Entity:
         return self.update() if key else self.create()
 
     def delete(self) -> bool:
+        self.__trigger_descriptors__('before_delete')
         key = self.get_key()
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
         storage = context.get_storage(storage_meta.name, self.__authorization__)
         result = storage.delete(key)
+        if result:
+            self.__trigger_descriptors__('after_delete')
         return result
 
     @classmethod

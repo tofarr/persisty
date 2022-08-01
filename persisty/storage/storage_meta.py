@@ -29,7 +29,7 @@ class StorageMeta:
     cache_control: CacheControlABC = SecureHashCacheControl()
     batch_size: int = 100
     description: Optional[str] = None
-    relations: Tuple[RelationABC] = tuple()
+    relations: Tuple[RelationABC, ...] = tuple()
 
     def to_schema(self) -> Schema:
         properties = {

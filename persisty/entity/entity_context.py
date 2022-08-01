@@ -53,6 +53,7 @@ def create_entity_type(
     params["__persisty_storage_meta__"] = storage_meta
     params["__persisty_context__"] = persisty_context
     params["__persisty_dataclass_type__"] = dataclass_type(storage_meta)
+    params["__schema__"] = storage_meta.to_schema()
     marshaller_context = persisty_context.schema_context.marshaller_context
     params["__marshaller__"] = marshaller_context.get_marshaller(params["__persisty_dataclass_type__"])
     entity_type = type(type_.__name__, (Entity,), params)

@@ -1,7 +1,7 @@
 import dataclasses
 import inspect
 from enum import Enum
-from typing import Callable, Optional, Type, List, Dict, Tuple
+from typing import Callable, Optional, Type, List, Dict
 
 import strawberry
 import typing_inspect
@@ -15,6 +15,7 @@ from persisty.context import PersistyContext
 from persisty.field.field_filter import FieldFilterOp, FieldFilter
 from persisty.field.write_transform.default_value_transform import DefaultValueTransform
 from persisty.field.write_transform.write_transform_mode import WriteTransformMode
+from persisty.relation.belongs_to import BelongsTo
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
@@ -27,7 +28,8 @@ from persisty.util import UNDEFINED
 class StorageSchemaFactory:
     persisty_context: PersistyContext
     storage_meta: StorageMeta
-    item_type: Optional[Type] = None
+    item_types: Dict[str, Type]
+    data_loaders: Dict[str, DataLoader]
     search_filter_factory_type: Optional[Type] = None
     search_order_factory_type: Optional[Type] = None
     result_set_type: Optional[Type] = None
@@ -91,25 +93,33 @@ class StorageSchemaFactory:
 
         return _strawberry_field(f"count_{self.storage_meta.name}", resolver)
 
-    def create_read_field(self) -> StrawberryField:
-        item_type = self.get_item_type()
+    def get_data_loader(self, storage_name: str, info: Info) -> DataLoader:
+        data_loaders = info.context.get('data_loaders')
+        if not data_loaders:
+            data_loaders = info.context['data_loaders'] = {}
+        loader = data_loaders.get(self.storage_meta.name)
+        if loader:
+            return loader
+        authorization = self.get_authorization(info)
+        item_type = self.item_types.get(storage_name)
         marshaller = self.get_marshaller_for_type(item_type)
 
-        async def read(reads: List[Tuple[str, Authorization]]) -> List[item_type]:
-            # Because the signature for this only takes one key at a time, we bundle the auth with the key
-            # But all auth items should be the same, so we just use the first to get the storage
-            authorization = reads[0][1]
-            keys = [r[0] for r in reads]
-            storage = self.get_storage(authorization)
-            items = storage.read_all(keys)
+        async def read(keys: List[str]) -> List[item_type]:
+            storage = self.persisty_context.get_storage(storage_name, authorization)
+            items = list(storage.read_all(keys))
             loaded = [marshaller.load(r) if r else None for r in items]
             return loaded
 
         loader = DataLoader(load_fn=read)
+        data_loaders[self.storage_meta.name] = loader
+        return loader
+
+    def create_read_field(self) -> StrawberryField:
+        item_type = self.get_item_type()
 
         async def resolver(key: str, info: Info) -> Optional[item_type]:
-            authorization = self.get_authorization(info)
-            return await loader.load((key, authorization))
+            loader = self.get_data_loader(self.storage_meta.name, info)
+            return await loader.load(key)
 
         return _strawberry_field(f"read_{self.storage_meta.name}", resolver)
 
@@ -181,25 +191,38 @@ class StorageSchemaFactory:
 
     def get_item_type(self) -> Type:
         """Get / Create a TypeDefinition for items within the storage to be returned"""
-        if self.item_type:
-            return self.item_type
+        item_type = self.item_types.get(self.storage_meta.name)
+        if item_type:
+            return item_type
         annotations = {}
+        params = {
+            '__doc__': self.storage_meta.description,
+            '__annotations__': annotations
+        }
         for field in self.storage_meta.fields:
             if not field.is_readable:
                 continue
             type_ = self.wrap_type_for_strawberry(field.schema.python_type)
             annotations[field.name] = type_
-        type_ = strawberry.type(
-            type(
-                _type_name(self.storage_meta.name),
-                (),
-                dict(
-                    __annotations__=annotations, __doc__=self.storage_meta.description
-                ),
-            )
-        )
-        self.item_type = type_
+        for relation in self.storage_meta.relations:
+            if isinstance(relation, BelongsTo):
+                annotations[relation.get_name()] = self.item_types[relation.storage_name]
+                params[relation.get_name()] = self.create_belongs_to_field(relation)
+
+        type_name = _type_name(self.storage_meta.name)
+        type_ = strawberry.type(type(type_name, (), params))
+        self.item_types[self.storage_meta.name] = type_
         return type_
+
+    def create_belongs_to_field(self, belongs_to: BelongsTo):
+        belongs_to_type = self.item_types[belongs_to.storage_name]
+
+        async def resolver(root, info: Info) -> belongs_to_type:
+            loader = self.get_data_loader(belongs_to.storage_name, info)
+            key = str(getattr(root, belongs_to.id_field_name))
+            return await loader.load(key)
+
+        return _strawberry_field(belongs_to.name, resolver)
 
     def get_result_set_type(self):
         if self.result_set_type:
@@ -274,7 +297,8 @@ class StorageSchemaFactory:
         )
         return type_
 
-    def create_search_order(self, obj) -> Optional[SearchOrder]:
+    @staticmethod
+    def create_search_order(obj) -> Optional[SearchOrder]:
         if not obj:
             return
         field = getattr(obj, "field")
@@ -383,4 +407,5 @@ def _init(self, *_, **kwargs):
 
 
 def _add_field(field: StrawberryField, fields: Dict[str, StrawberryField]):
-    fields[field.name] = field
+    if field:
+        fields[field.name] = field

@@ -26,9 +26,11 @@ def new_schema_from_storage(
     marshaller = persisty_context.schema_context.marshaller_context.get_marshaller(
         StorageMeta
     )
-    for storage_meta in meta_storage.search_all():
+    types = {}
+    data_loaders = {}
+    for storage_meta in storage_meta_list:
         storage_meta = marshaller.load(storage_meta)
-        factory = StorageSchemaFactory(persisty_context, storage_meta)
+        factory = StorageSchemaFactory(persisty_context, storage_meta, types, data_loaders)
         factory.add_to_schema(query_params, mutation_params)
 
     query_params["__annotations__"] = {f.name: f.type for f in query_params.values()}
