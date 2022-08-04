@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from marshy import dump
 from marshy.types import ExternalItemType
 
-from persisty.storage.batch_edit import BatchEditABC, Delete, Update
+from persisty.storage.batch_edit import BatchEdit
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
@@ -134,15 +134,15 @@ class TtlCacheStorage(StorageABC):
         self.cached_result_sets[result_set_key] = TtlEntry(entry, expire_at)
         return result_set
 
-    def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
+    def edit_batch(self, edits: List[BatchEdit]) -> List[BatchEditResult]:
         results = self.storage.edit_batch(edits)
         for result in results:
             if not result.success:
                 continue
             edit = result.edit
-            if isinstance(edit, Update):
-                key = self.get_storage_meta().key_config.to_key_str(edit.updates)
+            if edit.update_item:
+                key = self.get_storage_meta().key_config.to_key_str(edit.update_item)
                 self.cache.pop(key, None)
-            elif isinstance(edit, Delete):
-                self.cache.pop(edit.key, None)
+            elif edit.delete_key:
+                self.cache.pop(edit.delete_key, None)
         return results

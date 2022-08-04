@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Type
+from typing import Type, Optional
 
+from pydantic import BaseModel
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 
 from persisty.context import PersistyContext
@@ -79,3 +80,20 @@ class FastApiModelFactory:
             )
             setattr(self, "_result_set_model", result_set_model)
         return result_set_model
+
+
+    @property
+    def batch_edit_model(self) -> Type:
+        batch_edit_model = getattr(self, "_batch_edit_model", UNDEFINED)
+        if batch_edit_model is UNDEFINED:
+            create_input_model = self.create_input_model
+            update_input_model = self.update_input_model
+
+            class BatchEditModel(BaseModel):
+                create_item: Optional[create_input_model] = None
+                update_item: Optional[update_input_model] = None
+                delete_key: Optional[str] = None
+
+            batch_edit_model = BatchEditModel
+            setattr(self, "_batch_edit_model", batch_edit_model)
+        return batch_edit_model

@@ -33,12 +33,12 @@ class FilteredStorage(FilteredStorageABC):
         return updates
 
     def filter_read(self, item: ExternalItemType) -> Optional[ExternalItemType]:
-        if self.search_filter.match(item):
+        if self.search_filter.match(item, self.get_storage_meta().fields):
             return item
 
     # noinspection PyUnusedLocal
     def allow_delete(self, item: ExternalItemType) -> bool:
-        return self.search_filter.match(item)
+        return self.search_filter.match(item, self.get_storage_meta().fields)
 
     def filter_search_filter(
         self, search_filter: SearchFilterABC

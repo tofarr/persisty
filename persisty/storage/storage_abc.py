@@ -5,7 +5,7 @@ from typing import Optional, List, Iterator
 from marshy.types import ExternalItemType
 
 from persisty.errors import PersistyError
-from persisty.storage.batch_edit import BatchEditABC, Create, Update, Delete
+from persisty.storage.batch_edit import BatchEdit
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
@@ -95,7 +95,7 @@ class StorageABC(ABC):
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         """Create an stored in the data store"""
 
-    def edit_batch(self, edits: List[BatchEditABC]) -> List[BatchEditResult]:
+    def edit_batch(self, edits: List[BatchEdit]) -> List[BatchEditResult]:
         """
         Do a batch edit and return a list of results. The results should contain all the same edits in the same
         order
@@ -103,7 +103,7 @@ class StorageABC(ABC):
         assert len(edits) <= self.get_storage_meta().batch_size
         return edit_batch(self, edits)
 
-    def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
+    def edit_all(self, edits: Iterator[BatchEdit]) -> Iterator[BatchEditResult]:
         edits = iter(edits)
         while True:
             page = list(islice(edits, self.get_storage_meta().batch_size))
@@ -124,29 +124,24 @@ def skip_to_page(page_key: str, items, key_config):
                 return
 
 
-def edit_batch(storage, edits: List[BatchEditABC]) -> List[BatchEditResult]:
+def edit_batch(storage, edits: List[BatchEdit]) -> List[BatchEditResult]:
     """
     Simple non transactional implementation of batch functionality. Other implementations employ strategies to boost
-    performance such reducing the number of network round trips.
+    performance such reducing the number of network round trips. Whether an edit is atomic is dependant on the
+    underlying mechanism, but should be reflected in the results.
     """
     results = []
     for edit in edits:
         try:
-            if isinstance(edit, Create):
-                item = storage.create(edit.item)
+            if edit.create_item:
+                item = storage.create(edit.create_item)
                 results.append(BatchEditResult(edit, bool(item)))
-            elif isinstance(edit, Update):
-                item = storage.update(edit.updates)
+            elif edit.update_item:
+                item = storage.update(edit.update_item)
                 results.append(BatchEditResult(edit, bool(item)))
-            elif isinstance(edit, Delete):
-                deleted = storage.delete(edit.key)
-                results.append(BatchEditResult(edit, bool(deleted)))
             else:
-                results.append(
-                    BatchEditResult(
-                        edit, False, "unsupported_edit_type", edit.__class__.__name__
-                    )
-                )
+                deleted = storage.delete(edit.delete_key)
+                results.append(BatchEditResult(edit, bool(deleted)))
         except Exception as e:
             results.append(BatchEditResult(edit, False, "exception", str(e)))
     return results

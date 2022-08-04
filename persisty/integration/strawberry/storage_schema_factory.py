@@ -18,6 +18,7 @@ from persisty.field.write_transform.write_transform_mode import WriteTransformMo
 from persisty.relation.belongs_to import BelongsTo
 from persisty.relation.has_count import HasCount
 from persisty.relation.has_many import HasMany
+from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_factory import search_filter_dataclass_for
 from persisty.search_order.search_order_factory import search_order_dataclass_for
 from persisty.storage.result_set import result_set_dataclass_for
@@ -73,8 +74,8 @@ class StorageSchemaFactory:
         ) -> result_set_type:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
-            search_filter = search_filter.to_search_filter()
-            search_order = search_order.to_search_order()
+            search_filter = search_filter.to_search_filter() if search_filter else INCLUDE_ALL
+            search_order = search_order.to_search_order() if search_order else None
             result_set = storage.search(search_filter, search_order, page_key, limit)
             result_set.results = [item_marshaller.load(r) for r in result_set.results]
             return result_set
@@ -89,7 +90,7 @@ class StorageSchemaFactory:
         ) -> int:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
-            search_filter = search_filter.to_search_filter()
+            search_filter = search_filter.to_search_filter() if search_filter else INCLUDE_ALL
             count = storage.count(search_filter)
             return count
 
@@ -136,7 +137,7 @@ class StorageSchemaFactory:
             loaded = [marshaller.load(r) if r else None for r in read]
             return loaded
 
-        return _strawberry_field(f"read_batch_{self.storage_meta.name}", resolver)
+        return _strawberry_field(f"read_{self.storage_meta.name}_batch", resolver)
 
     def create_create_field(self) -> StrawberryField:
         item_type = self.get_item_type()
@@ -162,14 +163,14 @@ class StorageSchemaFactory:
         item_marshaller = self.get_marshaller_for_type(item_type)
 
         def resolver(
-            item: update_input_type, search_filter: search_filter_type, info: Info
+            item: update_input_type, search_filter: Optional[search_filter_type], info: Info
         ) -> Optional[item_type]:
             authorization = self.get_authorization(info)
             storage = self.persisty_context.get_storage(
                 self.storage_meta.name, authorization
             )
             item = input_marshaller.dump(item)
-            search_filter = search_filter.to_search_filter()
+            search_filter = search_filter.to_search_filter() if search_filter else INCLUDE_ALL
             updated = storage.update(item, search_filter)
             if updated:
                 created = item_marshaller.load(updated)

@@ -5,7 +5,7 @@ from marshy.types import ExternalItemType
 
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.batch_edit import BatchEditABC
+from persisty.storage.batch_edit import BatchEdit
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
 from persisty.search_order.search_order import SearchOrder
@@ -60,8 +60,8 @@ class WrapperStorageABC(StorageABC, ABC):
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         return self.get_storage().count(search_filter)
 
-    def edit_batch(self, edits: List[BatchEditABC]):
+    def edit_batch(self, edits: List[BatchEdit]):
         return self.get_storage().edit_batch(edits)
 
-    def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
+    def edit_all(self, edits: Iterator[BatchEdit]) -> Iterator[BatchEditResult]:
         return self.get_storage().edit_all(edits)

@@ -1,5 +1,4 @@
 import os
-from typing import Callable
 
 from persisty.access_control.authorization import ROOT, Authorization
 from persisty.util import get_logger

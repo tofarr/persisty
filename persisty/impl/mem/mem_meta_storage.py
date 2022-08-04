@@ -12,7 +12,7 @@ from persisty.context.meta_storage_abc import (
 from persisty.impl.mem.mem_storage import mem_storage, MemStorage
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.storage.batch_edit import BatchEditABC, Update, Delete
+from persisty.storage.batch_edit import BatchEdit
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
@@ -33,7 +33,8 @@ class MemMetaStorage(MetaStorageABC, WrapperStorageABC):
         default=STORAGE_META_MARSHALLER
     )
 
-    def storage_from_meta(self, storage_meta: StorageMeta):
+    @staticmethod
+    def storage_from_meta(storage_meta: StorageMeta):
         return mem_storage(storage_meta)
 
     def get_item_storage(self, name: str) -> Optional[StorageABC]:
@@ -76,23 +77,23 @@ class MemMetaStorage(MetaStorageABC, WrapperStorageABC):
             storage = _unnest(storage)
             storage.items = None  # Trash the storage to prevent future use
 
-    def edit_batch(self, edits: List[BatchEditABC]):
+    def edit_batch(self, edits: List[BatchEdit]):
         results = self.get_storage().edit_batch(edits)
         for result in results:
             self.after_batch_edit(result)
         return results
 
-    def edit_all(self, edits: Iterator[BatchEditABC]) -> Iterator[BatchEditResult]:
+    def edit_all(self, edits: Iterator[BatchEdit]) -> Iterator[BatchEditResult]:
         for result in self.get_storage().edit_all(edits):
             self.after_batch_edit(result)
             yield result
 
     def after_batch_edit(self, result: BatchEditResult):
         if result.success:
-            if isinstance(result.edit, Update):
-                self.after_update(result.edit.updates)
-            elif isinstance(result.edit, Delete):
-                self.after_delete(result.edit.key)
+            if result.edit.update_item:
+                self.after_update(result.edit.update_item)
+            elif result.edit.delete_key:
+                self.after_delete(result.edit.delete_key)
 
 
 def _unnest(storage: StorageABC) -> MemStorage:

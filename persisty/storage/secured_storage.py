@@ -3,7 +3,6 @@ from typing import Optional, Tuple
 
 from marshy.types import ExternalItemType
 
-from persisty.access_control.constants import NO_ACCESS
 from persisty.errors import PersistyError
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
