@@ -55,7 +55,9 @@ def create_entity_type(
     params["__persisty_dataclass_type__"] = dataclass_type(storage_meta)
     params["__schema__"] = storage_meta.to_schema()
     marshaller_context = persisty_context.schema_context.marshaller_context
-    params["__marshaller__"] = marshaller_context.get_marshaller(params["__persisty_dataclass_type__"])
+    params["__marshaller__"] = marshaller_context.get_marshaller(
+        params["__persisty_dataclass_type__"]
+    )
     entity_type = type(type_.__name__, (Entity,), params)
     _entity_types[type_.__name__] = entity_type
     return entity_type
@@ -64,6 +66,6 @@ def create_entity_type(
 def dataclass_type(storage_meta: StorageMeta):
     annotations = {f.name: f.schema.python_type for f in storage_meta.fields}
     params = {a: UNDEFINED for a in annotations}
-    params['__annotations__'] = annotations
+    params["__annotations__"] = annotations
     type_ = dataclass(type(to_camel_case(storage_meta.name), (), params))
     return type_

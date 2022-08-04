@@ -1,12 +1,14 @@
 marshy
-schemey
+schemey~=5.3
 pyaes
 # Optional dependencies
 sqlalchemy
 boto3~=1.24
 botocore~=1.27
 strawberry-graphql~=0.122
-starlette~=0.20
+starlette~=0.19
+fastapi~=0.79
+pydantic~=1.9
 uvicorn~=0.18
 # Dev dependencies
 black~=22.6

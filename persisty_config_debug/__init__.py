@@ -49,15 +49,16 @@ class Message:
 
 @stored
 class Node:
-    """ Testing self referencing data stores """
+    """Testing self referencing data stores"""
+
     id: UUID
     title: str
     parent_id: Optional[UUID]
     created_at: datetime
     updated_at: datetime
-    parent: Optional[Node] = BelongsTo(storage_name='node')
-    child_count: int = HasCount(storage_name='node', id_field_name='parent_id')
-    children: ResultSet[Node] = HasMany(storage_name='node', id_field_name='parent_id')
+    parent: Optional[Node] = BelongsTo(storage_name="node")
+    child_count: int = HasCount(storage_name="node", id_field_name="parent_id")
+    children: ResultSet[Node] = HasMany(storage_name="node", id_field_name="parent_id")
 
 
 # Entities will need to be set up later, because they rely on the persisty_context...
@@ -94,35 +95,32 @@ def seed_data():
         to_user_id=UUID("00000000-0000-0000-0000-000000000001"),
     ).create()
     NodeEntity(
-        ROOT,
-        id=UUID("00000000-0000-0000-0000-00000000000a"),
-        title='A'
+        ROOT, id=UUID("00000000-0000-0000-0000-00000000000a"), title="A"
     ).create()
     NodeEntity(
         ROOT,
         id=UUID("00000000-0000-0000-0000-0000000000ab"),
-        title='AB',
-        parent_id = UUID("00000000-0000-0000-0000-00000000000a"),
+        title="AB",
+        parent_id=UUID("00000000-0000-0000-0000-00000000000a"),
     ).create()
     NodeEntity(
         ROOT,
         id=UUID("00000000-0000-0000-0000-0000000000ac"),
-        title='AC',
-        parent_id = UUID("00000000-0000-0000-0000-00000000000a"),
+        title="AC",
+        parent_id=UUID("00000000-0000-0000-0000-00000000000a"),
     ).create()
     NodeEntity(
         ROOT,
         id=UUID("00000000-0000-0000-0000-000000000abd"),
-        title='D',
-        parent_id = UUID("00000000-0000-0000-0000-0000000000ab"),
+        title="D",
+        parent_id=UUID("00000000-0000-0000-0000-0000000000ab"),
     ).create()
     NodeEntity(
         ROOT,
         id=UUID("00000000-0000-0000-0000-000000000abe"),
-        title='E',
+        title="E",
         parent_id=UUID("00000000-0000-0000-0000-0000000000ab"),
     ).create()
-
 
 
 def configure_context(persisty_context: PersistyContext):

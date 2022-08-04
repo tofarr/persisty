@@ -17,10 +17,10 @@ class HasMany(RelationABC):
     def __set_name__(self, owner, name):
         self.name = name
         if not self.storage_name:
-            if name.endswith('_result_set'):
+            if name.endswith("_result_set"):
                 self.storage_name = name[:-11]
             else:
-                raise PersistyError(f'Please specify storage name for: {name}')
+                raise PersistyError(f"Please specify storage name for: {name}")
         if self.id_field_name is None:
             self.id_field_name = f"{to_snake_case(owner.__name__)}_id"
 
@@ -44,5 +44,7 @@ class HasManyPropertyDescriptor:
         if not key:
             return None
         entity_type = get_named_entity_type(self.entity_name)
-        result_set = entity_type.search(FieldFilter(self.id_field_name, FieldFilterOp.eq, key))
+        result_set = entity_type.search(
+            FieldFilter(self.id_field_name, FieldFilterOp.eq, key)
+        )
         return result_set

@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Optional, List
+from typing import Optional, List, Iterator
 
 from dataclasses import dataclass, field
 
@@ -58,6 +58,20 @@ class PersistyContext:
             storage.get_storage_meta(), access_control=access_control
         )
         return SecuredStorage(storage, storage_meta)
+
+    def admin_get_storage_meta(self, storage_name: str) -> StorageMeta:
+        storage_meta = self.meta_storage.read(storage_name)
+        if storage_meta:
+            storage_meta = self.schema_context.marshaller_context.load(
+                StorageMeta, storage_meta
+            )
+            return storage_meta
+
+    def admin_get_all_storage_meta(self) -> Iterator[StorageMeta]:
+        marshaller = self.schema_context.marshaller_context.get_marshaller(StorageMeta)
+        for storage_meta in self.meta_storage.search_all():
+            storage_meta = marshaller.load(storage_meta)
+            yield storage_meta
 
     def create_access_control(
         self, storage_name: str, authorization: Authorization

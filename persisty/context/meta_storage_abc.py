@@ -9,7 +9,9 @@ from persisty.obj_storage.stored import stored, get_storage_meta
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 
-StoredStorageMeta = stored(StorageMeta, key_config=FieldKeyConfig("name", FieldType.STR))
+StoredStorageMeta = stored(
+    StorageMeta, key_config=FieldKeyConfig("name", FieldType.STR)
+)
 STORED_STORAGE_META = get_storage_meta(StoredStorageMeta)
 STORAGE_META_MARSHALLER = get_default_context().get_marshaller(StorageMeta)
 

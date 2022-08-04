@@ -18,10 +18,9 @@ from persisty.field.write_transform.write_transform_mode import WriteTransformMo
 from persisty.relation.belongs_to import BelongsTo
 from persisty.relation.has_count import HasCount
 from persisty.relation.has_many import HasMany
-from persisty.search_filter.include_all import INCLUDE_ALL
-from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.search_order.search_order import SearchOrder
-from persisty.search_order.search_order_field import SearchOrderField
+from persisty.search_filter.search_filter_factory import search_filter_dataclass_for
+from persisty.search_order.search_order_factory import search_order_dataclass_for
+from persisty.storage.result_set import result_set_dataclass_for
 from persisty.storage.storage_meta import StorageMeta
 from persisty.util import UNDEFINED, to_camel_case, to_snake_case
 
@@ -30,7 +29,9 @@ from persisty.util import UNDEFINED, to_camel_case, to_snake_case
 class StorageSchemaFactory:
     persisty_context: PersistyContext
     storage_meta: StorageMeta
-    item_types: Dict[str, Type]
+    types: Dict[str, Type]
+    inputs: Dict[str, Type]
+    enums: Dict[str, Type]
     search_filter_factory_type: Optional[Type] = None
     search_order_factory_type: Optional[Type] = None
     result_set_type: Optional[Type] = None
@@ -72,8 +73,8 @@ class StorageSchemaFactory:
         ) -> result_set_type:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
-            search_filter = self.create_search_filter(search_filter)
-            search_order = self.create_search_order(search_order)
+            search_filter = search_filter.to_search_filter()
+            search_order = search_order.to_search_order()
             result_set = storage.search(search_filter, search_order, page_key, limit)
             result_set.results = [item_marshaller.load(r) for r in result_set.results]
             return result_set
@@ -88,21 +89,21 @@ class StorageSchemaFactory:
         ) -> int:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
-            search_filter = self.create_search_filter(search_filter)
+            search_filter = search_filter.to_search_filter()
             count = storage.count(search_filter)
             return count
 
         return _strawberry_field(f"count_{self.storage_meta.name}", resolver)
 
     def get_data_loader(self, storage_name: str, info: Info) -> DataLoader:
-        data_loaders = info.context.get('data_loaders')
+        data_loaders = info.context.get("data_loaders")
         if not data_loaders:
-            data_loaders = info.context['data_loaders'] = {}
+            data_loaders = info.context["data_loaders"] = {}
         loader = data_loaders.get(self.storage_meta.name)
         if loader:
             return loader
         authorization = self.get_authorization(info)
-        item_type = self.item_types.get(storage_name)
+        item_type = self.types.get(storage_name)
         marshaller = self.get_marshaller_for_type(item_type)
 
         async def read(keys: List[str]) -> List[item_type]:
@@ -168,7 +169,7 @@ class StorageSchemaFactory:
                 self.storage_meta.name, authorization
             )
             item = input_marshaller.dump(item)
-            search_filter = self.create_search_filter(search_filter)
+            search_filter = search_filter.to_search_filter()
             updated = storage.update(item, search_filter)
             if updated:
                 created = item_marshaller.load(updated)
@@ -192,13 +193,13 @@ class StorageSchemaFactory:
 
     def get_item_type(self) -> Type:
         """Get / Create a TypeDefinition for items within the storage to be returned"""
-        item_type = self.item_types.get(self.storage_meta.name)
+        item_type = self.types.get(self.storage_meta.name)
         if item_type:
             return item_type
         annotations = {}
         params = {
-            '__doc__': self.storage_meta.description,
-            '__annotations__': annotations
+            "__doc__": self.storage_meta.description,
+            "__annotations__": annotations,
         }
         for field in self.storage_meta.fields:
             if not field.is_readable:
@@ -213,12 +214,14 @@ class StorageSchemaFactory:
                 annotations[relation.get_name()] = int
                 params[relation.get_name()] = self.create_has_count_field(relation)
             if isinstance(relation, HasMany):
-                annotations[relation.get_name()] = to_camel_case(f'{relation.storage_name}_result_set')
+                annotations[relation.get_name()] = to_camel_case(
+                    f"{relation.storage_name}_result_set"
+                )
                 params[relation.get_name()] = self.create_has_many_field(relation)
 
         type_name = _type_name(self.storage_meta.name)
         type_ = strawberry.type(type(type_name, (), params))
-        self.item_types[self.storage_meta.name] = type_
+        self.types[self.storage_meta.name] = type_
         return type_
 
     def create_belongs_to_field(self, belongs_to: BelongsTo):
@@ -234,25 +237,28 @@ class StorageSchemaFactory:
         return _strawberry_field(belongs_to.name, resolver)
 
     def create_has_count_field(self, has_count: HasCount):
-
         def resolver(root, info: Info) -> int:
             authorization = self.get_authorization(info)
             key = self.storage_meta.key_config.to_key_str(root)
             search_filter = FieldFilter(has_count.id_field_name, FieldFilterOp.eq, key)
-            storage = self.persisty_context.get_storage(has_count.storage_name, authorization)
+            storage = self.persisty_context.get_storage(
+                has_count.storage_name, authorization
+            )
             count = storage.count(search_filter)
             return count
 
         return _strawberry_field(has_count.name, resolver)
 
     def create_has_many_field(self, has_many: HasMany):
-        result_set_type = f'{has_many.storage_name}_result_set'
+        result_set_type = f"{has_many.storage_name}_result_set"
 
         def resolver(root, info: Info) -> result_set_type:
             authorization = self.get_authorization(info)
             key = self.storage_meta.key_config.to_key_str(root)
             search_filter = FieldFilter(has_many.id_field_name, FieldFilterOp.eq, key)
-            storage = self.persisty_context.get_storage(has_many.storage_name, authorization)
+            storage = self.persisty_context.get_storage(
+                has_many.storage_name, authorization
+            )
             result_set = storage.search(search_filter)
             item_marshaller = self.get_marshaller_for_type(self.get_item_type())
             result_set.results = [item_marshaller.load(r) for r in result_set.results]
@@ -261,87 +267,34 @@ class StorageSchemaFactory:
         return _strawberry_field(has_many.name, resolver)
 
     def get_result_set_type(self):
-        if self.result_set_type:
-            return self.result_set_type
-        name = f"{self.storage_meta.name}_result_set"
-        type_name = _type_name(name)
-        params = {
-            "__annotations__": {
-                "results": List[self.get_item_type()],
-                "next_page_key": Optional[str],
-            }
-        }
-        type_ = strawberry.type(type(type_name, (), params))
-        self.item_types[name] = type_
-        return type_
+        result_set_type = self.result_set_type
+        if not result_set_type:
+            # noinspection PyTypeChecker
+            result_set_type = result_set_dataclass_for(self.get_item_type())
+            result_set_type = strawberry.type(result_set_type)
+            self.result_set_type = result_set_type
+            self.types[to_snake_case(result_set_type.__name__)] = result_set_type
+        return result_set_type
 
     def get_search_filter_factory_type(self) -> Type:
-        if self.search_filter_factory_type:
-            return self.search_filter_factory_type
-        annotations = {}
-        for field in self.storage_meta.fields:
-            if not field.is_readable:
-                continue
-            for op in field.permitted_filter_ops:
-                filter_name = f"{field.name}_{op.name}"
-                field_type = field.schema.python_type
-                if op in (FieldFilterOp.exists, FieldFilterOp.not_exists):
-                    field_type = bool
-                annotations[filter_name] = Optional[field_type]
-        params = {
-            "__init__": _init,
-            "__annotations__": annotations,
-        }
-        type_ = strawberry.input(
-            type(_type_name(f"{self.storage_meta.name}_search_filter"), (), params)
-        )
-        self.search_filter_factory_type = type_
-        return type_
-
-    def create_search_filter(self, obj) -> SearchFilterABC:
-        search_filter = INCLUDE_ALL
-        for field in self.storage_meta.fields:
-            for op in field.permitted_filter_ops:
-                filter_name = f"{field.name}_{op.name}"
-                if hasattr(obj, filter_name):
-                    value = getattr(obj, filter_name)
-                    if value is not UNDEFINED:
-                        # noinspection PyTypeChecker
-                        value = self.get_marshaller_for_type(
-                            field.schema.python_type
-                        ).load(value)
-                        field_filter = FieldFilter(field.name, op, value)
-                        search_filter &= field_filter
-        return search_filter
+        search_filter_factory_type = self.search_filter_factory_type
+        if not search_filter_factory_type:
+            search_filter_factory_type = search_filter_dataclass_for(self.storage_meta)
+            search_filter_factory_type = self.wrap_input_for_strawberry(
+                search_filter_factory_type
+            )
+            self.search_filter_factory_type = search_filter_factory_type
+        return search_filter_factory_type
 
     def get_search_order_factory_type(self):
-        if self.search_order_factory_type:
-            return self.search_order_factory_type
-        fields = {f.name: f.name for f in self.storage_meta.fields if f.is_sortable}
-        if not fields:
-            return
-        params = {
-            "desc": False,
-            "__init__": _init,
-            "__annotations__": {
-                "field": strawberry.enum(
-                    Enum(_type_name(f"{self.storage_meta.name}_search_field"), fields)
-                ),
-                "desc": Optional[bool],
-            },
-        }
-        type_ = strawberry.input(
-            type(_type_name(f"{self.storage_meta.name}_search_order"), (), params)
-        )
-        return type_
-
-    @staticmethod
-    def create_search_order(obj) -> Optional[SearchOrder]:
-        if not obj:
-            return
-        field = getattr(obj, "field")
-        desc = getattr(obj, "desc")
-        return SearchOrder((SearchOrderField(field.value, desc),))
+        search_order_factory_type = self.search_order_factory_type
+        if not search_order_factory_type:
+            search_order_factory_type = search_order_dataclass_for(self.storage_meta)
+            search_order_factory_type = self.wrap_input_for_strawberry(
+                search_order_factory_type
+            )
+            self.search_order_factory_type = search_order_factory_type
+        return search_order_factory_type
 
     def get_create_input_type(self):
         if self.create_input_type:
@@ -370,8 +323,10 @@ class StorageSchemaFactory:
 
         params["__init__"] = _init
         params["__annotations__"] = annotations
-        type_ = strawberry.input(
-            type(_type_name(f"create_{self.storage_meta.name}_input"), (), params)
+        type_ = self.wrap_input_for_strawberry(
+            dataclasses.dataclass(
+                type(_type_name(f"create_{self.storage_meta.name}_input"), (), params)
+            )
         )
         self.create_input_type = type_
         return type_
@@ -397,7 +352,9 @@ class StorageSchemaFactory:
 
         name = _type_name(f"update_{self.storage_meta.name}_input")
         params = {"__init__": _init, "__annotations__": annotations}
-        type_ = strawberry.input(type(name, (), params))
+        type_ = self.wrap_input_for_strawberry(
+            dataclasses.dataclass(type(name, (), params))
+        )
         self.update_input_type = type
         return type_
 
@@ -419,7 +376,47 @@ class StorageSchemaFactory:
             )
             return origin[args]
         if dataclasses.is_dataclass(type_):
-            return strawberry.type(type_, description=type_.__doc__)
+            output = self.types.get(type_.__name__)
+            if output:
+                return output
+            output = strawberry.type(type_, description=type_.__doc__)
+            self.types[type_.__name__] = output
+            for field in dataclasses.fields(output):
+                field.type = self.wrap_type_for_strawberry(field.type)
+            return output
+        if inspect.isclass(type_) and issubclass(type_, Enum):
+            strawberry_enum = self.enums.get(type_.__name__)
+            if not strawberry_enum:
+                # noinspection PyTypeChecker
+                strawberry_enum = self.enums[type_.__name__] = strawberry.enum(type_)
+            return strawberry_enum
+        # Handle anything that strawberry has trouble with here...
+        return type_
+
+    def wrap_input_for_strawberry(self, type_: Type):
+        """Wrap a nested dataclass structure in strawberry types"""
+        origin = typing_inspect.get_origin(type_)
+        if origin:
+            origin = self.wrap_type_for_strawberry(origin)
+            args = tuple(
+                self.wrap_type_for_strawberry(a) for a in typing_inspect.get_args(type_)
+            )
+            return origin[args]
+        if dataclasses.is_dataclass(type_):
+            input = self.inputs.get(type_.__name__)
+            if input:
+                return input
+            input = strawberry.input(type_, description=type_.__doc__)
+            self.inputs[type_.__name__] = input
+            for field in dataclasses.fields(input):
+                field.type = self.wrap_input_for_strawberry(field.type)
+            return input
+        if inspect.isclass(type_) and issubclass(type_, Enum):
+            strawberry_enum = self.enums.get(type_.__name__)
+            if not strawberry_enum:
+                # noinspection PyTypeChecker
+                strawberry_enum = self.enums[type_.__name__] = strawberry.enum(type_)
+            return strawberry_enum
         # Handle anything that strawberry has trouble with here...
         return type_
 

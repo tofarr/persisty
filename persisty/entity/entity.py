@@ -17,7 +17,9 @@ from persisty.storage.storage_meta import StorageMeta
 from persisty.util import UNDEFINED
 
 T = TypeVar("T")
-PersistyContext_ = 'persisty.context.PersistyContext'  # Curse python's circular import nonsense :(
+PersistyContext_ = (
+    "persisty.context.PersistyContext"  # Curse python's circular import nonsense :(
+)
 
 
 class Entity:
@@ -36,7 +38,7 @@ class Entity:
                 local_values = self.__persisty_dataclass_type__(**kwargs)
         self.__local_values__ = local_values
         self.__remote_values__ = remote_values
-        self.__trigger_descriptors__('on_init')
+        self.__trigger_descriptors__("on_init")
 
     def __trigger_descriptors__(self, event_type: str, kwargs: Optional[Dict] = None):
         if not kwargs:
@@ -47,22 +49,27 @@ class Entity:
                 callable_(**kwargs)
 
     def __setattr__(self, key, value):
-        if key.startswith('_'):
+        if key.startswith("_"):
             object.__setattr__(self, key, value)
             return
-        kwargs = dict(instance=self, key=key, old_value=getattr(self, key), new_value=value)
-        self.__trigger_descriptors__('before_set_attr', kwargs=kwargs)
+        kwargs = dict(
+            instance=self, key=key, old_value=getattr(self, key), new_value=value
+        )
+        self.__trigger_descriptors__("before_set_attr", kwargs=kwargs)
         object.__setattr__(self, key, value)
-        self.__trigger_descriptors__('after_set_attr', kwargs=kwargs)
+        self.__trigger_descriptors__("after_set_attr", kwargs=kwargs)
 
     def __repr__(self):
-        s = ((f.name, getattr(self, f.name)) for f in self.__persisty_storage_meta__.fields)
+        s = (
+            (f.name, getattr(self, f.name))
+            for f in self.__persisty_storage_meta__.fields
+        )
         s = (f"'{k}': {v}" for k, v in s if v is not UNDEFINED)
-        s = '{' + ", ".join(s) + '}'
+        s = "{" + ", ".join(s) + "}"
         return s
 
     def __eq__(self, other):
-        other_local_values = getattr(other, '__local_values__', UNDEFINED)
+        other_local_values = getattr(other, "__local_values__", UNDEFINED)
         return self.__local_values__ == other_local_values
 
     @classmethod
@@ -74,8 +81,10 @@ class Entity:
         marshaller = cls.__marshaller__
         if marshaller:
             return marshaller
-        marshaller = cls.__persisty_context__.schema_context.marshaller_context.get_marshaller(
-            cls.__persisty_storage_meta__.to_schema().python_type
+        marshaller = (
+            cls.__persisty_context__.schema_context.marshaller_context.get_marshaller(
+                cls.__persisty_storage_meta__.to_schema().python_type
+            )
         )
         cls.__marshaller__ = marshaller
         return marshaller
@@ -89,7 +98,9 @@ class Entity:
         return key
 
     def get_cache_header(self) -> CacheHeader:
-        cache_header = self.get_storage_meta().cache_control.get_cache_header(self.dump())
+        cache_header = self.get_storage_meta().cache_control.get_cache_header(
+            self.dump()
+        )
         return cache_header
 
     @classmethod
@@ -121,7 +132,7 @@ class Entity:
         item = storage.read(key)
         self.__remote_values__ = self.get_marshaller().load(item)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
-        self.__trigger_descriptors__('on_init')
+        self.__trigger_descriptors__("on_init")
         return self
 
     @classmethod
@@ -135,25 +146,25 @@ class Entity:
         return entity
 
     def create(self) -> T:
-        self.__trigger_descriptors__('before_create')
+        self.__trigger_descriptors__("before_create")
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
         storage = context.get_storage(storage_meta.name, self.__authorization__)
         created = storage.create(self.dump())
         self.__remote_values__ = self.get_marshaller().load(created)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
-        self.__trigger_descriptors__('after_create')
+        self.__trigger_descriptors__("after_create")
         return self
 
     def update(self) -> T:
-        self.__trigger_descriptors__('before_update')
+        self.__trigger_descriptors__("before_update")
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
         storage = context.get_storage(storage_meta.name, self.__authorization__)
         created = storage.update(self.dump())
         self.__remote_values__ = self.get_marshaller().load(created)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
-        self.__trigger_descriptors__('after_update')
+        self.__trigger_descriptors__("after_update")
         return self
 
     def save(self) -> T:
@@ -161,14 +172,14 @@ class Entity:
         return self.update() if key else self.create()
 
     def delete(self) -> bool:
-        self.__trigger_descriptors__('before_delete')
+        self.__trigger_descriptors__("before_delete")
         key = self.get_key()
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
         storage = context.get_storage(storage_meta.name, self.__authorization__)
         result = storage.delete(key)
         if result:
-            self.__trigger_descriptors__('after_delete')
+            self.__trigger_descriptors__("after_delete")
         return result
 
     @classmethod
@@ -183,7 +194,10 @@ class Entity:
         storage = context.get_storage(storage_meta.name, authorization)
         result_set = storage.search(search_filter, search_order)
         marshaller = cls.get_marshaller()
-        result_set.results = [cls(authorization, None, marshaller.load(result)) for result in result_set.results]
+        result_set.results = [
+            cls(authorization, None, marshaller.load(result))
+            for result in result_set.results
+        ]
         return result_set
 
     @classmethod

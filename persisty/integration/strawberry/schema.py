@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Type, Set, List, ForwardRef
+from typing import Optional, Dict, Type, Set, List
 
 import strawberry
 from dataclasses import is_dataclass, fields
@@ -14,7 +14,7 @@ from persisty.access_control.authorization import Authorization, ROOT
 from persisty.context import get_default_persisty_context, PersistyContext
 from persisty.errors import PersistyError
 from persisty.storage.storage_meta import StorageMeta
-from persisty.strawberry.storage_schema_factory import StorageSchemaFactory
+from persisty.integration.strawberry.storage_schema_factory import StorageSchemaFactory
 from persisty.util import to_snake_case
 
 
@@ -36,9 +36,13 @@ def new_schema_from_storage(
         StorageMeta
     )
     types = {}
+    inputs = {}
+    enums = {}
     for storage_meta in storage_meta_list:
         storage_meta = marshaller.load(storage_meta)
-        factory = StorageSchemaFactory(persisty_context, storage_meta, types)
+        factory = StorageSchemaFactory(
+            persisty_context, storage_meta, types, inputs, enums
+        )
         factory.add_to_schema(query_params, mutation_params)
 
     # the fields may have non globally resolvable forward references...
@@ -76,7 +80,10 @@ def _resolve_type_futures(type_, types: Dict[str, Type], resolved: Set):
         return StrawberryOptional(_resolve_type_futures(optional_type, types, resolved))
     origin = typing_inspect.get_origin(type_)
     if origin:
-        args = tuple(_resolve_type_futures(a, types, resolved) for a in typing_inspect.get_args(type_))
+        args = tuple(
+            _resolve_type_futures(a, types, resolved)
+            for a in typing_inspect.get_args(type_)
+        )
         if origin is list:
             return List[args]
         else:
@@ -92,7 +99,9 @@ def _resolve_type_futures(type_, types: Dict[str, Type], resolved: Set):
                     resolver = field.base_resolver
                     field_type = resolver.signature.return_annotation
                     field_type = _resolve_type_futures(field_type, types, resolved)
-                    resolver_override = StrawberryResolver(resolver.wrapped_func, type_override=field_type)
+                    resolver_override = StrawberryResolver(
+                        resolver.wrapped_func, type_override=field_type
+                    )
                     field.base_resolver = resolver_override
             else:
                 field.type = _resolve_type_futures(field.type, types, resolved)

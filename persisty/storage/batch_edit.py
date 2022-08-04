@@ -3,9 +3,9 @@ from dataclasses import dataclass, field
 from typing import TypeVar, Generic
 from uuid import UUID, uuid4
 
-from persisty.key_config.key_config_abc import KeyConfigABC
+from marshy.types import ExternalItemType
 
-T = TypeVar("T")
+from persisty.key_config.key_config_abc import KeyConfigABC
 
 
 @dataclass
@@ -20,8 +20,8 @@ class BatchEditABC(ABC):
 
 
 @dataclass
-class Create(BatchEditABC, Generic[T]):
-    item: T = None
+class Create(BatchEditABC):
+    item: ExternalItemType = None
     id: UUID = field(default_factory=uuid4)
 
     def get_key(self, key_config: KeyConfigABC) -> str:
@@ -32,8 +32,8 @@ class Create(BatchEditABC, Generic[T]):
 
 
 @dataclass
-class Update(BatchEditABC, Generic[T]):
-    updates: T = None
+class Update(BatchEditABC):
+    updates: ExternalItemType = None
     id: UUID = field(default_factory=uuid4)
 
     def get_key(self, key_config: KeyConfigABC) -> str:

@@ -17,10 +17,10 @@ class HasCount(RelationABC):
     def __set_name__(self, owner, name):
         self.name = name
         if not self.storage_name:
-            if name.endswith('_count'):
+            if name.endswith("_count"):
                 self.storage_name = name[:-6]
             else:
-                raise PersistyError(f'Please specify storage name for: {name}')
+                raise PersistyError(f"Please specify storage name for: {name}")
         if self.id_field_name is None:
             self.id_field_name = f"{to_snake_case(owner.__name__)}_id"
 
@@ -44,5 +44,7 @@ class HasCountPropertyDescriptor:
         if not key:
             return None
         entity_type = get_named_entity_type(self.entity_name)
-        count = entity_type.count(FieldFilter(self.id_field_name, FieldFilterOp.eq, key))
+        count = entity_type.count(
+            FieldFilter(self.id_field_name, FieldFilterOp.eq, key)
+        )
         return count

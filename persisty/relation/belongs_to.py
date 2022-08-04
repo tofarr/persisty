@@ -36,7 +36,10 @@ class BelongsTo(RelationABC):
 
     def to_property_descriptor(self):
         return BelongsToPropertyDescriptor(
-            self.name, to_camel_case(self.storage_name), self.id_field_name, f"_{self.name}"
+            self.name,
+            to_camel_case(self.storage_name),
+            self.id_field_name,
+            f"_{self.name}",
         )
 
 
