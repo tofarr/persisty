@@ -3,14 +3,16 @@ from typing import Optional, get_type_hints, Any
 
 import typing_inspect
 from marshy.factory.optional_marshaller_factory import get_optional_type
+from marshy.types import ExternalItemType
+from schemey import Schema
 
 from persisty.entity.entity_context import get_named_entity_type
-from persisty.relation.relation_abc import RelationABC
+from persisty.link.link_abc import LinkABC
 from persisty.util import to_snake_case, to_camel_case, UNDEFINED
 
 
 @dataclass
-class BelongsTo(RelationABC):
+class BelongsTo(LinkABC):
     name: Optional[str] = None  # Allows None so __set_name__ can exist
     storage_name: Optional[str] = None
     id_field_name: Optional[str] = None
@@ -41,6 +43,10 @@ class BelongsTo(RelationABC):
             self.id_field_name,
             f"_{self.name}",
         )
+
+    def update_json_schema(self, json_schema: ExternalItemType):
+        id_field_schema = json_schema.get('properties').get(self.id_field_name)
+        id_field_schema['persistyBelongsTo'] = self.storage_name
 
 
 @dataclass(frozen=True)

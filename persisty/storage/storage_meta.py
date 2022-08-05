@@ -16,7 +16,7 @@ from persisty.cache_control.secure_hash_cache_control import SecureHashCacheCont
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.field.field import Field
-from persisty.relation.relation_abc import RelationABC
+from persisty.link.link_abc import LinkABC
 from persisty.util import to_camel_case
 
 
@@ -35,7 +35,7 @@ class StorageMeta:
     cache_control: CacheControlABC = SecureHashCacheControl()
     batch_size: int = 100
     description: Optional[str] = None
-    relations: Tuple[RelationABC, ...] = tuple()
+    links: Tuple[LinkABC, ...] = tuple()
 
     def to_json_schema(
         self, prefix: str = "", check: Callable[[Field], bool] = is_readable
@@ -53,6 +53,8 @@ class StorageMeta:
             "properties": properties,
             "additionalProperties": False,
         }
+        for link in self.links:
+            link.update_json_schema(schema)
         return schema
 
     def to_schema(

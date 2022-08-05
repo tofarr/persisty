@@ -15,9 +15,9 @@ from persisty.context import PersistyContext
 from persisty.field.field_filter import FieldFilterOp, FieldFilter
 from persisty.field.write_transform.default_value_transform import DefaultValueTransform
 from persisty.field.write_transform.write_transform_mode import WriteTransformMode
-from persisty.relation.belongs_to import BelongsTo
-from persisty.relation.has_count import HasCount
-from persisty.relation.has_many import HasMany
+from persisty.link.belongs_to import BelongsTo
+from persisty.link.has_count import HasCount
+from persisty.link.has_many import HasMany
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_factory import search_filter_dataclass_for
 from persisty.search_order.search_order_factory import search_order_dataclass_for
@@ -207,18 +207,18 @@ class StorageSchemaFactory:
                 continue
             type_ = self.wrap_type_for_strawberry(field.schema.python_type)
             annotations[field.name] = type_
-        for relation in self.storage_meta.relations:
-            if isinstance(relation, BelongsTo):
-                annotations[relation.get_name()] = to_camel_case(relation.storage_name)
-                params[relation.get_name()] = self.create_belongs_to_field(relation)
-            if isinstance(relation, HasCount):
-                annotations[relation.get_name()] = int
-                params[relation.get_name()] = self.create_has_count_field(relation)
-            if isinstance(relation, HasMany):
-                annotations[relation.get_name()] = to_camel_case(
-                    f"{relation.storage_name}_result_set"
+        for link in self.storage_meta.links:
+            if isinstance(link, BelongsTo):
+                annotations[link.get_name()] = to_camel_case(link.storage_name)
+                params[link.get_name()] = self.create_belongs_to_field(link)
+            if isinstance(link, HasCount):
+                annotations[link.get_name()] = int
+                params[link.get_name()] = self.create_has_count_field(link)
+            if isinstance(link, HasMany):
+                annotations[link.get_name()] = to_camel_case(
+                    f"{link.storage_name}_result_set"
                 )
-                params[relation.get_name()] = self.create_has_many_field(relation)
+                params[link.get_name()] = self.create_has_many_field(link)
 
         type_name = _type_name(self.storage_meta.name)
         type_ = strawberry.type(type(type_name, (), params))

@@ -2,7 +2,7 @@ import importlib
 import pkgutil
 
 from persisty.context.persisty_context import PersistyContext
-from persisty.errors import PersistyError
+from persisty.impl.mem.mem_meta_storage import MemMetaStorage
 
 _default_context = None
 CONFIG_MODULE_PREFIX = "persisty_config_"
@@ -21,18 +21,9 @@ def new_default_persisty_context() -> PersistyContext:
         m for m in pkgutil.iter_modules() if m.name.startswith(CONFIG_MODULE_PREFIX)
     )
     modules = [importlib.import_module(m.name) for m in module_info]
-    modules.sort(key=lambda m: m.priority, reverse=True)
+    modules.sort(key=lambda m: m.priority)
+    persisty_context_ = PersistyContext(MemMetaStorage())  # The idea is that configs override this...
     for module in modules:
-        if hasattr(module, "create_meta_storage"):
-            meta_storage = module.create_meta_storage()
-            context = PersistyContext(meta_storage)
-            _configure_context(context, modules)
-            return context
-    raise PersistyError("no_context_config_found")
-
-
-def _configure_context(context: PersistyContext, modules):
-    modules.sort(key=lambda m: m.priority, reverse=True)
-    for module in modules:
-        if hasattr(module, "configure_context"):
-            getattr(module, "configure_context")(context)
+        # noinspection PyUnresolvedReferences
+        persisty_context_ = module.configure_context(persisty_context_)
+    return persisty_context_

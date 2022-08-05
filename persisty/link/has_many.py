@@ -4,12 +4,12 @@ from typing import Optional, get_type_hints
 from persisty.entity.entity_context import get_named_entity_type
 from persisty.errors import PersistyError
 from persisty.field.field_filter import FieldFilter, FieldFilterOp
-from persisty.relation.relation_abc import RelationABC
+from persisty.link.link_abc import LinkABC
 from persisty.util import to_camel_case, to_snake_case
 
 
 @dataclass
-class HasCount(RelationABC):
+class HasMany(LinkABC):
     name: Optional[str] = None  # Allows None so __set_name__ can exist
     storage_name: Optional[str] = None
     id_field_name: Optional[str] = None
@@ -17,8 +17,8 @@ class HasCount(RelationABC):
     def __set_name__(self, owner, name):
         self.name = name
         if not self.storage_name:
-            if name.endswith("_count"):
-                self.storage_name = name[:-6]
+            if name.endswith("_result_set"):
+                self.storage_name = name[:-11]
             else:
                 raise PersistyError(f"Please specify storage name for: {name}")
         if self.id_field_name is None:
@@ -28,13 +28,13 @@ class HasCount(RelationABC):
         return self.name
 
     def to_property_descriptor(self):
-        return HasCountPropertyDescriptor(
+        return HasManyPropertyDescriptor(
             self.name, to_camel_case(self.storage_name), self.id_field_name
         )
 
 
 @dataclass(frozen=True)
-class HasCountPropertyDescriptor:
+class HasManyPropertyDescriptor:
     name: str
     entity_name: str
     id_field_name: str
@@ -44,7 +44,7 @@ class HasCountPropertyDescriptor:
         if not key:
             return None
         entity_type = get_named_entity_type(self.entity_name)
-        count = entity_type.count(
+        result_set = entity_type.search(
             FieldFilter(self.id_field_name, FieldFilterOp.eq, key)
         )
-        return count
+        return result_set

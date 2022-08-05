@@ -15,12 +15,12 @@ from persisty.entity import entity_context
 from persisty.entity.entity import Entity
 from persisty.obj_storage.attr import Attr
 from persisty.obj_storage.stored import stored
-from persisty.relation.belongs_to import BelongsTo
-from persisty.relation.has_count import HasCount
-from persisty.relation.has_many import HasMany
+from persisty.link.belongs_to import BelongsTo
+from persisty.link.has_count import HasCount
+from persisty.link.has_many import HasMany
 from persisty.storage.result_set import ResultSet
 
-priority = 90
+priority = 100
 
 
 @stored
@@ -123,6 +123,7 @@ def seed_data():
     ).create()
 
 
-def configure_context(persisty_context: PersistyContext):
+def configure_context(persisty_context: PersistyContext) -> PersistyContext:
     configure_entities(persisty_context)
     seed_data()
+    return persisty_context

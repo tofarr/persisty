@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from marshy.factory.dataclass_marshaller_factory import DataclassMarshallerFactory
 
 from persisty.access_control.factory.access_control_factory import AccessControlFactory
@@ -8,9 +6,9 @@ from persisty.access_control.factory.permission_access_control_factory import (
 )
 from persisty.context import PersistyContext
 from persisty.impl.mem.mem_meta_storage import MemMetaStorage
-from persisty.util import UNDEFINED, get_logger
+from persisty.util import UNDEFINED
 
-priority = 100
+priority = 50
 
 
 def create_meta_storage():
@@ -30,3 +28,4 @@ def configure_context(persisty_context: PersistyContext):
     persisty_context.schema_context.marshaller_context.register_factory(
         DataclassMarshallerFactory(101, (UNDEFINED,))
     )
+    return persisty_context

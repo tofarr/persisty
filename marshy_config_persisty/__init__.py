@@ -14,10 +14,10 @@ from persisty.cache_control.ttl_cache_control import TtlCacheControl
 from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
-from persisty.relation.belongs_to import BelongsTo
-from persisty.relation.has_count import HasCount
-from persisty.relation.has_many import HasMany
-from persisty.relation.relation_abc import RelationABC
+from persisty.link.belongs_to import BelongsTo
+from persisty.link.has_count import HasCount
+from persisty.link.has_many import HasMany
+from persisty.link.link_abc import LinkABC
 from persisty.search_filter.and_filter import And
 from persisty.search_filter.exclude_all import ExcludeAll
 from persisty.search_filter.include_all import IncludeAll
@@ -56,7 +56,7 @@ def configure(context: MarshallerContext):
     configure_write_transforms(context)
     configure_access_control(context)
     configure_cache_control(context)
-    configure_relations(context)
+    configure_links(context)
 
 
 def configure_search_filters(context: MarshallerContext):
@@ -93,7 +93,7 @@ def configure_cache_control(context: MarshallerContext):
     register_impl(CacheControlABC, TtlCacheControl, context)
 
 
-def configure_relations(context: MarshallerContext):
-    register_impl(RelationABC, BelongsTo, context)
-    register_impl(RelationABC, HasMany, context)
-    register_impl(RelationABC, HasCount, context)
+def configure_links(context: MarshallerContext):
+    register_impl(LinkABC, BelongsTo, context)
+    register_impl(LinkABC, HasMany, context)
+    register_impl(LinkABC, HasCount, context)

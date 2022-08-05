@@ -29,8 +29,11 @@ def storage_meta_to_pydantic_model(
         field_check = _is_readable
     if not name:
         name = to_camel_case(storage_meta.name)
+    schema = storage_meta.to_schema()
+    properties = schema.schema['properties']
+    # noinspection PyTypeChecker
     annotations = {
-        f.name: field_for_pydantic(f.schema)
+        f.name: field_for_pydantic(Schema(properties[f.name], f.schema.python_type))
         for f in storage_meta.fields
         if field_check(f)
     }
@@ -56,6 +59,10 @@ def field_for_pydantic(schema: Schema) -> Type:
         def validate(cls, v):
             schema.validate(v)
             return v
+
+        @classmethod
+        def schema(cls):
+            return schema
 
         def __repr__(self):
             return f"FieldForPydantic({schema.__repr__()})"

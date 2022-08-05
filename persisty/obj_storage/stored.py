@@ -5,7 +5,7 @@ from persisty.access_control.constants import ALL_ACCESS
 from persisty.access_control.access_control_abc import AccessControlABC
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
-from persisty.relation.relation_abc import RelationABC
+from persisty.link.link_abc import LinkABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.obj_storage.attr import Attr
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
@@ -32,13 +32,13 @@ def stored(
         annotations = get_type_hints(cls_, localns={cls_.__name__: cls_})
 
         fields = []
-        relations = []
+        links = []
         for name, type_ in annotations.items():
             if name.startswith("__"):
                 continue
             attr = cls_dict.get(name, UNDEFINED)
-            if isinstance(attr, RelationABC):
-                relations.append(attr)
+            if isinstance(attr, LinkABC):
+                links.append(attr)
                 continue
             if not isinstance(attr, Attr):
                 schema = None
@@ -65,7 +65,7 @@ def stored(
             cache_control=cache_control,
             batch_size=batch_size,
             description=cls_.__doc__,
-            relations=tuple(relations),
+            links=tuple(links),
         )
         attrs = {
             **params,

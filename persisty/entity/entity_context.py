@@ -47,8 +47,8 @@ def create_entity_type(
     annotations = get_type_hints(type_)
     entity_properties = [EntityPropertyDescriptor(key) for key in annotations]
     params = {p.name: p for p in entity_properties}
-    for relation in storage_meta.relations:
-        params[relation.get_name()] = relation.to_property_descriptor()
+    for link in storage_meta.links:
+        params[link.get_name()] = link.to_property_descriptor()
     params["__annotations__"] = get_type_hints(type_)
     params["__persisty_storage_meta__"] = storage_meta
     params["__persisty_context__"] = persisty_context
