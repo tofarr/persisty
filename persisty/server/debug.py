@@ -20,7 +20,10 @@ def create_fastapi_app():
         from persisty.integration.fastapi.fastapi_route_factory import (
             admin_create_all_routes,
         )
-        api = FastAPI()
+        api = FastAPI(
+            title=os.environ.get('FAST_API_TITLE') or 'Persisty',
+            version=os.environ.get('FAST_API_VERSION') or '0.1.0'
+        )
         admin_create_all_routes(api, really_stupid_get_authorization)
         get_logger(__name__).info("FastAPI routes mounted...")
     except ModuleNotFoundError:

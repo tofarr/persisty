@@ -1,11 +1,16 @@
 from dataclasses import dataclass
 from typing import Optional, Callable, List
 
-from fastapi import FastAPI, Depends, Query, Path, Body
+from fastapi import FastAPI, Depends, Query, Path, Body, HTTPException
+from starlette import status
+from starlette.requests import Request
+from starlette.responses import JSONResponse
 
 from persisty.access_control.authorization import Authorization
+from persisty.cache_control.cache_header import CacheHeader
 from persisty.context import PersistyContext, get_default_persisty_context
 from persisty.integration.fastapi.fastapi_model_factory import FastApiModelFactory
+from persisty.integration.fastapi.starlette_cache_header import is_modified
 from persisty.storage.batch_edit import BatchEdit
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
@@ -53,40 +58,55 @@ class FastApiRouteFactory:
 
     def create_route_for_read(self, api: FastAPI):
         item_model = self.models.item_model
+        cache_control = self.storage_meta.cache_control
 
         @api.get(self.get_key_path(), response_model=Optional[item_model])
         async def read(
-            key: str, authorization: Authorization = Depends(self.get_authorization)
+            request: Request,
+            key: str,
+            authorization: Authorization = Depends(self.get_authorization),
         ) -> Optional[item_model]:
             """Retrieve an item using a key"""
             storage = self.get_storage(authorization)
             item = storage.read(key)
-            if item:
-                parsed = item_model(**item)
-                return parsed
+            if not item:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+            cache_header = cache_control.get_cache_header(item)
+            if not is_modified(cache_header, request):
+                return JSONResponse(None, status_code=status.HTTP_304_NOT_MODIFIED)
+            return JSONResponse(item, headers=cache_header.get_http_headers())
 
     def create_route_for_read_batch(self, api: FastAPI):
         item_model = self.models.item_model
+        cache_control = self.storage_meta.cache_control
 
         @api.get(f"/storage/{self.storage_meta.name}/batch", response_model=List[Optional[item_model]])
         async def read_batch(
-            key: List[str] = Query(), authorization: Authorization = Depends(self.get_authorization)
+            request: Request,
+            key: List[str] = Query(),
+            authorization: Authorization = Depends(self.get_authorization)
         ) -> List[Optional[item_model]]:
             """Retrieve a set of items using a key"""
             storage = self.get_storage(authorization)
             items = storage.read_batch(key)
-            parsed = [item_model(**i) for i in items]
-            return parsed
+            cache_header = CacheHeader().combine_with(cache_control.get_cache_header(i) for i in items if i)
+            if not is_modified(cache_header, request):
+                # noinspection PyTypeChecker
+                return JSONResponse(None, status_code=status.HTTP_304_NOT_MODIFIED)
+            # noinspection PyTypeChecker
+            return JSONResponse(items, headers=cache_header.get_http_headers())
 
     def create_route_for_search(self, api: FastAPI):
         search_filter_model = self.models.search_filter_model
         search_order_model = self.models.search_order_model
         result_set_model = self.models.result_set_model
+        cache_control = self.storage_meta.cache_control
 
         @api.get(
             f"/storage/{self.storage_meta.name}/search", response_model=result_set_model
         )
         async def search(
+            request: Request,
             search_filter: Optional[search_filter_model] = Depends(search_filter_model),
             search_order: Optional[search_order_model] = Depends(search_order_model),
             page_key: Optional[str] = None,
@@ -98,7 +118,16 @@ class FastApiRouteFactory:
             search_order = search_order.to_search_order()
             storage = self.get_storage(authorization)
             result_set = storage.search(search_filter, search_order, page_key, limit)
-            return result_set
+            cache_header = CacheHeader(result_set.next_page_key).combine_with(
+                cache_control.get_cache_header(r)
+                for r in result_set.results
+            )
+            if not is_modified(cache_header, request):
+                return JSONResponse(None, status_code=status.HTTP_304_NOT_MODIFIED)
+            return JSONResponse(
+                dict(results=result_set.results, next_page_key=result_set.next_page_key),
+                headers=cache_header.get_http_headers()
+            )
 
     def create_route_for_count(self, api: FastAPI):
         search_filter_model = self.models.search_filter_model
@@ -121,7 +150,9 @@ class FastApiRouteFactory:
         create_input_model = self.models.create_input_model
 
         @api.post(
-            f"/storage/{self.storage_meta.name}/item", response_model=Optional[item_model]
+            f"/storage/{self.storage_meta.name}/item",
+            response_model=Optional[item_model],
+            status_code=status.HTTP_201_CREATED
         )
         async def create(
             item: create_input_model,

@@ -16,6 +16,5 @@ if not os.environ.get("USERY_SQL_URN"):
 @lru_cache()
 def get_engine():
     from sqlalchemy import create_engine
-
     engine = create_engine(SQL_URN, echo=SQL_ECHO, future=True)
     return engine

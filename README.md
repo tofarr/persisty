@@ -7,6 +7,8 @@ Outside the scope of this project: Repo Synchronization
 Pre existing storage defined programmatically
 Storage derived from datastore state
 
+caching right the way through to the client.
+
 
 sqlalchemy integration
 change authorization permissions to scopes
