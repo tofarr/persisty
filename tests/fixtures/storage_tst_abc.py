@@ -3,20 +3,19 @@ from copy import deepcopy
 from datetime import datetime
 from typing import Tuple
 
-from dataclasses import dataclass, field
-from uuid import UUID, uuid4
+from dataclasses import dataclass
+from uuid import uuid4
 
 from marshy import ExternalType
 from marshy.types import ExternalItemType
 
 from persisty.errors import PersistyError
-from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.obj_storage.filter_factory import filter_factory
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_field import SearchOrderField
-from persisty.storage.batch_edit import Delete, Update, Create, BatchEditABC
+from persisty.storage.batch_edit import BatchEdit
 from persisty.field.field import Field
 from persisty.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.storage.result_set import ResultSet
@@ -364,22 +363,20 @@ class StorageTstABC(ABC):
     def test_edit_all(self):
         storage = self.new_number_name_storage()
         edits = storage.search_all(FieldFilter("value", FieldFilterOp.gt, 3))
-        edits = (Delete(n["id"]) for n in edits)
+        edits = (BatchEdit(delete_key=n["id"]) for n in edits)
         list(storage.edit_all(edits))
         self.assertEqual(3, storage.count())
         edits = [
-            Create(
-                dict(
-                    id="00000000-0000-0000-0001-000000000000",
-                    title="Minus One",
-                    value=-1,
-                )
-            ),
-            Update(
+            BatchEdit(create_item=dict(
+                id="00000000-0000-0000-0001-000000000000",
+                title="Minus One",
+                value=-1,
+            )),
+            BatchEdit(update_item=dict(
                 dict(id="00000000-0000-0000-0002-000000000001", title="Not existing")
-            ),
-            Update(dict(id="00000000-0000-0000-0000-000000000001", title="First")),
-            Delete("00000000-0000-0000-0002-000000000001"),
+            )),
+            BatchEdit(update_item=dict(id="00000000-0000-0000-0000-000000000001", title="First")),
+            BatchEdit(delete_key="00000000-0000-0000-0002-000000000001"),
         ]
         now = datetime.now().isoformat()
         results = [r.success for r in storage.edit_all(edits)]
@@ -425,7 +422,7 @@ class StorageTstABC(ABC):
 
     def test_edit_batch(self):
         storage = self.new_number_name_storage()
-        edits = [Delete(n["id"]) for n in storage.search().results]
+        edits = [BatchEdit(delete_key=n["id"]) for n in storage.search().results]
         results = list(storage.edit_batch(edits))
         for result in results:
             self.assertTrue(result.success)
@@ -487,24 +484,12 @@ class StorageTstABC(ABC):
                     break
 
     def test_edit_batch_errors(self):
-        @dataclass
-        class Mutate(BatchEditABC):
-            """Here to make trouble!"""
-
-            id: UUID = field(default_factory=uuid4)
-
-            def get_key(self, key_config: KeyConfigABC) -> str:
-                return "Mutate"
-
-            def get_id(self) -> UUID:
-                return self.id
-
         storage = self.new_number_name_storage()
         edits = [
-            Create(dict(id=NUMBER_NAMES_DICTS[1]["id"], value=-1, title="New Item")),
-            Update(dict(id=str(uuid4()), value=-2, title="Updated Item")),
-            Delete(str(uuid4())),
-            Mutate(),
+            BatchEdit(create_item=dict(id=NUMBER_NAMES_DICTS[1]["id"], value=-1, title="New Item")),
+            BatchEdit(update_item=dict(id=str(uuid4()), value=-2, title="Updated Item")),
+            BatchEdit(delete_key=str(uuid4())),
+            BatchEdit()
         ]
         results = storage.edit_batch(edits)
         self.assertFalse(next((True for r in results if r.success), False))
