@@ -34,6 +34,20 @@ class SqlalchemyTableStorage(StorageABC):
     # SqlAlchemy engine class
     table: Table
     session_maker: sessionmaker = field(default_factory=get_default_session_maker)
+    insert_stmt: Optional[Any] = None
+    read_stmt: Optional[Any] = None
+    delete_stmt: Optional[Any] = None
+
+    def __post_init__(self):
+        if not self.insert_stmt:
+            insert_stmt = self.table.insert
+            object.__setattr__(self, 'insert_stmt', insert_stmt)
+        if not self.read_stmt:
+            read_stmt = self.table.select(whereclause=self._key_where_clause())
+            object.__setattr__(self, 'read_stmt', read_stmt)
+        if not self.delete_stmt:
+            delete_stmt = self.table.delete(whereclause=self._key_where_clause())
+            object.__setattr__(self, 'delete_stmt', delete_stmt)
 
     def get_storage_meta(self) -> StorageMeta:
         return self.storage_meta
@@ -41,8 +55,7 @@ class SqlalchemyTableStorage(StorageABC):
     def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
         with self.session_maker() as session:
             dumped = self._dump(item, False, session)
-            stmt = self.table.insert(dumped)
-            result = session.execute(stmt)
+            result = session.execute(self.insert_stmt, *dumped)
             if result.inserted_primary_key:
                 for column, value in zip(
                     self.table.primary_key, result.inserted_primary_key
@@ -51,9 +64,8 @@ class SqlalchemyTableStorage(StorageABC):
             return item
 
     def read(self, key: str) -> Optional[ExternalItemType]:
-        stmt = self.table.select(whereclause=self._key_where_clause_from_str(key))
         with Session(self.session_maker()) as session:
-            row = session.execute(stmt).first()
+            row = session.execute(self.read_stmt, **self._key_from_str(key)).first()
             item = self._load(row, session)
             return item
 
@@ -77,9 +89,8 @@ class SqlalchemyTableStorage(StorageABC):
                 return item
 
     def delete(self, key: str) -> bool:
-        stmt = self.table.delete(whereclause=self._key_where_clause_from_str(key))
         with Session(self.session_maker()) as session:
-            row = session.execute(stmt)
+            row = session.execute(self.delete_stmt)
             return bool(row[0])
 
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
@@ -245,12 +256,8 @@ class SqlalchemyTableStorage(StorageABC):
         ])
         return key_where_clause
 
-    def _key_where_clause_from_str(self, key: str):
-        key_where_clause = and_(
-            self.table.columns.get(k) == v
-            for k, v in self.storage_meta.key_config.from_key_str(key)
-        )
-        return key_where_clause
+    def _key_from_str(self, key: str):
+        return self.storage_meta.key_config.from_key_str(key)
 
     def _key_where_clause_from_item(self, item: ExternalItemType):
         key_where_clause = and_(
