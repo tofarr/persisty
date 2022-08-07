@@ -74,7 +74,9 @@ class StorageSchemaFactory:
         ) -> result_set_type:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
-            search_filter = search_filter.to_search_filter() if search_filter else INCLUDE_ALL
+            search_filter = (
+                search_filter.to_search_filter() if search_filter else INCLUDE_ALL
+            )
             search_order = search_order.to_search_order() if search_order else None
             result_set = storage.search(search_filter, search_order, page_key, limit)
             result_set.results = [item_marshaller.load(r) for r in result_set.results]
@@ -90,7 +92,9 @@ class StorageSchemaFactory:
         ) -> int:
             authorization = self.get_authorization(info)
             storage = self.get_storage(authorization)
-            search_filter = search_filter.to_search_filter() if search_filter else INCLUDE_ALL
+            search_filter = (
+                search_filter.to_search_filter() if search_filter else INCLUDE_ALL
+            )
             count = storage.count(search_filter)
             return count
 
@@ -163,14 +167,18 @@ class StorageSchemaFactory:
         item_marshaller = self.get_marshaller_for_type(item_type)
 
         def resolver(
-            item: update_input_type, search_filter: Optional[search_filter_type], info: Info
+            item: update_input_type,
+            search_filter: Optional[search_filter_type],
+            info: Info,
         ) -> Optional[item_type]:
             authorization = self.get_authorization(info)
             storage = self.persisty_context.get_storage(
                 self.storage_meta.name, authorization
             )
             item = input_marshaller.dump(item)
-            search_filter = search_filter.to_search_filter() if search_filter else INCLUDE_ALL
+            search_filter = (
+                search_filter.to_search_filter() if search_filter else INCLUDE_ALL
+            )
             updated = storage.update(item, search_filter)
             if updated:
                 created = item_marshaller.load(updated)

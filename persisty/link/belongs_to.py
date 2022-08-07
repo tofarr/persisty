@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 from typing import Optional, get_type_hints, Any
 
-import typing_inspect
 from marshy.factory.optional_marshaller_factory import get_optional_type
 from marshy.types import ExternalItemType
-from schemey import Schema
 
 from persisty.entity.entity_context import get_named_entity_type
 from persisty.link.link_abc import LinkABC
+from persisty.link.on_delete import OnDelete
 from persisty.util import to_snake_case, to_camel_case, UNDEFINED
 
 
@@ -17,6 +16,7 @@ class BelongsTo(LinkABC):
     storage_name: Optional[str] = None
     id_field_name: Optional[str] = None
     optional: Optional[bool] = None
+    on_delete: OnDelete = OnDelete.BLOCK
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -45,8 +45,8 @@ class BelongsTo(LinkABC):
         )
 
     def update_json_schema(self, json_schema: ExternalItemType):
-        id_field_schema = json_schema.get('properties').get(self.id_field_name)
-        id_field_schema['persistyBelongsTo'] = self.storage_name
+        id_field_schema = json_schema.get("properties").get(self.id_field_name)
+        id_field_schema["persistyBelongsTo"] = self.storage_name
 
 
 @dataclass(frozen=True)

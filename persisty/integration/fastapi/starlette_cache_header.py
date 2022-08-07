@@ -17,8 +17,8 @@ def is_modified(cache_header: CacheHeader, request: Request):
 
 
 def is_modified_since(cache_header: CacheHeader, request: Request) -> Optional[bool]:
-    """ Determine if a resource was modified since the timestamp given. None implies unknown. """
-    if_modified_since = request.headers.get('If-Modified-Since')
+    """Determine if a resource was modified since the timestamp given. None implies unknown."""
+    if_modified_since = request.headers.get("If-Modified-Since")
     if if_modified_since is None:
         return None
     if cache_header.updated_at is None:
@@ -27,8 +27,8 @@ def is_modified_since(cache_header: CacheHeader, request: Request) -> Optional[b
 
 
 def is_none_match(cache_header: CacheHeader, request: Request) -> Optional[bool]:
-    """ Determine if a resource ETag matches the one in the request. None implies unknown. """
-    if_none_match = request.headers.get('If-None-Match')
+    """Determine if a resource ETag matches the one in the request. None implies unknown."""
+    if_none_match = request.headers.get("If-None-Match")
     if if_none_match is None:
         return None
     if cache_header.etag is None:

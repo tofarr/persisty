@@ -215,7 +215,9 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
                     if not filtered_updates:
                         result.code = "filtered_edit"
                         continue
-                    filtered_edits.append(BatchEdit(update_item=filtered_updates, id=edit.id))
+                    filtered_edits.append(
+                        BatchEdit(update_item=filtered_updates, id=edit.id)
+                    )
                 else:
                     item = items_by_key.get(edit.delete_key)
                     if not item:

@@ -1,5 +1,8 @@
 from dataclasses import dataclass, Field
-from typing import get_type_hints
+from typing import get_type_hints, Optional
+
+from marshy import get_default_context
+from marshy.marshaller_context import MarshallerContext
 
 from persisty.access_control.constants import ALL_ACCESS
 from persisty.access_control.access_control_abc import AccessControlABC
@@ -22,9 +25,12 @@ def stored(
     key_config: KeyConfigABC = FIELD_KEY_CONFIG,
     access_control: AccessControlABC = ALL_ACCESS,
     cache_control: CacheControlABC = SecureHashCacheControl(),
-    batch_size: int = 100
+    batch_size: int = 100,
+    marshaller_context: Optional[MarshallerContext] = None
 ):
     """Decorator inspired by dataclasses, containing stored meta."""
+    if marshaller_context is None:
+        marshaller_context = get_default_context()
 
     def wrapper(cls_):
         cls_dict = cls_.__dict__
@@ -50,7 +56,7 @@ def stored(
                     schema=schema,
                     write_transform=UNDEFINED
                     if attr is UNDEFINED
-                    else DefaultValueTransform(attr),
+                    else DefaultValueTransform(marshaller_context.dump(attr, type_)),
                 )
 
             attr.populate(key_config)

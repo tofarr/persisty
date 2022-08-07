@@ -81,7 +81,6 @@ class FastApiModelFactory:
             setattr(self, "_result_set_model", result_set_model)
         return result_set_model
 
-
     @property
     def batch_edit_model(self) -> Type:
         batch_edit_model = getattr(self, "_batch_edit_model", UNDEFINED)

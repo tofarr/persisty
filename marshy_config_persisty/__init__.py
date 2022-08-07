@@ -58,6 +58,8 @@ def configure(context: MarshallerContext):
     configure_cache_control(context)
     configure_links(context)
 
+    configure_sqlalchemy(context)
+
 
 def configure_search_filters(context: MarshallerContext):
     register_impl(SearchFilterABC, And, context)
@@ -97,3 +99,12 @@ def configure_links(context: MarshallerContext):
     register_impl(LinkABC, BelongsTo, context)
     register_impl(LinkABC, HasMany, context)
     register_impl(LinkABC, HasCount, context)
+
+
+def configure_sqlalchemy(context: MarshallerContext):
+    try:
+        # Local import in case sqlalchemy is not included (Optional extra)
+        from marshy_config_persisty.sqlalchemy_config import configure_converters
+        configure_converters(context)
+    except ValueError as e:
+        pass

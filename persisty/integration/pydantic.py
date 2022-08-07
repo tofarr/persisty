@@ -30,7 +30,7 @@ def storage_meta_to_pydantic_model(
     if not name:
         name = to_camel_case(storage_meta.name)
     schema = storage_meta.to_schema()
-    properties = schema.schema['properties']
+    properties = schema.schema["properties"]
     # noinspection PyTypeChecker
     annotations = {
         f.name: field_for_pydantic(Schema(properties[f.name], f.schema.python_type))

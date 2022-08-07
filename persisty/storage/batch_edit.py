@@ -12,6 +12,7 @@ class BatchEdit:
     """
     Batch edit should define one of create_item, update_item, or delete_key. Defining multiple is not valid.
     """
+
     id: UUID = field(default_factory=uuid4)
     create_item: Optional[ExternalItemType] = None
     update_item: Optional[ExternalItemType] = None
