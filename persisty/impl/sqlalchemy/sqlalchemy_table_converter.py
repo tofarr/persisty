@@ -3,7 +3,6 @@ from typing import Dict, Iterator
 
 from sqlalchemy import Table, MetaData
 from sqlalchemy.engine import Engine
-from sqlalchemy.orm import sessionmaker
 
 from persisty.impl.sqlalchemy.sqlalchemy_column_converter import (
     SqlalchemyColumnConverter,

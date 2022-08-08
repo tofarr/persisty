@@ -19,7 +19,9 @@ class NotFilterConverter(AndFilterConverter):
         context,
     ) -> Optional[Tuple[Any, bool]]:
         if isinstance(search_filter, Not):
-            clause, handled = context.convert(search_filter.search_filter, table, storage_meta)
+            clause, handled = context.convert(
+                search_filter.search_filter, table, storage_meta
+            )
             if clause:
                 clause = not_(clause)
             return clause, handled

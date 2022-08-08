@@ -218,6 +218,9 @@ class DynamodbTableStorage(StorageABC):
             if not last_evaluated_key:
                 return count
 
+    def edit_batch(self, edits: List[BatchEdit]) -> List[BatchEditResult]:
+
+
     def _load(self, item):
         if item is None:
             return None

@@ -11,6 +11,7 @@ caching right the way through to the client.
 
 
 sqlalchemy integration
+Revisit the filtered_storage class - make sure reads are not done unless required, and that they are definitely not repeated
 change authorization permissions to scopes
 make authorization jwt encodable / decodable
 
@@ -38,7 +39,7 @@ Add redis support
 Add remote http support
 
 
-Rate Limiting - Not Part of Core!
+Rate Limiting - Not Part of Core! But useful.
 
 
 Demo a distributed lock.

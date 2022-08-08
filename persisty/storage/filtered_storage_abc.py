@@ -87,10 +87,10 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
             old_item, self.get_storage_meta().fields
         ):
             return None
-        item = self.filter_update(old_item, updates)
-        if not item:
+        updates = self.filter_update(old_item, updates)
+        if not updates:
             return None
-        return self.get_storage().update(item, search_filter)
+        return self.get_storage().update(updates, search_filter)
 
     def delete(self, key: str) -> bool:
         item = self.get_storage().read(key)

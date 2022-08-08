@@ -14,7 +14,11 @@ _NULL = None
 
 class FieldFilterConverter(AndFilterConverter):
     def convert(
-        self, search_filter: SearchFilterABC, table: Table, storage_meta: StorageMeta, context
+        self,
+        search_filter: SearchFilterABC,
+        table: Table,
+        storage_meta: StorageMeta,
+        context,
     ) -> Optional[Tuple[Any, bool]]:
         if isinstance(search_filter, FieldFilter):
             col = table.columns.get(search_filter.name)

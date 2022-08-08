@@ -36,7 +36,7 @@ class AndFilterConverter(SearchFilterConverterABC):
         handled = True
         for sub_filter in search_filters:
             sub_clause, sub_handled = context.convert(sub_filter, table, storage_meta)
-            if sub_clause:
+            if sub_clause is not None:
                 sub_clauses.append(sub_clause)
             handled = handled and sub_handled
         return sub_clauses, handled

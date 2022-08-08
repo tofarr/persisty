@@ -105,6 +105,7 @@ def configure_sqlalchemy(context: MarshallerContext):
     try:
         # Local import in case sqlalchemy is not included (Optional extra)
         from marshy_config_persisty.sqlalchemy_config import configure_converters
+
         configure_converters(context)
     except ValueError as e:
         pass

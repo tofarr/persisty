@@ -27,7 +27,9 @@ def get_converters() -> List[SearchFilterConverterABC]:
 class SearchFilterConverterContext:
     converters: List[SearchFilterConverterABC] = field(default_factory=get_converters)
 
-    def convert(self, search_filter: SearchFilterABC, table: Table, storage_meta: StorageMeta) -> Tuple[Any, bool]:
+    def convert(
+        self, search_filter: SearchFilterABC, table: Table, storage_meta: StorageMeta
+    ) -> Tuple[Any, bool]:
         for converter in self.converters:
             result = converter.convert(search_filter, table, storage_meta, self)
             if result:

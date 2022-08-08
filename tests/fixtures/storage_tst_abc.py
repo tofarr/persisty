@@ -367,15 +367,25 @@ class StorageTstABC(ABC):
         list(storage.edit_all(edits))
         self.assertEqual(3, storage.count())
         edits = [
-            BatchEdit(create_item=dict(
-                id="00000000-0000-0000-0001-000000000000",
-                title="Minus One",
-                value=-1,
-            )),
-            BatchEdit(update_item=dict(
-                dict(id="00000000-0000-0000-0002-000000000001", title="Not existing")
-            )),
-            BatchEdit(update_item=dict(id="00000000-0000-0000-0000-000000000001", title="First")),
+            BatchEdit(
+                create_item=dict(
+                    id="00000000-0000-0000-0001-000000000000",
+                    title="Minus One",
+                    value=-1,
+                )
+            ),
+            BatchEdit(
+                update_item=dict(
+                    dict(
+                        id="00000000-0000-0000-0002-000000000001", title="Not existing"
+                    )
+                )
+            ),
+            BatchEdit(
+                update_item=dict(
+                    id="00000000-0000-0000-0000-000000000001", title="First"
+                )
+            ),
             BatchEdit(delete_key="00000000-0000-0000-0002-000000000001"),
         ]
         now = datetime.now().isoformat()
@@ -486,10 +496,16 @@ class StorageTstABC(ABC):
     def test_edit_batch_errors(self):
         storage = self.new_number_name_storage()
         edits = [
-            BatchEdit(create_item=dict(id=NUMBER_NAMES_DICTS[1]["id"], value=-1, title="New Item")),
-            BatchEdit(update_item=dict(id=str(uuid4()), value=-2, title="Updated Item")),
+            BatchEdit(
+                create_item=dict(
+                    id=NUMBER_NAMES_DICTS[1]["id"], value=-1, title="New Item"
+                )
+            ),
+            BatchEdit(
+                update_item=dict(id=str(uuid4()), value=-2, title="Updated Item")
+            ),
             BatchEdit(delete_key=str(uuid4())),
-            BatchEdit()
+            BatchEdit(),
         ]
         results = storage.edit_batch(edits)
         self.assertFalse(next((True for r in results if r.success), False))
