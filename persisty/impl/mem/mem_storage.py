@@ -117,7 +117,5 @@ def mem_storage(
     if storage is None:
         storage = {}
     storage = MemStorage(storage_meta, storage)
-    if storage_meta.access_control is not ALL_ACCESS:
-        storage = SecuredStorage(storage)
     storage = SchemaValidatingStorage(storage)
     return storage

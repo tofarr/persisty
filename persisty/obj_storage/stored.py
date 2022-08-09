@@ -1,15 +1,14 @@
 from dataclasses import dataclass, Field
-from typing import get_type_hints, Optional
+from typing import get_type_hints, Optional, Tuple
 
 from marshy import get_default_context
 from marshy.marshaller_context import MarshallerContext
 
-from persisty.access_control.constants import ALL_ACCESS
-from persisty.access_control.access_control_abc import AccessControlABC
+from persisty.access_control.factory.access_control_factory_abc import AccessControlFactoryABC
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from persisty.link.link_abc import LinkABC
-from persisty.storage.storage_meta import StorageMeta
+from persisty.storage.storage_meta import StorageMeta, DEFAULT_ACCESS_CONTROL_FACTORIES
 from persisty.obj_storage.attr import Attr
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
@@ -23,7 +22,7 @@ def stored(
     cls=None,
     *,
     key_config: KeyConfigABC = FIELD_KEY_CONFIG,
-    access_control: AccessControlABC = ALL_ACCESS,
+    access_control_factories: Tuple[AccessControlFactoryABC, ...] = DEFAULT_ACCESS_CONTROL_FACTORIES,
     cache_control: CacheControlABC = SecureHashCacheControl(),
     batch_size: int = 100,
     marshaller_context: Optional[MarshallerContext] = None
@@ -67,7 +66,7 @@ def stored(
             name=to_snake_case(cls_.__name__),
             fields=tuple(fields),
             key_config=key_config,
-            access_control=access_control,
+            access_control_factories=access_control_factories,
             cache_control=cache_control,
             batch_size=batch_size,
             description=cls_.__doc__,

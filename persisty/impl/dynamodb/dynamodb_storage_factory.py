@@ -158,7 +158,6 @@ class DynamodbStorageFactory:
             aws_profile_name=self.aws_profile_name,
             region_name=self.region_name,
         )
-        storage = SecuredStorage(storage)
         storage = SchemaValidatingStorage(storage)
         return storage
 

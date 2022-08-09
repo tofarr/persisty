@@ -9,8 +9,12 @@ from marshy.types import ExternalItemType
 from schemey import Schema, schema_from_json
 from schemey.schema import str_schema
 
-from persisty.access_control.access_control_abc import AccessControlABC
+from persisty.access_control.access_control import AccessControl
+from persisty.access_control.authorization import Authorization
 from persisty.access_control.constants import ALL_ACCESS
+from persisty.access_control.factory.access_control_factory_abc import AccessControlFactoryABC
+from persisty.access_control.factory.default_access_control_factory import DefaultAccessControlFactory
+from persisty.access_control.factory.permission_access_control_factory import PermissionAccessControlFactory
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
@@ -20,8 +24,14 @@ from persisty.link.link_abc import LinkABC
 from persisty.util import to_camel_case
 
 
-def is_readable(field: Field) -> bool:
-    return field.is_readable
+def is_readable(field_: Field) -> bool:
+    return field_.is_readable
+
+
+DEFAULT_ACCESS_CONTROL_FACTORIES = (
+    PermissionAccessControlFactory('root', ALL_ACCESS),
+    DefaultAccessControlFactory()
+)
 
 
 @dataclass(frozen=True)
@@ -31,7 +41,7 @@ class StorageMeta:
     )
     fields: Tuple[Field, ...]
     key_config: KeyConfigABC = FIELD_KEY_CONFIG
-    access_control: AccessControlABC = ALL_ACCESS
+    access_control_factories: Tuple[AccessControlFactoryABC, ...] = DEFAULT_ACCESS_CONTROL_FACTORIES
     cache_control: CacheControlABC = SecureHashCacheControl()
     batch_size: int = 100
     description: Optional[str] = None
@@ -66,6 +76,12 @@ class StorageMeta:
         fields = {f.name: f.name for f in self.fields if f.is_sortable}
         if fields:
             return Enum(f"{to_camel_case(self.name)}Sortable", fields)
+
+    def get_access_control(self, authorization: Authorization) -> Optional[AccessControl]:
+        for access_control_factory in self.access_control_factories:
+            access_control = access_control_factory.create_access_control(authorization)
+            if access_control:
+                return access_control
 
 
 def _add_prefix_to_refs(item: ExternalItemType, prefix: str):
