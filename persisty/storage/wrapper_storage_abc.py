@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator, List, Optional
+from typing import Iterator, List, Optional, Dict
 
 from marshy.types import ExternalItemType
 
@@ -33,13 +33,17 @@ class WrapperStorageABC(StorageABC, ABC):
     def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
         return self.get_storage().read_batch(keys)
 
-    def update(
-        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    def _update(
+        self,
+        key: str,
+        item: ExternalItemType,
+        updates: ExternalItemType,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
-        return self.get_storage().update(updates, search_filter)
+        return self.get_storage()._update(key, item, updates, search_filter)
 
-    def delete(self, key: str) -> bool:
-        return self.get_storage().delete(key)
+    def _delete(self, key: str, item: ExternalItemType) -> bool:
+        return self.get_storage()._delete(key, item)
 
     def search(
         self,
@@ -60,8 +64,10 @@ class WrapperStorageABC(StorageABC, ABC):
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         return self.get_storage().count(search_filter)
 
-    def edit_batch(self, edits: List[BatchEdit]):
-        return self.get_storage().edit_batch(edits)
+    def _edit_batch(
+        self, edits: List[BatchEdit], items_by_key: Dict[str, ExternalItemType]
+    ) -> List[BatchEditResult]:
+        return self.get_storage()._edit_batch(edits, items_by_key)
 
     def edit_all(self, edits: Iterator[BatchEdit]) -> Iterator[BatchEditResult]:
         return self.get_storage().edit_all(edits)

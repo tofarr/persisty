@@ -183,12 +183,9 @@ class StorageTstABC(ABC):
 
     def test_update_invalid_schema(self):
         storage = self.new_super_bowl_results_storage()
-        try:
-            storage.update({"code": "i", "date": "not_a_date"}) and self.assertTrue(
-                False
-            )
-        except PersistyError:
-            self.assertEqual(56, storage.count())
+        with self.assertRaises(PersistyError):
+            storage.update({"code": "i", "date": "not_a_date"})
+        self.assertEqual(56, storage.count())
         read = storage.read("i")
         expected = {
             "code": "i",

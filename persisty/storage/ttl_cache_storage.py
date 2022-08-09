@@ -83,17 +83,20 @@ class TtlCacheStorage(StorageABC):
         items = [items_by_key.get(key) for key in keys]
         return items
 
-    def update(
-        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    def _update(
+        self,
+        key: str,
+        item: ExternalItemType,
+        updates: ExternalItemType,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
-        item = self.storage.update(updates, search_filter)
+        item = self.storage._update(key, item, updates, search_filter)
         if item:
-            key = self.get_storage_meta().key_config.to_key_str(item)
             self.store_item_in_cache(key, item)
         return item
 
-    def delete(self, key: str) -> bool:
-        destroyed = self.storage.delete(key)
+    def _delete(self, key: str, item: ExternalItemType) -> bool:
+        destroyed = self.storage._delete(key, item)
         if key in self.cache:
             del self.cache[key]
         return destroyed

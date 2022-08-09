@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from itertools import islice
-from typing import Optional, List, Iterator
+from typing import Optional, List, Iterator, Dict
 
 from marshy.types import ExternalItemType
 
@@ -45,7 +45,6 @@ class StorageABC(ABC):
             items = self.read_batch(batch_keys)
             yield from items
 
-    @abstractmethod
     def update(
         self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
     ) -> Optional[ExternalItemType]:
@@ -55,9 +54,37 @@ class StorageABC(ABC):
         extracted from the updates did not match any existing item, return None. If any other error occurrecd, throw
         a PersistyError
         """
+        key = self.get_storage_meta().key_config.to_key_str(updates)
+        if not key:
+            raise PersistyError(f"missing_key:{updates}")
+        item = self.read(key)
+        if item and search_filter.match(item, self.get_storage_meta().fields):
+            return self._update(key, item, updates, search_filter)
 
     @abstractmethod
+    def _update(
+        self,
+        key: str,
+        item: ExternalItemType,
+        updates: ExternalItemType,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
+    ) -> Optional[ExternalItemType]:
+        """
+        Update (a partial set of values from) an item based upon its key and the constraint given. By convention
+        any UNDEFINED value is ignored. Return the full new version of the item if an update occured. If the key
+        extracted from the updates did not match any existing item, return None. If any other error occurrecd, throw
+        a PersistyError
+        """
+
     def delete(self, key: str) -> bool:
+        """Delete an stored from the data store. Return true if an item was deleted, false otherwise"""
+        item = self.read(key)
+        if not item:
+            return False
+        return self._delete(key, item)
+
+    @abstractmethod
+    def _delete(self, key: str, item: ExternalItemType) -> bool:
         """Delete an stored from the data store. Return true if an item was deleted, false otherwise"""
 
     def search(
@@ -101,7 +128,74 @@ class StorageABC(ABC):
         order
         """
         assert len(edits) <= self.get_storage_meta().batch_size
-        return edit_batch(self, edits)
+        to_key_str = self.get_storage_meta().key_config.to_key_str
+        keys = []
+        for edit in edits:
+            if edit.create_item:
+                key = to_key_str(edit.create_item)
+                if key:
+                    keys.append(key)
+            if edit.update_item:
+                keys.append(to_key_str(edit.update_item))
+            elif edit.delete_key:
+                keys.append(edit.delete_key)
+        items_by_key = {
+            to_key_str(item): item for item in self.read_batch(keys) if item
+        }
+        filtered_edits = []
+        for edit in edits:
+            if edit.create_item:
+                key = to_key_str(edit.create_item)
+                if key:
+                    item = items_by_key.get(key)
+                    if item:
+                        continue
+                filtered_edits.append(edit)
+                continue
+            if edit.update_item:
+                key = to_key_str(edit.update_item)
+                if key in items_by_key:
+                    filtered_edits.append(edit)
+            elif edit.delete_key and edit.delete_key in items_by_key:
+                filtered_edits.append(edit)
+        filtered_results = self._edit_batch(filtered_edits, items_by_key)
+        filtered_results_by_id = {r.edit.id: r for r in filtered_results}
+        results = [
+            filtered_results_by_id.get(e.id)
+            or BatchEditResult(
+                e, False, "duplicate_key" if e.create_item else "missing_key"
+            )
+            for e in edits
+        ]
+        return results
+
+    def _edit_batch(
+        self, edits: List[BatchEdit], items_by_key: Dict[str, ExternalItemType]
+    ) -> List[BatchEditResult]:
+        """
+        Simple non transactional implementation of batch functionality. Other implementations employ strategies to boost
+        performance such reducing the number of network round trips. Whether an edit is atomic is dependant on the
+        underlying mechanism, but should be reflected in the results.
+        """
+        results = []
+        to_key_str = self.get_storage_meta().key_config.to_key_str
+        for edit in edits:
+            try:
+                if edit.create_item:
+                    item = self.create(edit.create_item)
+                    results.append(BatchEditResult(edit, bool(item)))
+                elif edit.update_item:
+                    key = to_key_str(edit.update_item)
+                    item = items_by_key[key]
+                    item = self._update(key, item, edit.update_item)
+                    results.append(BatchEditResult(edit, bool(item)))
+                else:
+                    item = items_by_key.get(edit.delete_key)
+                    deleted = self._delete(edit.delete_key, item)
+                    results.append(BatchEditResult(edit, bool(deleted)))
+            except Exception as e:
+                results.append(BatchEditResult(edit, False, "exception", str(e)))
+        return results
 
     def edit_all(self, edits: Iterator[BatchEdit]) -> Iterator[BatchEditResult]:
         edits = iter(edits)
@@ -122,26 +216,3 @@ def skip_to_page(page_key: str, items, key_config):
             key = key_config.to_key_str(next_result)
             if key == page_key:
                 return
-
-
-def edit_batch(storage, edits: List[BatchEdit]) -> List[BatchEditResult]:
-    """
-    Simple non transactional implementation of batch functionality. Other implementations employ strategies to boost
-    performance such reducing the number of network round trips. Whether an edit is atomic is dependant on the
-    underlying mechanism, but should be reflected in the results.
-    """
-    results = []
-    for edit in edits:
-        try:
-            if edit.create_item:
-                item = storage.create(edit.create_item)
-                results.append(BatchEditResult(edit, bool(item)))
-            elif edit.update_item:
-                item = storage.update(edit.update_item)
-                results.append(BatchEditResult(edit, bool(item)))
-            else:
-                deleted = storage.delete(edit.delete_key)
-                results.append(BatchEditResult(edit, bool(deleted)))
-        except Exception as e:
-            results.append(BatchEditResult(edit, False, "exception", str(e)))
-    return results

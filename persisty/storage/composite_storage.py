@@ -97,15 +97,16 @@ class CompositeStorage(StorageABC):
             self.apply_key_to_item(storage, item)
         return item
 
-    def update(
-        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    def _update(
+        self,
+        key: str,
+        item: ExternalItemType,
+        updates: ExternalItemType,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
-        key = self.get_storage_meta().key_config.to_key_str(updates)
         storage, sub_key = self.storage_for_key(key)
-        updates = storage.get_storage_meta().key_config.from_key_str(
-            sub_key, {**updates}
-        )
-        item = storage.update(updates, search_filter)
+        updates.update(storage.get_storage_meta().key_config.from_key_str(sub_key))
+        item = storage._update(sub_key, item, updates, search_filter)
         if item:
             self.apply_key_to_item(storage, item)
         return item
@@ -113,6 +114,10 @@ class CompositeStorage(StorageABC):
     def delete(self, key: str) -> bool:
         storage, sub_key = self.storage_for_key(key)
         return storage.delete(sub_key)
+
+    def _delete(self, key: str, item: ExternalItemType) -> bool:
+        storage, sub_key = self.storage_for_key(key)
+        return storage._delete(sub_key, item)
 
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         count = 0

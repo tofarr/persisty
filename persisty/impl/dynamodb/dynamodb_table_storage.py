@@ -14,6 +14,8 @@ from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.field.field import load_field_values
 from persisty.field.field_filter import FieldFilter, FieldFilterOp
+from persisty.storage.batch_edit import BatchEdit
+from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_order.search_order import SearchOrder
@@ -118,6 +120,15 @@ class DynamodbTableStorage(StorageABC):
         loaded = self._load(response.get("Attributes"))
         return loaded
 
+    def _update(
+        self,
+        key: str,
+        item: ExternalItemType,
+        updates: ExternalItemType,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
+    ) -> Optional[ExternalItemType]:
+        return self.update(updates, search_filter)
+
     @catch_client_error
     def delete(self, key: str) -> bool:
         table = self._dynamodb_table()
@@ -125,6 +136,9 @@ class DynamodbTableStorage(StorageABC):
         response = table.delete_item(Key=key_dict, ReturnValues="ALL_OLD")
         attributes = response.get("Attributes")
         return bool(attributes)
+
+    def _delete(self, key: str, item: ExternalItemType) -> bool:
+        return self.delete(key)
 
     @catch_client_error
     def search(
@@ -168,10 +182,10 @@ class DynamodbTableStorage(StorageABC):
                 response = table.query(**query_args)
             else:
                 response = table.scan(**query_args)
-            items = response["Items"]
+            items = [self._load(item) for item in response["Items"]]
             if not handled:
                 items = [
-                    self._load(item)
+                    item
                     for item in items
                     if search_filter.match(item, self.storage_meta.fields)
                 ]
@@ -218,8 +232,33 @@ class DynamodbTableStorage(StorageABC):
             if not last_evaluated_key:
                 return count
 
-    def edit_batch(self, edits: List[BatchEdit]) -> List[BatchEditResult]:
-
+    def _edit_batch(
+        self, edits: List[BatchEdit], items_by_key: Dict[str, ExternalItemType]
+    ) -> List[BatchEditResult]:
+        assert len(edits) <= self.storage_meta.batch_size
+        results = []
+        key_config = self.storage_meta.key_config
+        table = self._dynamodb_table()
+        with table.batch_writer() as batch:
+            for edit in edits:
+                if edit.create_item:
+                    item = self._dump(edit.create_item)
+                    batch.put_item(Item=item)
+                    results.append(BatchEditResult(edit, True))
+                elif edit.update_item:
+                    key = key_config.to_key_str(edit.update_item)
+                    item = items_by_key[key]
+                    updates = self._dump(edit.update_item, True)
+                    item = self._convert_to_decimals(item)
+                    item.update(updates)
+                    batch.put_item(Item=item)
+                    edit.update_item = self._load(item)
+                    results.append(BatchEditResult(edit, True))
+                else:
+                    key = key_config.from_key_str(edit.delete_key)
+                    batch.delete_item(Key=key)
+                    results.append(BatchEditResult(edit, True))
+        return results
 
     def _load(self, item):
         if item is None:

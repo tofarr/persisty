@@ -104,7 +104,9 @@ class SqlalchemyTableStorage(StorageABC):
             items = [items_by_key.get(k) for k in keys]
             return items
 
-    def _read_batch(self, connection, keys: List[Dict], cols: Optional[List[Column]] = None) -> List[Dict]:
+    def _read_batch(
+        self, connection, keys: List[Dict], cols: Optional[List[Column]] = None
+    ) -> List[Dict]:
         # NB: Does not enforce ordering
         assert len(keys) <= self.storage_meta.batch_size
         where_clause = self._key_where_clause_from_items(keys)
@@ -118,31 +120,34 @@ class SqlalchemyTableStorage(StorageABC):
         return items
 
     @catch_db_error
-    def update(
-        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    def _update(
+        self,
+        key: str,
+        item: ExternalItemType,
+        updates: ExternalItemType,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
-        if search_filter is EXCLUDE_ALL:
-            return
-        key = {f.name: updates[f.name] for f in self._key_fields()}
         with self.engine.begin() as connection:
-            item = self._read(connection, key)
-            if not item:
-                return
-            item.update(**updates)
-            updates = self._dump(item, True)
-            stmt = self.table.update(self._key_where_clause_from_item(item))
+            updates = self._dump(updates, True)
+            stmt = self.table.update(self._key_where_clause_from_item(updates))
             connection.execute(stmt, updates)
+            key = self.storage_meta.key_config.from_key_str(key)
+            loaded = self._read(connection, key)
             connection.commit()
-            return self._load(updates)
+            return loaded
 
     @catch_db_error
     def delete(self, key: str) -> bool:
         with self.engine.begin() as connection:
-            stmt = self.table.delete(whereclause=self._key_where_clause())
             key = self.storage_meta.key_config.from_key_str(key)
+            stmt = self.table.delete(whereclause=self._key_where_clause())
             result = connection.execute(stmt, key)
             connection.commit()
             return bool(result.rowcount)
+
+    @catch_db_error
+    def _delete(self, key: str, item: ExternalItemType) -> bool:
+        return self.delete(key)
 
     @catch_db_error
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
@@ -261,14 +266,24 @@ class SqlalchemyTableStorage(StorageABC):
             connection.commit()
             return results
 
-    def _batch_insert(self, connection, edits: List[BatchEdit], results_by_id: Dict[UUID, BatchEditResult]):
+    def _batch_insert(
+        self,
+        connection,
+        edits: List[BatchEdit],
+        results_by_id: Dict[UUID, BatchEditResult],
+    ):
         stmt = self.table.insert(bind=connection)
         items_to_create = [self._dump(e.create_item, False) for e in edits]
         connection.execute(stmt, items_to_create)
         for insert in edits:
             results_by_id[insert.id] = BatchEditResult(insert, True)
 
-    def _batch_update(self, connection, edits: List[BatchEdit], results_by_id: Dict[UUID, BatchEditResult]):
+    def _batch_update(
+        self,
+        connection,
+        edits: List[BatchEdit],
+        results_by_id: Dict[UUID, BatchEditResult],
+    ):
         edits_by_key = {}
         key_dicts_to_load_row = []
         key_fields = [f.name for f in self._key_fields()]
@@ -288,7 +303,12 @@ class SqlalchemyTableStorage(StorageABC):
             connection.execute(stmt, item_updates)
             results_by_id[edit.id].success = True
 
-    def _batch_delete(self, connection, edits: List[BatchEdit], results_by_id: Dict[UUID, BatchEditResult]):
+    def _batch_delete(
+        self,
+        connection,
+        edits: List[BatchEdit],
+        results_by_id: Dict[UUID, BatchEditResult],
+    ):
         key_config = self.storage_meta.key_config
         delete_keys = [key_config.from_key_str(d.delete_key) for d in edits]
         existing_keys = self._get_existing_keys(connection, delete_keys)

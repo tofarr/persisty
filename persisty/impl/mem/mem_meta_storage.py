@@ -51,10 +51,15 @@ class MemMetaStorage(MetaStorageABC, WrapperStorageABC):
     def get_storage(self) -> StorageABC:
         return self.meta_storage
 
-    def update(
-        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    def _update(
+        self,
+        key: str,
+        item: ExternalItemType,
+        updates: ExternalItemType,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
-        new_item = self.get_storage().update(updates, search_filter)
+        new_item = self.get_storage()._update(key, item, updates, search_filter)
+        self.after_update(new_item)
         return new_item
 
     def after_update(self, new_item: ExternalItemType):
@@ -65,7 +70,7 @@ class MemMetaStorage(MetaStorageABC, WrapperStorageABC):
                 storage = _unnest(storage)
                 storage.storage_meta = storage_meta
 
-    def delete(self, key: str) -> bool:
+    def _delete(self, key: str, item: ExternalItemType) -> bool:
         result = self.get_storage().delete(key)
         if result:
             self.after_delete(key)

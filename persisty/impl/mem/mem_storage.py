@@ -46,22 +46,21 @@ class MemStorage(StorageABC):
             item = self._load(item)
         return item
 
-    def update(
-        self, item: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    def _update(
+        self,
+        key: str,
+        item: ExternalItemType,
+        updates: ExternalItemType,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
         search_filter.validate_for_fields(self.storage_meta.fields)
-        key = self.storage_meta.key_config.to_key_str(item)
-        if key is None:
-            raise PersistyError(f"missing_key:{item}")
-        stored = self.items.get(key)
-        if not stored or not search_filter.match(stored, self.storage_meta.fields):
-            return None
-        dumped = self._dump(item, True)
-        stored.update(dumped)
-        item = self._load(stored)
+        dumped = self._dump(updates, True)
+        item.update(dumped)
+        self.items[key] = item
+        item = self._load(item)
         return item
 
-    def delete(self, key: str) -> bool:
+    def _delete(self, key: str, item: ExternalItemType) -> bool:
         if key not in self.items:
             return False
         result = self.items.pop(key, UNDEFINED)

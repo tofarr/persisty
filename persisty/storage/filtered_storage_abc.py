@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator, List, Optional, Tuple
+from typing import Iterator, List, Optional, Tuple, Dict
 
 from marshy.types import ExternalItemType
 
@@ -76,26 +76,21 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
         items = [self.filter_read(item) if item else None for item in items]
         return items
 
-    def update(
-        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+    def _update(
+        self,
+        key: str,
+        item: ExternalItemType,
+        updates: ExternalItemType,
+        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
-        key = self.get_storage_meta().key_config.to_key_str(updates)
-        if not key:
-            raise PersistyError(f"missing_key:{updates}")
-        old_item = self.read(key)
-        if not old_item or not search_filter.match(
-            old_item, self.get_storage_meta().fields
-        ):
-            return None
-        updates = self.filter_update(old_item, updates)
+        updates = self.filter_update(item, updates)
         if not updates:
             return None
-        return self.get_storage().update(updates, search_filter)
+        return self.get_storage()._update(key, item, updates, search_filter)
 
-    def delete(self, key: str) -> bool:
-        item = self.get_storage().read(key)
-        if item and self.allow_delete(item):
-            return self.get_storage().delete(key)
+    def _delete(self, key: str, item: ExternalItemType) -> bool:
+        if self.allow_delete(item):
+            return self.get_storage()._delete(key, item)
         return False
 
     def search(
@@ -180,14 +175,11 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
         count = sum(1 for _ in items)
         return count
 
-    def edit_batch(self, edits: List[BatchEdit]):
+    def _edit_batch(
+        self, edits: List[BatchEdit], items_by_key: Dict[str, ExternalItemType]
+    ) -> List[BatchEditResult]:
         assert len(edits) <= self.get_storage_meta().batch_size
         key_config = self.get_storage_meta().key_config
-
-        # Load the items that may be needed for filtering
-        keys = list(filter(None, (edit.get_key(key_config) for edit in edits)))
-        items = self.read_batch(keys)
-        items_by_key = {key_config.to_key_str(item): item for item in items if item}
 
         results = [BatchEditResult(edit, code="unknown") for edit in edits]
         results_by_id = {result.edit.id: result for result in results}
@@ -196,10 +188,6 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
             result = results_by_id[edit.id]
             try:
                 if edit.create_item:
-                    key = edit.get_key(key_config)
-                    if key and key in items_by_key:
-                        result.code = "create_existing"
-                        continue
                     item = self.filter_create(edit.create_item)
                     if not item:
                         result.code = "fitered_edit"
@@ -230,7 +218,9 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
             except PersistyError as e:
                 result.msg = str(e)
         if filtered_edits:
-            filtered_results = self.get_storage().edit_batch(filtered_edits)
+            filtered_results = self.get_storage()._edit_batch(
+                filtered_edits, items_by_key
+            )
             for filtered_result in filtered_results:
                 result = results_by_id.get(filtered_result.edit.id)
                 # If result is missing, then the nested storage has not implemented the protocol correctly
