@@ -112,7 +112,9 @@ class StorageSchemaFactory:
         marshaller = self.get_marshaller_for_type(item_type)
 
         async def read(keys: List[str]) -> List[item_type]:
-            storage = self.persisty_context.get_storage(storage_name, authorization)
+            storage = self.persisty_context.get_storage_by_name(
+                storage_name, authorization
+            )
             items = list(storage.read_all(keys))
             loaded = [marshaller.load(r) if r else None for r in items]
             return loaded
@@ -172,7 +174,7 @@ class StorageSchemaFactory:
             info: Info,
         ) -> Optional[item_type]:
             authorization = self.get_authorization(info)
-            storage = self.persisty_context.get_storage(
+            storage = self.persisty_context.get_storage_by_name(
                 self.storage_meta.name, authorization
             )
             item = input_marshaller.dump(item)
@@ -187,12 +189,9 @@ class StorageSchemaFactory:
         return _strawberry_field(f"update_{self.storage_meta.name}", resolver)
 
     def create_delete_field(self) -> Optional[StrawberryField]:
-        if getattr(self.storage_meta.access_control, "deletable", True) is False:
-            return
-
         def resolver(key: str, info: Info) -> bool:
             authorization = self.get_authorization(info)
-            storage = self.persisty_context.get_storage(
+            storage = self.persisty_context.get_storage_by_name(
                 self.storage_meta.name, authorization
             )
             result = storage.delete(key)
@@ -250,7 +249,7 @@ class StorageSchemaFactory:
             authorization = self.get_authorization(info)
             key = self.storage_meta.key_config.to_key_str(root)
             search_filter = FieldFilter(has_count.id_field_name, FieldFilterOp.eq, key)
-            storage = self.persisty_context.get_storage(
+            storage = self.persisty_context.get_storage_by_name(
                 has_count.storage_name, authorization
             )
             count = storage.count(search_filter)
@@ -265,7 +264,7 @@ class StorageSchemaFactory:
             authorization = self.get_authorization(info)
             key = self.storage_meta.key_config.to_key_str(root)
             search_filter = FieldFilter(has_many.id_field_name, FieldFilterOp.eq, key)
-            storage = self.persisty_context.get_storage(
+            storage = self.persisty_context.get_storage_by_name(
                 has_many.storage_name, authorization
             )
             result_set = storage.search(search_filter)
@@ -390,6 +389,7 @@ class StorageSchemaFactory:
                 return output
             output = strawberry.type(type_, description=type_.__doc__)
             self.types[type_.__name__] = output
+            # noinspection PyDataclass
             for field in dataclasses.fields(output):
                 field.type = self.wrap_type_for_strawberry(field.type)
             return output
@@ -412,14 +412,15 @@ class StorageSchemaFactory:
             )
             return origin[args]
         if dataclasses.is_dataclass(type_):
-            input = self.inputs.get(type_.__name__)
-            if input:
-                return input
-            input = strawberry.input(type_, description=type_.__doc__)
-            self.inputs[type_.__name__] = input
-            for field in dataclasses.fields(input):
+            input_ = self.inputs.get(type_.__name__)
+            if input_:
+                return input_
+            input_ = strawberry.input(type_, description=type_.__doc__)
+            self.inputs[type_.__name__] = input_
+            # noinspection PyDataclass
+            for field in dataclasses.fields(input_):
                 field.type = self.wrap_input_for_strawberry(field.type)
-            return input
+            return input_
         if inspect.isclass(type_) and issubclass(type_, Enum):
             strawberry_enum = self.enums.get(type_.__name__)
             if not strawberry_enum:
@@ -430,7 +431,9 @@ class StorageSchemaFactory:
         return type_
 
     def get_storage(self, authorization: Authorization):
-        return self.persisty_context.get_storage(self.storage_meta.name, authorization)
+        return self.persisty_context.get_storage_by_name(
+            self.storage_meta.name, authorization
+        )
 
 
 def _strawberry_field(name: str, resolver: Callable) -> StrawberryField:

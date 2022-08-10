@@ -23,7 +23,7 @@ def admin_create_all_routes(
 ):
     if persisty_context is None:
         persisty_context = get_default_persisty_context()
-    for storage_meta in persisty_context.admin_get_all_storage_meta():
+    for storage_meta in persisty_context.get_all_storage_meta():
         route_factory = FastApiRouteFactory(
             storage_meta, persisty_context, get_authorization
         )
@@ -52,7 +52,9 @@ class FastApiRouteFactory:
         self.create_route_for_conditional_update(api)
 
     def get_storage(self, authorization: Authorization) -> StorageABC:
-        return self.persisty_context.get_storage(self.storage_meta.name, authorization)
+        return self.persisty_context.get_storage_by_name(
+            self.storage_meta.name, authorization
+        )
 
     def create_route_for_read(self, api: FastAPI):
         item_model = self.models.item_model

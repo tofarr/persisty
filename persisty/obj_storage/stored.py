@@ -4,7 +4,9 @@ from typing import get_type_hints, Optional, Tuple
 from marshy import get_default_context
 from marshy.marshaller_context import MarshallerContext
 
-from persisty.access_control.factory.access_control_factory_abc import AccessControlFactoryABC
+from persisty.access_control.factory.access_control_factory_abc import (
+    AccessControlFactoryABC,
+)
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from persisty.link.link_abc import LinkABC
@@ -22,7 +24,9 @@ def stored(
     cls=None,
     *,
     key_config: KeyConfigABC = FIELD_KEY_CONFIG,
-    access_control_factories: Tuple[AccessControlFactoryABC, ...] = DEFAULT_ACCESS_CONTROL_FACTORIES,
+    access_control_factories: Tuple[
+        AccessControlFactoryABC, ...
+    ] = DEFAULT_ACCESS_CONTROL_FACTORIES,
     cache_control: CacheControlABC = SecureHashCacheControl(),
     batch_size: int = 100,
     marshaller_context: Optional[MarshallerContext] = None

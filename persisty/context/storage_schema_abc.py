@@ -11,7 +11,7 @@ class StorageSchemaABC(ABC):
 
     @abstractmethod
     def get_name(self) -> str:
-        """ Get the name of this factory """
+        """Get the name of this factory"""
 
     @abstractmethod
     def create_storage(
@@ -22,10 +22,11 @@ class StorageSchemaABC(ABC):
         """Create a storage object for the meta given if possible."""
 
     @abstractmethod
-    def get_storage_by_name(self, storage_name: str, authorization: Authorization) -> Optional[StorageABC]:
-        """ Get a storage object based upon its name """
+    def get_storage_by_name(
+        self, storage_name: str, authorization: Authorization
+    ) -> Optional[StorageABC]:
+        """Get a storage object based upon its name"""
 
     @abstractmethod
     def get_all_storage_meta(self) -> Iterator[StorageMeta]:
-        """ Get the meta for this factory """
-
+        """Get the meta for this factory"""

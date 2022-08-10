@@ -128,7 +128,7 @@ class Entity:
         key = self.get_key()
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
-        storage = context.get_storage(storage_meta.name, self.__authorization__)
+        storage = context.get_storage_by_name(storage_meta.name, self.__authorization__)
         item = storage.read(key)
         self.__remote_values__ = self.get_marshaller().load(item)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
@@ -139,7 +139,7 @@ class Entity:
     def read(cls, key: str, authorization: Authorization) -> T:
         storage_meta = cls.get_storage_meta()
         context = cls.__persisty_context__
-        storage = context.get_storage(storage_meta.name, authorization)
+        storage = context.get_storage_by_name(storage_meta.name, authorization)
         item = storage.read(key)
         local_values = cls.get_marshaller().load(item)
         entity = cls(authorization, local_values)
@@ -149,7 +149,7 @@ class Entity:
         self.__trigger_descriptors__("before_create")
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
-        storage = context.get_storage(storage_meta.name, self.__authorization__)
+        storage = context.get_storage_by_name(storage_meta.name, self.__authorization__)
         created = storage.create(self.dump())
         self.__remote_values__ = self.get_marshaller().load(created)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
@@ -160,7 +160,7 @@ class Entity:
         self.__trigger_descriptors__("before_update")
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
-        storage = context.get_storage(storage_meta.name, self.__authorization__)
+        storage = context.get_storage_by_name(storage_meta.name, self.__authorization__)
         created = storage.update(self.dump())
         self.__remote_values__ = self.get_marshaller().load(created)
         self.__local_values__ = dataclasses.replace(self.__remote_values__)
@@ -176,7 +176,7 @@ class Entity:
         key = self.get_key()
         storage_meta = self.get_storage_meta()
         context = self.__persisty_context__
-        storage = context.get_storage(storage_meta.name, self.__authorization__)
+        storage = context.get_storage_by_name(storage_meta.name, self.__authorization__)
         result = storage.delete(key)
         if result:
             self.__trigger_descriptors__("after_delete")
@@ -191,7 +191,7 @@ class Entity:
     ) -> ResultSet[T]:
         storage_meta = cls.get_storage_meta()
         context = cls.__persisty_context__
-        storage = context.get_storage(storage_meta.name, authorization)
+        storage = context.get_storage_by_name(storage_meta.name, authorization)
         result_set = storage.search(search_filter, search_order)
         marshaller = cls.get_marshaller()
         result_set.results = [
@@ -209,7 +209,7 @@ class Entity:
     ) -> Iterator[T]:
         storage_meta = cls.get_storage_meta()
         context = cls.__persisty_context__
-        storage = context.get_storage(storage_meta.name, authorization)
+        storage = context.get_storage_by_name(storage_meta.name, authorization)
         marshaller = cls.get_marshaller()
         items = storage.search_all(search_filter, search_order)
         items = (cls(authorization, None, marshaller.load(item)) for item in items)
@@ -223,6 +223,6 @@ class Entity:
     ) -> int:
         storage_meta = cls.get_storage_meta()
         context = cls.__persisty_context__
-        storage = context.get_storage(storage_meta.name, authorization)
+        storage = context.get_storage_by_name(storage_meta.name, authorization)
         count = storage.count(search_filter)
         return count

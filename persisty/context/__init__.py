@@ -22,9 +22,7 @@ def new_default_persisty_context() -> PersistyContext:
     )
     modules = [importlib.import_module(m.name) for m in module_info]
     modules.sort(key=lambda m: m.priority)
-    persisty_context_ = PersistyContext(
-        MemMetaStorage()
-    )  # The idea is that configs override this...
+    persisty_context_ = PersistyContext()  # The idea is that configs override this...
     for module in modules:
         # noinspection PyUnresolvedReferences
         persisty_context_ = module.configure_context(persisty_context_)

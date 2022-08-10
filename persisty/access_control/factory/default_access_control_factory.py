@@ -15,4 +15,3 @@ class DefaultAccessControlFactory(AccessControlFactoryABC):
 
     def create_access_control(self, authorization: Authorization):
         return self.access_control
-

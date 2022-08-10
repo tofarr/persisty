@@ -6,6 +6,15 @@ from marshy.marshaller_context import MarshallerContext
 from marshy_config_persisty.field_filter_op_marshaller import FieldFilterOpMarshaller
 from persisty.access_control.access_control import AccessControl
 from persisty.access_control.access_control_abc import AccessControlABC
+from persisty.access_control.factory.access_control_factory_abc import (
+    AccessControlFactoryABC,
+)
+from persisty.access_control.factory.default_access_control_factory import (
+    DefaultAccessControlFactory,
+)
+from persisty.access_control.factory.permission_access_control_factory import (
+    PermissionAccessControlFactory,
+)
 from persisty.access_control.field_filter_access_control import FieldFilterAccessControl
 from persisty.cache_control.cache_control_abc import CacheControlABC
 from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
@@ -55,6 +64,7 @@ def configure(context: MarshallerContext):
     configure_key_configs(context)
     configure_write_transforms(context)
     configure_access_control(context)
+    configure_access_control_factory(context)
     configure_cache_control(context)
     configure_links(context)
 
@@ -89,6 +99,11 @@ def configure_access_control(context: MarshallerContext):
     register_impl(AccessControlABC, AccessControl, context)
 
 
+def configure_access_control_factory(context: MarshallerContext):
+    register_impl(AccessControlFactoryABC, DefaultAccessControlFactory, context)
+    register_impl(AccessControlFactoryABC, PermissionAccessControlFactory, context)
+
+
 def configure_cache_control(context: MarshallerContext):
     register_impl(CacheControlABC, SecureHashCacheControl, context)
     register_impl(CacheControlABC, TimestampCacheControl, context)
@@ -107,5 +122,5 @@ def configure_sqlalchemy(context: MarshallerContext):
         from marshy_config_persisty.sqlalchemy_config import configure_converters
 
         configure_converters(context)
-    except ValueError as e:
+    except ValueError:
         pass

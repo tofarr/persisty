@@ -13,6 +13,7 @@ from persisty.access_control.authorization import ROOT
 from persisty.context import PersistyContext
 from persisty.entity import entity_context
 from persisty.entity.entity import Entity
+from persisty.impl.mem.mem_storage_schema import MemStorageSchema
 from persisty.obj_storage.attr import Attr
 from persisty.obj_storage.stored import stored
 from persisty.link.belongs_to import BelongsTo
@@ -124,6 +125,7 @@ def seed_data():
 
 
 def configure_context(persisty_context: PersistyContext) -> PersistyContext:
+    persisty_context.register_storage_schema(MemStorageSchema())
     configure_entities(persisty_context)
     seed_data()
     return persisty_context

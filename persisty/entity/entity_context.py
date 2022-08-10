@@ -6,6 +6,7 @@ from typing import TypeVar, Type, Union, get_type_hints, Optional
 
 from dataclasses import dataclass
 
+from persisty.access_control.authorization import Authorization, ROOT
 from persisty.entity.entity import Entity
 from persisty.entity.entity_property_descriptor import EntityPropertyDescriptor
 from persisty.errors import PersistyError
@@ -24,7 +25,9 @@ def get_named_entity_type(name: str) -> Type[Union[T, Entity]]:
 
 
 def create_entity_type(
-    type_: T, persisty_context: Optional[PersistyContext] = None
+    type_: T,
+    persisty_context: Optional[PersistyContext] = None,
+    authorization: Authorization = ROOT,
 ) -> Type[Union[T, Entity]]:
     entity_type = _entity_types.get(type_.__name__)
     if entity_type:
@@ -34,13 +37,12 @@ def create_entity_type(
 
         persisty_context = get_default_persisty_context()
     storage_meta = get_storage_meta(type_)
-    dumped = persisty_context.schema_context.marshaller_context.dump(
-        storage_meta, StorageMeta
+    existing_storage = persisty_context.get_storage_by_name(
+        storage_meta.name, authorization
     )
-    existing_storage_meta = persisty_context.meta_storage.read(storage_meta.name)
-    if not existing_storage_meta:
-        persisty_context.meta_storage.create(dumped)
-    elif existing_storage_meta != dumped:
+    if not existing_storage:
+        persisty_context.create_storage(storage_meta, authorization)
+    elif existing_storage.get_storage_meta() != storage_meta:
         raise PersistyError(
             f"Storage meta did not match existing: {storage_meta.name} (Maybe a migration is required?)"
         )

@@ -10,36 +10,20 @@ from strawberry.field import StrawberryField, UNRESOLVED
 from strawberry.type import StrawberryContainer, StrawberryOptional
 from strawberry.types.fields.resolver import StrawberryResolver
 
-from persisty.access_control.authorization import Authorization, ROOT
 from persisty.context import get_default_persisty_context, PersistyContext
-from persisty.errors import PersistyError
-from persisty.storage.storage_meta import StorageMeta
 from persisty.integration.strawberry.storage_schema_factory import StorageSchemaFactory
 from persisty.util import to_snake_case
 
 
-def new_schema_from_storage(
-    authorization: Authorization = ROOT,
-    persisty_context: Optional[PersistyContext] = None,
-):
+def new_schema_from_storage(persisty_context: Optional[PersistyContext] = None):
     if persisty_context is None:
         persisty_context = get_default_persisty_context()
-    meta_storage = persisty_context.get_meta_storage(authorization)
     query_params: Dict = {}
     mutation_params: Dict = {}
-
-    storage_meta_list = list(meta_storage.search_all())
-    if not storage_meta_list:
-        raise PersistyError("No storage detected in context!")
-
-    marshaller = persisty_context.schema_context.marshaller_context.get_marshaller(
-        StorageMeta
-    )
     types = {}
     inputs = {}
     enums = {}
-    for storage_meta in storage_meta_list:
-        storage_meta = marshaller.load(storage_meta)
+    for storage_meta in persisty_context.get_all_storage_meta():
         factory = StorageSchemaFactory(
             persisty_context, storage_meta, types, inputs, enums
         )

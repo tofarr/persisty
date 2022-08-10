@@ -14,28 +14,33 @@ from persisty.storage.storage_meta import StorageMeta
 
 @dataclass
 class MemStorageSchema(StorageSchemaABC):
-    """ Storage factory for in memory storage. Saves a cache of storage items for reuse. """
-    name: str = 'mem'
+    """Storage factory for in memory storage. Saves a cache of storage items for reuse."""
+
+    name: str = "mem"
     storage: Dict[str, StorageABC] = field(default_factory=dict)
 
     def get_name(self) -> str:
         return self.name
 
-    def create_storage(self, storage_meta: StorageMeta, authorization: Authorization) -> Optional[StorageABC]:
+    def create_storage(
+        self, storage_meta: StorageMeta, authorization: Authorization
+    ) -> Optional[StorageABC]:
         storage = self.storage.get(storage_meta.name)
         if storage:
             if storage.get_storage_meta() != storage_meta:
-                raise PersistyError(f'storage_already_exists:{storage_meta.name}')
-            else:
-                storage = MemStorage(storage_meta)
-                storage = SchemaValidatingStorage(storage, storage_meta.to_schema())
-                self.storage[storage_meta.name] = storage
+                raise PersistyError(f"storage_already_exists:{storage_meta.name}")
+        else:
+            storage = MemStorage(storage_meta)
+            storage = SchemaValidatingStorage(storage, storage_meta.to_schema())
+            self.storage[storage_meta.name] = storage
         access_control = storage_meta.get_access_control(authorization)
         if access_control != ALL_ACCESS:
             storage = SecuredStorage(storage, access_control)
         return storage
 
-    def get_storage_by_name(self, storage_name: str, authorization: Authorization) -> Optional[StorageABC]:
+    def get_storage_by_name(
+        self, storage_name: str, authorization: Authorization
+    ) -> Optional[StorageABC]:
         storage = self.storage.get(storage_name)
         if not storage:
             return

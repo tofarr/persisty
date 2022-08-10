@@ -14,7 +14,7 @@ from persisty.storage.storage_meta import StorageMeta
 
 @dataclass
 class DynamodbStorageSchema(StorageSchemaABC):
-    name: str = 'dynamodb'
+    name: str = "dynamodb"
     aws_profile_name: Optional[str] = None
     region_name: Optional[str] = None
     metadata_storage: Optional[StorageABC] = None
@@ -27,7 +27,7 @@ class DynamodbStorageSchema(StorageSchemaABC):
             factory = DynamodbStorageFactory(
                 storage_meta=STORED_STORAGE_META,
                 aws_profile_name=self.aws_profile_name,
-                region_name=self.region_name
+                region_name=self.region_name,
             )
             factory.derive_from_storage_meta()
             try:
@@ -39,27 +39,33 @@ class DynamodbStorageSchema(StorageSchemaABC):
     def get_name(self) -> str:
         return self.name
 
-    def create_storage(self, storage_meta: StorageMeta, authorization: Authorization) -> Optional[StorageABC]:
+    def create_storage(
+        self, storage_meta: StorageMeta, authorization: Authorization
+    ) -> Optional[StorageABC]:
         factory = DynamodbStorageFactory(
             storage_meta=storage_meta,
             aws_profile_name=self.aws_profile_name,
-            region_name=self.region_name
+            region_name=self.region_name,
         )
         factory.derive_from_storage_meta()
         factory.create_table_in_aws()
         return SchemaValidatingStorage(factory.create_storage())
 
-    def get_storage_by_name(self, storage_name: str, authorization: Authorization) -> Optional[StorageABC]:
+    def get_storage_by_name(
+        self, storage_name: str, authorization: Authorization
+    ) -> Optional[StorageABC]:
         storage_meta = self.metadata_storage.read(storage_name)
         if storage_meta is None:
             return
-        storage_meta = self.schema_context.marshaller_context.load(StorageMeta, storage_meta)
+        storage_meta = self.schema_context.marshaller_context.load(
+            StorageMeta, storage_meta
+        )
         factory = DynamodbStorageFactory(
             storage_meta=storage_meta,
             aws_profile_name=self.aws_profile_name,
-            region_name=self.region_name
+            region_name=self.region_name,
         )
-        factory.load_from_aws() # Grab indexes and such not in AWS
+        factory.load_from_aws()  # Grab indexes and such not in AWS
         return factory.create_storage()
 
     def get_all_storage_meta(self) -> Iterator[StorageMeta]:
