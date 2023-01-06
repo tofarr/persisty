@@ -4,7 +4,6 @@ from typing import Optional, get_type_hints, Any
 from marshy.factory.optional_marshaller_factory import get_optional_type
 from marshy.types import ExternalItemType
 
-from persisty.entity.entity_context import get_named_entity_type
 from persisty.link.link_abc import LinkABC
 from persisty.link.on_delete import OnDelete
 from persisty.util import to_snake_case, to_camel_case, UNDEFINED

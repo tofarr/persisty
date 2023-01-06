@@ -121,7 +121,8 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
     def test_convert_to_decimals(self):
         item = {"some_int": 10, "some_float": 0.5}
         # noinspection PyUnresolvedReferences
-        storage = self.new_tag_storage().storage.storage
+        storage = self.new_tag_storage()
+        storage = storage.storage
         converted = storage._convert_to_decimals(item)
         expected = {"some_int": Decimal("10"), "some_float": Decimal(0.5)}
         self.assertEqual(expected, converted)

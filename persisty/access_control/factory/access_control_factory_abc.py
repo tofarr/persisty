@@ -1,8 +1,9 @@
 from abc import abstractmethod, ABC
 from typing import Optional
 
+from servey.security.authorization import Authorization
+
 from persisty.access_control.access_control import AccessControl
-from persisty.access_control.authorization import Authorization
 
 
 class AccessControlFactoryABC(ABC):

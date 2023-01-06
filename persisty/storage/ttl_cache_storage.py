@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from marshy import dump
 from marshy.types import ExternalItemType
 
+from servey.cache_control.ttl_cache_control import TtlCacheControl
 from persisty.storage.batch_edit import BatchEdit
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet

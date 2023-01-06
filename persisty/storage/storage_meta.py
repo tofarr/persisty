@@ -6,11 +6,13 @@ from typing import Tuple, Optional, Callable
 from dataclasses import dataclass, field
 
 from marshy.types import ExternalItemType
-from schemey import Schema, schema_from_json
+from schemey import Schema, SchemaContext, get_default_schema_context
 from schemey.schema import str_schema
+from servey.cache_control.cache_control_abc import CacheControlABC
+from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
+from servey.security.authorization import Authorization
 
 from persisty.access_control.access_control import AccessControl
-from persisty.access_control.authorization import Authorization
 from persisty.access_control.constants import ALL_ACCESS
 from persisty.access_control.factory.access_control_factory_abc import (
     AccessControlFactoryABC,
@@ -18,11 +20,9 @@ from persisty.access_control.factory.access_control_factory_abc import (
 from persisty.access_control.factory.default_access_control_factory import (
     DefaultAccessControlFactory,
 )
-from persisty.access_control.factory.permission_access_control_factory import (
-    PermissionAccessControlFactory,
+from persisty.access_control.factory.scope_access_control_factory import (
+    ScopeAccessControlFactory,
 )
-from persisty.cache_control.cache_control_abc import CacheControlABC
-from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from persisty.key_config.field_key_config import FIELD_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.field.field import Field
@@ -35,7 +35,7 @@ def is_readable(field_: Field) -> bool:
 
 
 DEFAULT_ACCESS_CONTROL_FACTORIES = (
-    PermissionAccessControlFactory("root", ALL_ACCESS),
+    ScopeAccessControlFactory("root", ALL_ACCESS),
     DefaultAccessControlFactory(),
 )
 
@@ -67,7 +67,7 @@ class StorageMeta:
         }
         schema = {
             "type": "object",
-            "name": self.name,
+            "name": self.name.title(),
             "properties": properties,
             "additionalProperties": False,
         }
@@ -75,10 +75,25 @@ class StorageMeta:
             link.update_json_schema(schema)
         return schema
 
+    def schema_for_read(self):
+        pass
+
+    def schema_for_create(self):
+        pass
+
+    def schema_for_update(self):
+        pass
+
     def to_schema(
-        self, prefix: str = "", check: Callable[[Field], bool] = is_readable
+        self,
+        prefix: str = "",
+        check: Callable[[Field], bool] = is_readable,
+        schema_context: Optional[SchemaContext] = None,
     ) -> Schema:
-        return schema_from_json(self.to_json_schema(prefix, check))
+        if not schema_context:
+            schema_context = get_default_schema_context()
+        schema = schema_context.schema_from_json(self.to_json_schema(prefix, check))
+        return schema
 
     def get_sortable_fields_as_enum(self):
         fields = {f.name: f.name for f in self.fields if f.is_sortable}

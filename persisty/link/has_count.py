@@ -3,7 +3,6 @@ from typing import Optional, get_type_hints
 
 from schemey import Schema
 
-from persisty.entity.entity_context import get_named_entity_type
 from persisty.errors import PersistyError
 from persisty.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.link.link_abc import LinkABC

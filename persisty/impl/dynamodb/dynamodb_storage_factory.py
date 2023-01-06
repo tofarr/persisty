@@ -1,8 +1,11 @@
 import dataclasses
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional, Dict, Set
 
 import boto3
+from marshy.types import ExternalItemType
+from servey.security.authorization import Authorization
+from servey.cache_control.ttl_cache_control import TtlCacheControl
 
 from persisty.errors import PersistyError
 from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex, from_schema
@@ -11,19 +14,47 @@ from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.obj_storage.attr import Attr
 from persisty.field.field_type import FieldType
 from persisty.storage.schema_validating_storage import SchemaValidatingStorage
-from persisty.storage.secured_storage import SecuredStorage
+from persisty.storage.secured_storage import secured_storage
+from persisty.storage.storage_abc import StorageABC
+from persisty.storage.storage_factory_abc import StorageFactoryABC
 from persisty.storage.storage_meta import StorageMeta
+from persisty.storage.ttl_cache_storage import TtlCacheStorage
 from persisty.util import filter_none
 
 
 @dataclass
-class DynamodbStorageFactory:
+class DynamodbStorageFactory(StorageFactoryABC):
     storage_meta: Optional[StorageMeta] = None
     aws_profile_name: Optional[str] = None
     region_name: Optional[str] = None
     table_name: Optional[str] = None
     index: Optional[DynamodbIndex] = None
     global_secondary_indexes: Optional[Dict[str, DynamodbIndex]] = None
+    cache: ExternalItemType = field(default_factory=dict)
+    cached_result_sets: ExternalItemType = field(default_factory=dict)
+
+    def get_storage_meta(self) -> StorageMeta:
+        return self.storage_meta
+
+    def create(self, authorization: Optional[Authorization]) -> Optional[StorageABC]:
+        storage = DynamodbTableStorage(
+            storage_meta=self.storage_meta,
+            table_name=self.table_name,
+            index=self.index,
+            global_secondary_indexes=self.global_secondary_indexes or {},
+            aws_profile_name=self.aws_profile_name,
+            region_name=self.region_name,
+        )
+        storage = SchemaValidatingStorage(storage)
+        if isinstance(self.storage_meta.cache_control, TtlCacheControl):
+            storage = TtlCacheStorage(
+                storage,
+                self.cache,
+                self.cached_result_sets,
+                self.storage_meta.cache_control.ttl,
+            )
+        storage = secured_storage(storage, authorization)
+        return storage
 
     def sanitize_storage_meta(self):
         overrides = []
@@ -148,18 +179,6 @@ class DynamodbStorageFactory:
 
         response = dynamodb.create_table(**kwargs)
         return response
-
-    def create_storage(self):
-        storage = DynamodbTableStorage(
-            storage_meta=self.storage_meta,
-            table_name=self.table_name,
-            index=self.index,
-            global_secondary_indexes=self.global_secondary_indexes or {},
-            aws_profile_name=self.aws_profile_name,
-            region_name=self.region_name,
-        )
-        storage = SchemaValidatingStorage(storage)
-        return storage
 
     def _attrs(self, index: DynamodbIndex, attrs: Dict):
         attrs[index.pk] = self._attr(index.pk)

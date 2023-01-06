@@ -42,7 +42,7 @@ class StorageTstABC(ABC):
         expected = {
             "code": "iii",
             "year": 1969,
-            "date": "1969-01-12T00:00:00",
+            "date": "1969-01-12T00:00:00+00:00",
             "winner_code": "new_york_jets",
             "runner_up_code": "baltimore",
             "winner_score": 16,
@@ -62,7 +62,7 @@ class StorageTstABC(ABC):
             {
                 "code": "vii",
                 "year": 1973,
-                "date": "1973-01-14T00:00:00",
+                "date": "1973-01-14T00:00:00+00:00",
                 "winner_code": "miami",
                 "runner_up_code": "washington",
                 "winner_score": 14,
@@ -72,7 +72,7 @@ class StorageTstABC(ABC):
             {
                 "code": "ii",
                 "year": 1968,
-                "date": "1968-01-14T00:00:00",
+                "date": "1968-01-14T00:00:00+00:00",
                 "winner_code": "green_bay",
                 "runner_up_code": "oakland",
                 "winner_score": 33,
@@ -81,7 +81,7 @@ class StorageTstABC(ABC):
             {
                 "code": "xx",
                 "year": 1986,
-                "date": "1986-01-26T00:00:00",
+                "date": "1986-01-26T00:00:00+00:00",
                 "winner_code": "chicago",
                 "runner_up_code": "new_england",
                 "winner_score": 46,
@@ -98,7 +98,7 @@ class StorageTstABC(ABC):
         item = {
             "code": "c",
             "year": 2067,
-            "date": "2067-01-15T00:00:00",
+            "date": "2067-01-15T00:00:00+00:00",
             "winner_code": "robots",
             "runner_up_code": "humans",
             "winner_score": 1234,
@@ -116,7 +116,7 @@ class StorageTstABC(ABC):
         item = {
             "code": "c",
             "year": "not_a_year",
-            "date": "2067-01-15T00:00:00",
+            "date": "2067-01-15T00:00:00+00:00",
             "winner_code": "robots",
             "runner_up_code": "humans",
             "winner_score": 1234,
@@ -132,7 +132,7 @@ class StorageTstABC(ABC):
         item = {
             "code": "i",
             "year": 1971,
-            "date": "1967-01-15T00:00:00",
+            "date": "1967-01-15T00:00:00+00:00",
             "winner_code": "green_bay",
             "runner_up_code": "kansas_city",
             "winner_score": 35,
@@ -156,7 +156,7 @@ class StorageTstABC(ABC):
         expected = {
             "code": "li",
             "year": 2017,
-            "date": "2017-02-05T00:00:00",
+            "date": "2017-02-05T00:00:00+00:00",
             "winner_code": "tom_brady_fan_club",
             "runner_up_code": "atlanta",
             "winner_score": 34,
@@ -190,7 +190,7 @@ class StorageTstABC(ABC):
         expected = {
             "code": "i",
             "year": 1967,
-            "date": "1967-01-15T00:00:00",
+            "date": "1967-01-15T00:00:00+00:00",
             "winner_code": "green_bay",
             "runner_up_code": "kansas_city",
             "winner_score": 35,
@@ -212,7 +212,7 @@ class StorageTstABC(ABC):
         expected = {
             "code": "li",
             "year": 2017,
-            "date": "2017-02-05T00:00:00",
+            "date": "2017-02-05T00:00:00+00:00",
             "winner_code": "tom_brady_fan_club",
             "runner_up_code": "atlanta",
             "winner_score": 34,
@@ -233,7 +233,7 @@ class StorageTstABC(ABC):
         expected = {
             "code": "li",
             "year": 2017,
-            "date": "2017-02-05T00:00:00",
+            "date": "2017-02-05T00:00:00+00:00",
             "winner_code": "new_england",
             "runner_up_code": "atlanta",
             "winner_score": 34,
@@ -404,24 +404,24 @@ class StorageTstABC(ABC):
                 "value": -1,
             },
             {
-                "created_at": "1969-12-31T17:00:00",
+                "created_at": "1970-01-01T00:00:00+00:00",
                 "id": "00000000-0000-0000-0000-000000000001",
                 "title": "First",
                 "updated_at": results[1]["updated_at"],
                 "value": 1,
             },
             {
-                "created_at": "1969-12-31T17:00:00",
+                "created_at": "1970-01-01T00:00:00+00:00",
                 "id": "00000000-0000-0000-0000-000000000002",
                 "title": "Two",
-                "updated_at": "1969-12-31T17:00:00",
+                "updated_at": "1970-01-01T00:00:00+00:00",
                 "value": 2,
             },
             {
-                "created_at": "1969-12-31T17:00:00",
+                "created_at": "1970-01-01T00:00:00+00:00",
                 "id": "00000000-0000-0000-0000-000000000003",
                 "title": "Three",
-                "updated_at": "1969-12-31T17:00:00",
+                "updated_at": "1970-01-01T00:00:00+00:00",
                 "value": 3,
             },
         ]

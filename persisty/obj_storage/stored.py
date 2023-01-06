@@ -7,8 +7,8 @@ from marshy.marshaller_context import MarshallerContext
 from persisty.access_control.factory.access_control_factory_abc import (
     AccessControlFactoryABC,
 )
-from persisty.cache_control.cache_control_abc import CacheControlABC
-from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
+from servey.cache_control.cache_control_abc import CacheControlABC
+from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from persisty.link.link_abc import LinkABC
 from persisty.storage.storage_meta import StorageMeta, DEFAULT_ACCESS_CONTROL_FACTORIES
 from persisty.obj_storage.attr import Attr
@@ -88,5 +88,5 @@ def stored(
     return wrapper if cls is None else wrapper(cls)
 
 
-def get_storage_meta(stored_) -> StorageMeta:
-    return stored_.__persisty_storage_meta__
+def get_storage_meta(stored_) -> Optional[StorageMeta]:
+    return getattr(stored_, "__persisty_storage_meta__", None)

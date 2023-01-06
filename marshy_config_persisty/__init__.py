@@ -12,14 +12,16 @@ from persisty.access_control.factory.access_control_factory_abc import (
 from persisty.access_control.factory.default_access_control_factory import (
     DefaultAccessControlFactory,
 )
-from persisty.access_control.factory.permission_access_control_factory import (
-    PermissionAccessControlFactory,
+from persisty.access_control.factory.scope_access_control_factory import (
+    ScopeAccessControlFactory,
 )
 from persisty.access_control.field_filter_access_control import FieldFilterAccessControl
-from persisty.cache_control.cache_control_abc import CacheControlABC
-from persisty.cache_control.secure_hash_cache_control import SecureHashCacheControl
-from persisty.cache_control.timestamp_cache_control import TimestampCacheControl
-from persisty.cache_control.ttl_cache_control import TtlCacheControl
+from servey.cache_control.cache_control_abc import CacheControlABC
+from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
+from servey.cache_control.timestamp_cache_control import TimestampCacheControl
+from servey.cache_control.ttl_cache_control import TtlCacheControl
+from persisty.finder.module_storage_factory_finder import ModuleStorageFactoryFinder
+from persisty.finder.storage_factory_finder_abc import StorageFactoryFinderABC
 from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
@@ -67,6 +69,7 @@ def configure(context: MarshallerContext):
     configure_access_control_factory(context)
     configure_cache_control(context)
     configure_links(context)
+    configure_finders(context)
 
     configure_sqlalchemy(context)
 
@@ -101,7 +104,7 @@ def configure_access_control(context: MarshallerContext):
 
 def configure_access_control_factory(context: MarshallerContext):
     register_impl(AccessControlFactoryABC, DefaultAccessControlFactory, context)
-    register_impl(AccessControlFactoryABC, PermissionAccessControlFactory, context)
+    register_impl(AccessControlFactoryABC, ScopeAccessControlFactory, context)
 
 
 def configure_cache_control(context: MarshallerContext):
@@ -124,3 +127,7 @@ def configure_sqlalchemy(context: MarshallerContext):
         configure_converters(context)
     except ValueError:
         pass
+
+
+def configure_finders(context: MarshallerContext):
+    register_impl(StorageFactoryFinderABC, ModuleStorageFactoryFinder, context)

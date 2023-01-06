@@ -11,7 +11,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "i",
         "year": 1967,
-        "date": "1967-01-15T00:00:00",
+        "date": "1967-01-15T00:00:00+00:00",
         "winner_code": "green_bay",
         "runner_up_code": "kansas_city",
         "winner_score": 35,
@@ -20,7 +20,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "ii",
         "year": 1968,
-        "date": "1968-01-14T00:00:00",
+        "date": "1968-01-14T00:00:00+00:00",
         "winner_code": "green_bay",
         "runner_up_code": "oakland",
         "winner_score": 33,
@@ -29,7 +29,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "iii",
         "year": 1969,
-        "date": "1969-01-12T00:00:00",
+        "date": "1969-01-12T00:00:00+00:00",
         "winner_code": "new_york_jets",
         "runner_up_code": "baltimore",
         "winner_score": 16,
@@ -38,7 +38,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "iv",
         "year": 1970,
-        "date": "1970-01-11T00:00:00",
+        "date": "1970-01-11T00:00:00+00:00",
         "winner_code": "kansas_city",
         "runner_up_code": "minnesota",
         "winner_score": 23,
@@ -47,7 +47,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "v",
         "year": 1971,
-        "date": "1971-01-17T00:00:00",
+        "date": "1971-01-17T00:00:00+00:00",
         "winner_code": "baltimore",
         "runner_up_code": "dallas",
         "winner_score": 16,
@@ -56,7 +56,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "vi",
         "year": 1972,
-        "date": "1972-01-16T00:00:00",
+        "date": "1972-01-16T00:00:00+00:00",
         "winner_code": "dallas",
         "runner_up_code": "miami",
         "winner_score": 24,
@@ -65,7 +65,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "vii",
         "year": 1973,
-        "date": "1973-01-14T00:00:00",
+        "date": "1973-01-14T00:00:00+00:00",
         "winner_code": "miami",
         "runner_up_code": "washington",
         "winner_score": 14,
@@ -74,7 +74,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "viii",
         "year": 1974,
-        "date": "1974-01-13T00:00:00",
+        "date": "1974-01-13T00:00:00+00:00",
         "winner_code": "miami",
         "runner_up_code": "minnesota",
         "winner_score": 24,
@@ -83,7 +83,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "ix",
         "year": 1975,
-        "date": "1975-01-12T00:00:00",
+        "date": "1975-01-12T00:00:00+00:00",
         "winner_code": "pittsburgh",
         "runner_up_code": "minnesota",
         "winner_score": 16,
@@ -92,7 +92,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "x",
         "year": 1976,
-        "date": "1976-01-18T00:00:00",
+        "date": "1976-01-18T00:00:00+00:00",
         "winner_code": "pittsburgh",
         "runner_up_code": "dallas",
         "winner_score": 21,
@@ -101,7 +101,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xi",
         "year": 1977,
-        "date": "1977-01-09T00:00:00",
+        "date": "1977-01-09T00:00:00+00:00",
         "winner_code": "oakland",
         "runner_up_code": "minnesota",
         "winner_score": 32,
@@ -110,7 +110,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xii",
         "year": 1978,
-        "date": "1978-01-15T00:00:00",
+        "date": "1978-01-15T00:00:00+00:00",
         "winner_code": "dallas",
         "runner_up_code": "denver",
         "winner_score": 27,
@@ -119,7 +119,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xiii",
         "year": 1979,
-        "date": "1979-01-21T00:00:00",
+        "date": "1979-01-21T00:00:00+00:00",
         "winner_code": "pittsburgh",
         "runner_up_code": "dallas",
         "winner_score": 35,
@@ -128,7 +128,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xiv",
         "year": 1980,
-        "date": "1980-01-20T00:00:00",
+        "date": "1980-01-20T00:00:00+00:00",
         "winner_code": "pittsburgh",
         "runner_up_code": "los_angeles_rams",
         "winner_score": 31,
@@ -137,7 +137,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xv",
         "year": 1981,
-        "date": "1981-01-25T00:00:00",
+        "date": "1981-01-25T00:00:00+00:00",
         "winner_code": "oakland",
         "runner_up_code": "philadelphia",
         "winner_score": 27,
@@ -146,7 +146,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xvi",
         "year": 1982,
-        "date": "1982-01-24T00:00:00",
+        "date": "1982-01-24T00:00:00+00:00",
         "winner_code": "san_francisco",
         "runner_up_code": "cincinnati",
         "winner_score": 26,
@@ -155,7 +155,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xvii",
         "year": 1983,
-        "date": "1983-01-30T00:00:00",
+        "date": "1983-01-30T00:00:00+00:00",
         "winner_code": "washington",
         "runner_up_code": "miami",
         "winner_score": 27,
@@ -164,7 +164,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xviii",
         "year": 1984,
-        "date": "1984-01-22T00:00:00",
+        "date": "1984-01-22T00:00:00+00:00",
         "winner_code": "los_angeles_raiders",
         "runner_up_code": "washington",
         "winner_score": 38,
@@ -173,7 +173,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xix",
         "year": 1985,
-        "date": "1985-01-20T00:00:00",
+        "date": "1985-01-20T00:00:00+00:00",
         "winner_code": "san_francisco",
         "runner_up_code": "miami",
         "winner_score": 38,
@@ -182,7 +182,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xx",
         "year": 1986,
-        "date": "1986-01-26T00:00:00",
+        "date": "1986-01-26T00:00:00+00:00",
         "winner_code": "chicago",
         "runner_up_code": "new_england",
         "winner_score": 46,
@@ -191,7 +191,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxi",
         "year": 1987,
-        "date": "1987-01-25T00:00:00",
+        "date": "1987-01-25T00:00:00+00:00",
         "winner_code": "new_york_giants",
         "runner_up_code": "denver",
         "winner_score": 39,
@@ -200,7 +200,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxii",
         "year": 1988,
-        "date": "1988-01-31T00:00:00",
+        "date": "1988-01-31T00:00:00+00:00",
         "winner_code": "washington",
         "runner_up_code": "denver",
         "winner_score": 42,
@@ -209,7 +209,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxiii",
         "year": 1989,
-        "date": "1989-01-22T00:00:00",
+        "date": "1989-01-22T00:00:00+00:00",
         "winner_code": "san_francisco",
         "runner_up_code": "cincinnati",
         "winner_score": 20,
@@ -218,7 +218,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxiv",
         "year": 1990,
-        "date": "1990-01-28T00:00:00",
+        "date": "1990-01-28T00:00:00+00:00",
         "winner_code": "san_francisco",
         "runner_up_code": "denver",
         "winner_score": 55,
@@ -227,7 +227,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxv",
         "year": 1991,
-        "date": "1991-01-27T00:00:00",
+        "date": "1991-01-27T00:00:00+00:00",
         "winner_code": "new_york_giants",
         "runner_up_code": "buffalo",
         "winner_score": 20,
@@ -236,7 +236,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxvi",
         "year": 1992,
-        "date": "1992-01-26T00:00:00",
+        "date": "1992-01-26T00:00:00+00:00",
         "winner_code": "washington",
         "runner_up_code": "buffalo",
         "winner_score": 37,
@@ -245,7 +245,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxvii",
         "year": 1993,
-        "date": "1993-01-31T00:00:00",
+        "date": "1993-01-31T00:00:00+00:00",
         "winner_code": "dallas",
         "runner_up_code": "buffalo",
         "winner_score": 52,
@@ -254,7 +254,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxviii",
         "year": 1994,
-        "date": "1994-01-30T00:00:00",
+        "date": "1994-01-30T00:00:00+00:00",
         "winner_code": "dallas",
         "runner_up_code": "buffalo",
         "winner_score": 30,
@@ -263,7 +263,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxix",
         "year": 1995,
-        "date": "1995-01-29T00:00:00",
+        "date": "1995-01-29T00:00:00+00:00",
         "winner_code": "san_francisco",
         "runner_up_code": "san_diego",
         "winner_score": 49,
@@ -272,7 +272,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxx",
         "year": 1996,
-        "date": "1996-01-28T00:00:00",
+        "date": "1996-01-28T00:00:00+00:00",
         "winner_code": "dallas",
         "runner_up_code": "pittsburgh",
         "winner_score": 27,
@@ -281,7 +281,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxxi",
         "year": 1997,
-        "date": "1997-01-26T00:00:00",
+        "date": "1997-01-26T00:00:00+00:00",
         "winner_code": "green_bay",
         "runner_up_code": "new_england",
         "winner_score": 35,
@@ -290,7 +290,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxxii",
         "year": 1998,
-        "date": "1998-01-25T00:00:00",
+        "date": "1998-01-25T00:00:00+00:00",
         "winner_code": "denver",
         "runner_up_code": "green_bay",
         "winner_score": 31,
@@ -299,7 +299,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxxiii",
         "year": 1999,
-        "date": "1999-01-31T00:00:00",
+        "date": "1999-01-31T00:00:00+00:00",
         "winner_code": "denver",
         "runner_up_code": "atlanta",
         "winner_score": 34,
@@ -308,7 +308,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxxiv",
         "year": 2000,
-        "date": "2000-01-30T00:00:00",
+        "date": "2000-01-30T00:00:00+00:00",
         "winner_code": "st._louis",
         "runner_up_code": "tennessee",
         "winner_score": 23,
@@ -317,7 +317,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxxv",
         "year": 2001,
-        "date": "2001-01-28T00:00:00",
+        "date": "2001-01-28T00:00:00+00:00",
         "winner_code": "baltimore",
         "runner_up_code": "new_york_giants",
         "winner_score": 34,
@@ -326,7 +326,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxxvi",
         "year": 2002,
-        "date": "2002-02-03T00:00:00",
+        "date": "2002-02-03T00:00:00+00:00",
         "winner_code": "new_england",
         "runner_up_code": "st._louis",
         "winner_score": 20,
@@ -335,7 +335,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxxvii",
         "year": 2003,
-        "date": "2003-01-26T00:00:00",
+        "date": "2003-01-26T00:00:00+00:00",
         "winner_code": "tampa_bay",
         "runner_up_code": "oakland",
         "winner_score": 48,
@@ -344,7 +344,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxxviii",
         "year": 2004,
-        "date": "2004-02-01T00:00:00",
+        "date": "2004-02-01T00:00:00+00:00",
         "winner_code": "new_england",
         "runner_up_code": "carolina",
         "winner_score": 32,
@@ -353,7 +353,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xxxix",
         "year": 2005,
-        "date": "2005-02-06T00:00:00",
+        "date": "2005-02-06T00:00:00+00:00",
         "winner_code": "new_england",
         "runner_up_code": "philadelphia",
         "winner_score": 24,
@@ -362,7 +362,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xl",
         "year": 2006,
-        "date": "2006-02-05T00:00:00",
+        "date": "2006-02-05T00:00:00+00:00",
         "winner_code": "pittsburgh",
         "runner_up_code": "seattle",
         "winner_score": 21,
@@ -371,7 +371,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xli",
         "year": 2007,
-        "date": "2007-02-04T00:00:00",
+        "date": "2007-02-04T00:00:00+00:00",
         "winner_code": "indianapolis",
         "runner_up_code": "chicago",
         "winner_score": 29,
@@ -380,7 +380,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xlii",
         "year": 2008,
-        "date": "2008-02-03T00:00:00",
+        "date": "2008-02-03T00:00:00+00:00",
         "winner_code": "new_york_giants",
         "runner_up_code": "new_england",
         "winner_score": 17,
@@ -389,7 +389,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xliii",
         "year": 2009,
-        "date": "2009-02-01T00:00:00",
+        "date": "2009-02-01T00:00:00+00:00",
         "winner_code": "pittsburgh",
         "runner_up_code": "arizona",
         "winner_score": 27,
@@ -398,7 +398,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xliv",
         "year": 2010,
-        "date": "2010-02-07T00:00:00",
+        "date": "2010-02-07T00:00:00+00:00",
         "winner_code": "new_orleans",
         "runner_up_code": "indianapolis",
         "winner_score": 31,
@@ -407,7 +407,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xlv",
         "year": 2011,
-        "date": "2011-02-06T00:00:00",
+        "date": "2011-02-06T00:00:00+00:00",
         "winner_code": "green_bay",
         "runner_up_code": "pittsburgh",
         "winner_score": 31,
@@ -416,7 +416,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xlvi",
         "year": 2012,
-        "date": "2012-02-05T00:00:00",
+        "date": "2012-02-05T00:00:00+00:00",
         "winner_code": "new_york_giants",
         "runner_up_code": "new_england",
         "winner_score": 21,
@@ -425,7 +425,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xlvii",
         "year": 2013,
-        "date": "2013-02-03T00:00:00",
+        "date": "2013-02-03T00:00:00+00:00",
         "winner_code": "baltimore",
         "runner_up_code": "san_francisco",
         "winner_score": 34,
@@ -434,7 +434,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xlviii",
         "year": 2014,
-        "date": "2014-02-02T00:00:00",
+        "date": "2014-02-02T00:00:00+00:00",
         "winner_code": "seattle",
         "runner_up_code": "denver",
         "winner_score": 43,
@@ -443,7 +443,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "xlix",
         "year": 2015,
-        "date": "2015-02-01T00:00:00",
+        "date": "2015-02-01T00:00:00+00:00",
         "winner_code": "new_england",
         "runner_up_code": "seattle",
         "winner_score": 28,
@@ -452,7 +452,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "50",
         "year": 2016,
-        "date": "2016-02-07T00:00:00",
+        "date": "2016-02-07T00:00:00+00:00",
         "winner_code": "denver",
         "runner_up_code": "carolina",
         "winner_score": 24,
@@ -461,7 +461,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "li",
         "year": 2017,
-        "date": "2017-02-05T00:00:00",
+        "date": "2017-02-05T00:00:00+00:00",
         "winner_code": "new_england",
         "runner_up_code": "atlanta",
         "winner_score": 34,
@@ -470,7 +470,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "lii",
         "year": 2018,
-        "date": "2018-02-04T00:00:00",
+        "date": "2018-02-04T00:00:00+00:00",
         "winner_code": "philadelphia",
         "runner_up_code": "new_england",
         "winner_score": 41,
@@ -479,7 +479,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "liii",
         "year": 2019,
-        "date": "2019-02-03T00:00:00",
+        "date": "2019-02-03T00:00:00+00:00",
         "winner_code": "new_england",
         "runner_up_code": "los_angeles_rams",
         "winner_score": 13,
@@ -488,7 +488,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "liv",
         "year": 2020,
-        "date": "2020-02-02T00:00:00",
+        "date": "2020-02-02T00:00:00+00:00",
         "winner_code": "kansas_city",
         "runner_up_code": "san_francisco",
         "winner_score": 31,
@@ -497,7 +497,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "lv",
         "year": 2021,
-        "date": "2021-02-07T00:00:00",
+        "date": "2021-02-07T00:00:00+00:00",
         "winner_code": "tampa_bay",
         "runner_up_code": "kansas_city",
         "winner_score": 31,
@@ -506,7 +506,7 @@ SUPER_BOWL_RESULT_DICTS = [
     {
         "code": "lvi",
         "year": 2022,
-        "date": "2022-02-13T00:00:00",
+        "date": "2022-02-13T00:00:00+00:00",
         "winner_code": "los_angeles_rams",
         "runner_up_code": "cincinnati",
         "winner_score": 23,

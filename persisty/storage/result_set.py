@@ -11,7 +11,7 @@ class ResultSet(Generic[T]):
     next_page_key: str = None
 
 
-def result_set_dataclass_for(type_: Type[T]) -> ResultSet[T]:
+def result_set_dataclass_for(type_: Type[T]) -> Type[ResultSet[T]]:
     params = {
         "__annotations__": {
             "results": List[type_],

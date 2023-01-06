@@ -6,9 +6,9 @@ from typing import Optional, Type, TypeVar, Iterator, Dict
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.types import ExternalItemType
 from schemey import Schema
+from servey.security.authorization import Authorization
 
-from persisty.access_control.authorization import Authorization
-from persisty.cache_control.cache_header import CacheHeader
+from servey.cache_control.cache_header import CacheHeader
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder

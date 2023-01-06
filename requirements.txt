@@ -1,15 +1,10 @@
-marshy
-schemey~=5.3
+servey[dev,server,aws,serverless]~=2.0
 pyaes
+marshy
+schemey
 # Optional dependencies
 sqlalchemy
-boto3~=1.24
-botocore~=1.27
-strawberry-graphql~=0.122
-starlette~=0.19
-fastapi~=0.79
-pydantic~=1.9
-uvicorn~=0.18
+boto3~=1.26
 # Dev dependencies
 black~=22.6
 moto~=3.1

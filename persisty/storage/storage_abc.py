@@ -46,7 +46,7 @@ class StorageABC(ABC):
             yield from items
 
     def update(
-        self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
+        self, updates: ExternalItemType, precondition: SearchFilterABC = INCLUDE_ALL
     ) -> Optional[ExternalItemType]:
         """
         Update (a partial set of values from) an item based upon its key and the constraint given. By convention
@@ -58,8 +58,8 @@ class StorageABC(ABC):
         if not key:
             raise PersistyError(f"missing_key:{updates}")
         item = self.read(key)
-        if item and search_filter.match(item, self.get_storage_meta().fields):
-            return self._update(key, item, updates, search_filter)
+        if item and precondition.match(item, self.get_storage_meta().fields):
+            return self._update(key, item, updates, precondition)
 
     @abstractmethod
     def _update(
@@ -67,7 +67,7 @@ class StorageABC(ABC):
         key: str,
         item: ExternalItemType,
         updates: ExternalItemType,
-        search_filter: SearchFilterABC = INCLUDE_ALL,
+        precondition: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
         """
         Update (a partial set of values from) an item based upon its key and the constraint given. By convention

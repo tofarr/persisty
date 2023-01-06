@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Type
 from uuid import UUID, uuid4
 
 from marshy.types import ExternalItemType
@@ -25,3 +25,20 @@ class BatchEdit:
             return key_config.to_key_str(self.update_item)
         else:
             return self.delete_key
+
+
+def batch_edit_dataclass_for(
+    type_name: str, create_input_type: Type, update_input_type: Type
+) -> Type:
+    params = {
+        "__annotations__": {
+            "create_item": Optional[create_input_type],
+            "update_item": Optional[update_input_type],
+            "delete_key": Optional[str],
+        },
+        "create_item": None,
+        "update_item": None,
+        "delete_key": None,
+    }
+    type_ = dataclass(type(type_name, (), params))
+    return type_

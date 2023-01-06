@@ -4,14 +4,12 @@ from dataclasses import dataclass, field
 
 from marshy.types import ExternalItemType
 
-from persisty.access_control.constants import ALL_ACCESS
 from persisty.errors import PersistyError
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.field.field import load_field_values
 from persisty.storage.schema_validating_storage import SchemaValidatingStorage
-from persisty.storage.secured_storage import SecuredStorage
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 
@@ -108,14 +106,3 @@ class MemStorage(StorageABC):
             if value is not UNDEFINED:
                 result[field_.name] = value
         return result
-
-
-def mem_storage(
-    storage_meta: StorageMeta, storage: Optional[Dict[str, ExternalItemType]] = None
-):
-    """Wraps a mem storage instance to provide additional checking"""
-    if storage is None:
-        storage = {}
-    storage = MemStorage(storage_meta, storage)
-    storage = SchemaValidatingStorage(storage)
-    return storage

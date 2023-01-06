@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, Tuple
 
 from marshy.types import ExternalItemType
+from servey.security.authorization import Authorization
 
 from persisty.access_control.access_control import AccessControl
 from persisty.errors import PersistyError
@@ -47,3 +48,13 @@ class SecuredStorage(FilteredStorageABC):
         if not self.access_control.is_searchable():
             return EXCLUDE_ALL, True
         return self.access_control.transform_search_filter(search_filter)
+
+
+def secured_storage(storage: StorageABC, authorization: Authorization) -> StorageABC:
+    access_controls = (
+        f.create_access_control(authorization)
+        for f in storage.get_storage_meta().access_control_factories
+    )
+    access_controls = (a for a in access_controls if a)
+    access_control = next(access_controls)
+    return SecuredStorage(storage, access_control)
