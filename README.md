@@ -1,3 +1,13 @@
+TODO:
+
+Build post processing triggers
+Get Sql Alchemy Storage Working
+Get Dynamodb Storage Working
+Extras
+======
+Consider building a user app
+Consider building a rate limiting app (Rate Limit access control)
+
 
 
 Outside the scope of this project: Repo Synchronization

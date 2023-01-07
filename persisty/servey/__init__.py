@@ -273,7 +273,7 @@ def action_for_read_batch(
 
     @action(
         name=f"{storage_meta.name}_read_batch",
-        description=f"Read a selection of item from {storage_meta.name} given a key",
+        description=f"Read a batch of items from {storage_meta.name} given keys",
         triggers=(
             WebTrigger(
                 WebTriggerMethod.GET, "/actions/" + storage_meta.name + "-batch"
@@ -307,7 +307,7 @@ def action_for_edit_batch(
 
     @action(
         name=f"{storage_meta.name}_edit_batch",
-        description=f"Read a selection of item from {storage_meta.name} given a key",
+        description=f"Perform a batch of edits against {storage_meta.name}",
         triggers=(
             WebTrigger(
                 WebTriggerMethod.PATCH, "/actions/" + storage_meta.name + "-batch"

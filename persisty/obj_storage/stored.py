@@ -38,7 +38,7 @@ def stored(
     def wrapper(cls_):
         cls_dict = cls_.__dict__
         params = {k: v for k, v in cls_dict.items() if not k.startswith("__")}
-        annotations = get_type_hints(cls_, localns={cls_.__name__: cls_})
+        annotations = dict(**cls_.__annotations__)
 
         fields = []
         links = []
