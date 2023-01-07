@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
+from typing import Dict, Any, Type, List
 
 from marshy.types import ExternalItemType
-from schemey import Schema
+
+from persisty.field.field import Field
 
 
 class LinkABC(ABC):
@@ -18,8 +20,13 @@ class LinkABC(ABC):
         """Get the name of this link"""
 
     @abstractmethod
-    def to_property_descriptor(self):
+    def to_action_fn(self, owner_name: str):
         """Create a property descriptor for this link"""
+
+    def update_params(self, params: Dict[str, Any], annotations: Dict[str, Type], fields: List[Field]):
+        """
+        Update parameters
+        """
 
     def update_json_schema(self, json_schema: ExternalItemType):
         """

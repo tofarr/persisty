@@ -1,9 +1,9 @@
+from dataclasses import dataclass
 from typing import Optional, Dict, Callable, Type, List
 
 from marshy import get_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.marshaller_context import MarshallerContext
-from schemey import SchemaContext, get_default_schema_context, Schema
 from servey.action.action import action, get_action
 from servey.security.authorization import Authorization
 from servey.trigger.web_trigger import WebTrigger, WebTriggerMethod
@@ -18,25 +18,24 @@ from persisty.search_order.search_order_factory import (
     search_order_dataclass_for,
     SearchOrderFactoryABC,
 )
+from persisty.servey import output
 from persisty.servey.input import input_type_for_create, input_type_for_update
 from persisty.storage.batch_edit import batch_edit_dataclass_for, BatchEdit
 from persisty.storage.batch_edit_result import batch_edit_result_dataclass_for
 from persisty.storage.result_set import result_set_dataclass_for
 from persisty.storage.storage_factory_abc import StorageFactoryABC
+from persisty.storage.storage_meta import StorageMeta
 
 
 def add_actions_for_all_storage_factories(
     target: Dict,
-    marshaller_context: Optional[MarshallerContext] = None,
-    schema_context: Optional[SchemaContext] = None,
+    marshaller_context: Optional[MarshallerContext] = None
 ):
     if not marshaller_context:
         marshaller_context = get_default_context()
-    if not schema_context:
-        schema_context = get_default_schema_context()
     for storage_factory in find_storage_factories():
         add_actions_for_storage_factory(
-            storage_factory, target, marshaller_context, schema_context
+            storage_factory, target, marshaller_context
         )
 
 
@@ -44,11 +43,10 @@ def add_actions_for_storage_factory(
     storage_factory: StorageFactoryABC,
     target: Dict,
     marshaller_context: MarshallerContext,
-    schema_context: SchemaContext,
 ):
     storage_meta = storage_factory.get_storage_meta()
-    schema = storage_meta.to_schema(schema_context=schema_context)
-    marshaller = marshaller_context.get_marshaller(schema.python_type)
+    item_type = get_item_type(storage_meta)
+    marshaller = marshaller_context.get_marshaller(item_type)
     search_filter_type = search_filter_dataclass_for(storage_meta)
     search_order_type = search_order_dataclass_for(storage_meta)
     create_input_type = input_type_for_create(storage_meta)
@@ -60,25 +58,25 @@ def add_actions_for_storage_factory(
         action_for_create(
             storage_factory,
             marshaller,
-            schema,
+            item_type,
             create_input_type,
             create_input_type_marshaller,
         ),
-        action_for_read(storage_factory, marshaller, schema),
+        action_for_read(storage_factory, marshaller, item_type),
         action_for_update(
             storage_factory,
             marshaller,
-            schema,
+            item_type,
             update_input_type,
             update_input_type_marshaller,
             search_filter_type,
         ),
         action_for_delete(storage_factory),
         action_for_search(
-            storage_factory, marshaller, schema, search_filter_type, search_order_type
+            storage_factory, marshaller, item_type, search_filter_type, search_order_type
         ),
         action_for_count(storage_factory, search_filter_type),
-        action_for_read_batch(storage_factory, marshaller, schema),
+        action_for_read_batch(storage_factory, marshaller, item_type),
         action_for_edit_batch(
             storage_factory,
             create_input_type,
@@ -94,7 +92,7 @@ def add_actions_for_storage_factory(
 def action_for_create(
     storage_factory: StorageFactoryABC,
     marshaller: MarshallerABC,
-    schema: Schema,
+    item_type: Type,
     create_input_type: Type,
     create_input_type_marshaller: MarshallerABC,
 ) -> Callable:
@@ -107,7 +105,7 @@ def action_for_create(
     )
     def create(
         item: create_input_type, authorization: Optional[Authorization] = None
-    ) -> Optional[schema.python_type]:
+    ) -> Optional[item_type]:
         dumped = create_input_type_marshaller.dump(item)
         storage = storage_factory.create(authorization)
         created = storage.create(dumped)
@@ -118,7 +116,7 @@ def action_for_create(
 
 
 def action_for_read(
-    storage_factory: StorageFactoryABC, marshaller: MarshallerABC, schema: Schema
+    storage_factory: StorageFactoryABC, marshaller: MarshallerABC, item_type: Type
 ) -> Callable:
     storage_meta = storage_factory.get_storage_meta()
 
@@ -134,7 +132,7 @@ def action_for_read(
     )
     def read(
         key: str, authorization: Optional[Authorization] = None
-    ) -> Optional[schema.python_type]:
+    ) -> Optional[item_type]:
         storage = storage_factory.create(authorization)
         result = storage.read(key)
         if result:
@@ -146,7 +144,7 @@ def action_for_read(
 def action_for_update(
     storage_factory: StorageFactoryABC,
     marshaller: MarshallerABC,
-    schema: Schema,
+    item_type: Type,
     update_input_type: Type,
     update_input_type_marshaller: MarshallerABC,
     search_filter_type: Type[SearchFilterFactoryABC],
@@ -167,7 +165,7 @@ def action_for_update(
         item: update_input_type,
         precondition: Optional[search_filter_type] = None,
         authorization: Optional[Authorization] = None,
-    ) -> Optional[schema.python_type]:
+    ) -> Optional[item_type]:
         dumped = update_input_type_marshaller.dump(item)
         storage_meta.key_config.from_key_str(key, dumped)
         storage = storage_factory.create(authorization)
@@ -203,13 +201,13 @@ def action_for_delete(storage_factory: StorageFactoryABC) -> Callable:
 def action_for_search(
     storage_factory: StorageFactoryABC,
     marshaller: MarshallerABC,
-    schema: Schema,
+    item_type: Type,
     search_filter_type: Type[SearchFilterFactoryABC],
     search_order_type: Type[SearchOrderFactoryABC],
 ) -> Callable:
     storage_meta = storage_factory.get_storage_meta()
     # noinspection PyTypeChecker
-    result_set_type = result_set_dataclass_for(schema.python_type)
+    result_set_type = get_result_set_type(item_type)
 
     @action(
         name=f"{storage_meta.name}_search",
@@ -269,7 +267,7 @@ def action_for_count(
 
 
 def action_for_read_batch(
-    storage_factory: StorageFactoryABC, marshaller: MarshallerABC, schema: Schema
+    storage_factory: StorageFactoryABC, marshaller: MarshallerABC, item_type: Type
 ) -> Callable:
     storage_meta = storage_factory.get_storage_meta()
 
@@ -285,7 +283,7 @@ def action_for_read_batch(
     )
     def read_batch(
         keys: List[str], authorization: Optional[Authorization] = None
-    ) -> List[Optional[schema.python_type]]:
+    ) -> List[Optional[item_type]]:
         storage = storage_factory.create(authorization)
         results = storage.read_batch(keys)
         results = [marshaller.load(r) if r else None for r in results]
@@ -345,3 +343,34 @@ def action_for_edit_batch(
         return results
 
     return edit_batch
+
+
+def get_item_type(storage_meta: StorageMeta):
+    name = storage_meta.name.title()
+    if hasattr(output, name):
+        return getattr(output, name)
+
+    annotations = {}
+    params = {
+        '__annotations__': annotations
+    }
+    for f in storage_meta.fields:
+        if f.is_readable:
+            annotations[f.name] = f.schema.python_type
+
+    for link in storage_meta.links:
+        params[link.get_name()] = link.to_action_fn(storage_meta.name)
+
+    type_ = dataclass(type(name, tuple(), params))
+    setattr(output, name, type_)
+    return type_
+
+
+def get_result_set_type(item_type: Type) -> Type:
+    result_set_name = f"{item_type.__name__}ResultSet"
+    result_set_type = getattr(output, result_set_name, None)
+    if not result_set_type:
+        # noinspection PyTypeChecker
+        result_set_type = result_set_dataclass_for(item_type)
+        setattr(output, result_set_name, result_set_type)
+    return result_set_type

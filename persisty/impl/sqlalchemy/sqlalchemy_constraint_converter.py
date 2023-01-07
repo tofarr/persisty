@@ -4,7 +4,7 @@ from typing import Dict, Iterator
 from sqlalchemy import ForeignKeyConstraint
 
 from persisty.key_config.field_key_config import FieldKeyConfig
-from persisty.link.belongs_to import BelongsTo
+from persisty.link.belongs_tozz import BelongsTo
 from persisty.link.on_delete import OnDelete
 from persisty.storage.storage_meta import StorageMeta
 

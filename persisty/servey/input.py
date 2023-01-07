@@ -52,6 +52,8 @@ def input_type_for_create(storage_meta: StorageMeta):
         "__doc__": f"Item for {storage_meta.name} create",
         "__annotations__": annotations,
     }
+    default_params = {}
+    default_annotations = {}
     for field in storage_meta.fields:
         mode = WriteTransformMode.SPECIFIED
         if field.write_transform:
@@ -59,13 +61,19 @@ def input_type_for_create(storage_meta: StorageMeta):
         if mode == WriteTransformMode.GENERATED:
             continue  # Field does not appear as part of create operations
         param_type = field.schema.python_type
-        param_field = params[field.name] = dataclasses.field(
+        param_field = dataclasses.field(
             metadata=dict(schemey=field.schema)
         )
         if mode == WriteTransformMode.OPTIONAL:
             param_type = Optional[param_type]
             param_field.default_factory = _default_factory
-        annotations[field.name] = param_type
+            default_params[field.name] = param_field
+            default_annotations[field.name] = param_type
+        else:
+            params[field.name] = param_field
+            annotations[field.name] = param_type
+    params.update(**default_params)  # Make sure ordering is correct
+    annotations.update(**default_annotations)
     type_ = dataclass(type(f"{storage_meta.name}Create", (Input,), params))
     return type_
 
@@ -76,6 +84,8 @@ def input_type_for_update(storage_meta: StorageMeta):
         "__doc__": f"Item for {storage_meta.name} update",
         "__annotations__": annotations,
     }
+    default_params = {}
+    default_annotations = {}
     for field in storage_meta.fields:
         mode = WriteTransformMode.OPTIONAL
         if field.write_transform:
@@ -86,12 +96,17 @@ def input_type_for_update(storage_meta: StorageMeta):
         ):
             continue  # Field does not appear as part of create operations
         param_type = field.schema.python_type
-        param_field = params[field.name] = dataclasses.field(
+        param_field = dataclasses.field(
             metadata=dict(schemey=field.schema)
         )
         if mode == WriteTransformMode.OPTIONAL:
-            param_type = Optional[param_type]
-            # param_field.default_factory = _default_factory
-        annotations[field.name] = param_type
+            default_annotations[field.name] = Optional[param_type]
+            default_params[field.name] = param_field
+        else:
+            annotations[field.name] = param_type
+            params[field.name] = param_field
+
+    params.update(**default_params)  # Make sure ordering is correct
+    annotations.update(**default_annotations)
     type_ = dataclass(type(f"{storage_meta.name}Update", (Input,), params))
     return type_

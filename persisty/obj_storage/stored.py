@@ -42,12 +42,15 @@ def stored(
 
         fields = []
         links = []
-        for name, type_ in annotations.items():
+        for name, type_ in list(annotations.items()):
             if name.startswith("__"):
                 continue
             attr = cls_dict.get(name, UNDEFINED)
             if isinstance(attr, LinkABC):
                 links.append(attr)
+                del annotations[name]
+                del params[name]
+                attr.update_params(params, annotations, fields)
                 continue
             if not isinstance(attr, Attr):
                 schema = None
@@ -65,6 +68,11 @@ def stored(
             attr.populate(key_config)
             fields.append(attr.to_field())
             params[name] = UNDEFINED
+
+        for name, value in params.items():
+            if isinstance(value, LinkABC):
+                annotations.pop(name, None)
+                links.append(value)
 
         storage_meta = StorageMeta(
             name=to_snake_case(cls_.__name__),
