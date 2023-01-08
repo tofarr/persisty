@@ -5,7 +5,8 @@ from marshy import dump
 from moto import mock_dynamodb
 
 from persisty.errors import PersistyError
-from persisty.impl.mem.mem_storage import mem_storage, MemStorage
+from persisty.impl.mem.mem_storage import MemStorage
+from persisty.impl.mem.mem_storage_factory import MemStorageFactory
 from persisty.obj_storage.filter_factory import filter_factory
 from persisty.obj_storage.stored import get_storage_meta
 from persisty.search_filter.include_all import INCLUDE_ALL
@@ -23,20 +24,20 @@ from tests.fixtures.storage_tst_abc import StorageTstABC
 @mock_dynamodb
 class TestMemStorage(TestCase, StorageTstABC):
     def new_super_bowl_results_storage(self) -> StorageABC:
-        storage = mem_storage(
+        factory = MemStorageFactory(
             get_storage_meta(SuperBowlResult),
             {r.code: dump(r) for r in SUPER_BOWL_RESULTS},
         )
-        return storage
+        return factory.create(None)
 
     def new_number_name_storage(self) -> StorageABC:
         number_names = (dump(r) for r in NUMBER_NAMES)
         # noinspection PyTypeChecker
-        storage = mem_storage(
+        factory = MemStorageFactory(
             get_storage_meta(NumberName),
             {r["id"]: r for r in number_names},
         )
-        return storage
+        return factory.create(None)
 
     def test_search_all_sorted(self):
         storage = self.new_super_bowl_results_storage()
@@ -55,7 +56,7 @@ class TestMemStorage(TestCase, StorageTstABC):
         )
 
     def test_mem_storage_no_dict(self):
-        storage = mem_storage(get_storage_meta(NumberName))
+        storage = MemStorageFactory(get_storage_meta(NumberName)).create(None)
         created = storage.create(dict(value=1, title="One"))
         loaded = storage.read(created["id"])
         self.assertEqual(loaded, created)

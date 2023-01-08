@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Tuple
 
 from dataclasses import dataclass
@@ -385,16 +385,16 @@ class StorageTstABC(ABC):
             ),
             BatchEdit(delete_key="00000000-0000-0000-0002-000000000001"),
         ]
-        now = datetime.now().isoformat()
+        now = datetime.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
         results = [r.success for r in storage.edit_all(edits)]
         self.assertEqual(results, [True, False, True, False])
         results = list(
             storage.search_all(search_order=SearchOrder((SearchOrderField("value"),)))
         )
         results = sorted(results, key=lambda r: r["value"])
-        self.assertTrue(results[0]["created_at"] >= now)
-        self.assertTrue(results[0]["updated_at"] >= now)
-        self.assertTrue(results[1]["updated_at"] >= now)
+        self.assertGreaterEqual(results[0]["created_at"], now)
+        self.assertGreaterEqual(results[0]["updated_at"], now)
+        self.assertGreaterEqual(results[1]["updated_at"], now)
         expected_results = [
             {
                 "created_at": results[0]["created_at"],

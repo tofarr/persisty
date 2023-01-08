@@ -23,7 +23,9 @@ class LinkABC(ABC):
     def to_action_fn(self, owner_name: str):
         """Create a property descriptor for this link"""
 
-    def update_params(self, params: Dict[str, Any], annotations: Dict[str, Type], fields: List[Field]):
+    def update_params(
+        self, params: Dict[str, Any], annotations: Dict[str, Type], fields: List[Field]
+    ):
         """
         Update parameters
         """

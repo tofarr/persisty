@@ -1,3 +1,5 @@
+import logging
+
 from marshy.factory.impl_marshaller_factory import register_impl
 from marshy.marshaller.obj_marshaller import AttrConfig
 from marshy.marshaller.property_marshaller import PropertyConfig
@@ -54,6 +56,7 @@ from persisty.field.write_transform.write_transform_abc import WriteTransformABC
 from persisty.util import UNDEFINED
 
 priority = 100
+LOGGER = logging.getLogger(__name__)
 
 
 def configure(context: MarshallerContext):
@@ -72,6 +75,7 @@ def configure(context: MarshallerContext):
     configure_finders(context)
 
     configure_sqlalchemy(context)
+    configure_celery(context)
 
 
 def configure_search_filters(context: MarshallerContext):
@@ -122,12 +126,26 @@ def configure_links(context: MarshallerContext):
 def configure_sqlalchemy(context: MarshallerContext):
     try:
         # Local import in case sqlalchemy is not included (Optional extra)
-        from marshy_config_persisty.sqlalchemy_config import configure_converters
+        from marshy_config_persisty import sqlalchemy_config
 
-        configure_converters(context)
-    except ValueError:
-        pass
+        sqlalchemy_config.configure_converters(context)
+        sqlalchemy_config.configure_sqlalchemy_context(context)
+    except ModuleNotFoundError:
+        LOGGER.info('sqlalchemy not found - skipping')
 
 
 def configure_finders(context: MarshallerContext):
     register_impl(StorageFactoryFinderABC, ModuleStorageFactoryFinder, context)
+
+
+def configure_celery(context: MarshallerContext):
+    try:
+        from servey.servey_celery.celery_config.celery_config_abc import CeleryConfigABC
+        from persisty.trigger.celery_storage_trigger_config import (
+            CeleryStorageTriggerConfig,
+        )
+
+        register_impl(CeleryConfigABC, CeleryStorageTriggerConfig, context)
+    except ModuleNotFoundError as e:
+        LOGGER.error(e)
+        LOGGER.info("Celery module not found: skipping")

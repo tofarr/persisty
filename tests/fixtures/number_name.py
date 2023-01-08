@@ -1,12 +1,13 @@
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
 from marshy import dump
 
+from persisty.access_control.factory.default_access_control_factory import ALL_ACCESS_FACTORY
 from persisty.obj_storage.stored import stored
 
 
-@stored(batch_size=10)
+@stored(batch_size=10, access_control_factories=(ALL_ACCESS_FACTORY,))
 class NumberName:
     """Item linking a string representing a number with an integer value. Also has a uuid, and timestamps."""
 
@@ -58,8 +59,8 @@ for n in range(1, 100):
             id=UUID("00000000-0000-0000-0000-000000000" + (str(1000 + n)[1:])),
             title=title,
             value=n,
-            created_at=datetime.fromtimestamp(0),
-            updated_at=datetime.fromtimestamp(0),
+            created_at=datetime.fromtimestamp(0, tz=timezone.utc),
+            updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
         )
     )
 

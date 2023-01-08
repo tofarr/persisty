@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 
 from persisty.field.write_transform.write_transform_abc import (
     WriteTransformABC,
@@ -35,7 +35,7 @@ class TimestampGenerator(WriteTransformABC):
         if is_update and not self.on_update:
             return UNDEFINED
         else:
-            return datetime.now().isoformat()
+            return datetime.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
 
 CREATED_AT_GENERATOR = TimestampGenerator()

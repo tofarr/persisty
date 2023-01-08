@@ -32,18 +32,20 @@ class HasCount(LinkABC):
 
     def to_action_fn(self, owner_name: str) -> Callable:
         linked_storage_factory = next(
-            f for f in find_storage_factories()
+            f
+            for f in find_storage_factories()
             if f.get_storage_meta().name == self.linked_storage_name
         )
         key_field_name = self.key_field_name
 
-        @action(name=owner_name+'_'+self.name)
+        @action(name=owner_name + "_" + self.name)
         def action_fn(self, authorization: Optional[Authorization]) -> int:
             storage = linked_storage_factory.create(authorization)
             key = storage.get_storage_meta().key_config.to_key_str(self)
-            count = storage.count(search_filter=FieldFilter(key_field_name, FieldFilterOp.eq, key))
+            count = storage.count(
+                search_filter=FieldFilter(key_field_name, FieldFilterOp.eq, key)
+            )
             return count
 
-        action_fn.__name__ = owner_name+'_'+self.name
+        action_fn.__name__ = owner_name + "_" + self.name
         return action_fn
-

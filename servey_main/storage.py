@@ -9,6 +9,7 @@ from persisty.access_control.factory.default_access_control_factory import (
     DefaultAccessControlFactory,
 )
 from persisty.impl.mem.mem_storage_factory import MemStorageFactory
+from persisty.impl.sqlalchemy.sqlalchemy_table_storage_factory import SqlalchemyTableStorageFactory
 from persisty.link.belongs_to import BelongsTo
 from persisty.link.has_count import HasCount
 from persisty.link.has_many import HasMany
@@ -26,17 +27,19 @@ class User:
         metadata=dict(schemey=str_schema(max_length=255, str_format=StringFormat.EMAIL))
     )
     message_count: int = HasCount()
-    message_result_set: ResultSet['Message'] = HasMany()
+    message_result_set: ResultSet["Message"] = HasMany()
 
 
 @stored(access_control_factories=(DefaultAccessControlFactory(ALL_ACCESS),))
 class Message:
-    """Item representing a user object"""
+    """Item representing a message object"""
 
     id: UUID
     text: str
     user: User = BelongsTo()
 
 
-user_storage_factory = MemStorageFactory(get_storage_meta(User))
-message_storage_factory = MemStorageFactory(get_storage_meta(Message))
+#user_storage_factory = MemStorageFactory(get_storage_meta(User))
+#message_storage_factory = MemStorageFactory(get_storage_meta(Message))
+user_storage_factory = SqlalchemyTableStorageFactory(get_storage_meta(User))
+message_storage_factory = SqlalchemyTableStorageFactory(get_storage_meta(Message))

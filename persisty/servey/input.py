@@ -61,9 +61,7 @@ def input_type_for_create(storage_meta: StorageMeta):
         if mode == WriteTransformMode.GENERATED:
             continue  # Field does not appear as part of create operations
         param_type = field.schema.python_type
-        param_field = dataclasses.field(
-            metadata=dict(schemey=field.schema)
-        )
+        param_field = dataclasses.field(metadata=dict(schemey=field.schema))
         if mode == WriteTransformMode.OPTIONAL:
             param_type = Optional[param_type]
             param_field.default_factory = _default_factory
@@ -96,9 +94,7 @@ def input_type_for_update(storage_meta: StorageMeta):
         ):
             continue  # Field does not appear as part of create operations
         param_type = field.schema.python_type
-        param_field = dataclasses.field(
-            metadata=dict(schemey=field.schema)
-        )
+        param_field = dataclasses.field(metadata=dict(schemey=field.schema))
         if mode == WriteTransformMode.OPTIONAL:
             default_annotations[field.name] = Optional[param_type]
             default_params[field.name] = param_field

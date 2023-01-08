@@ -28,15 +28,12 @@ from persisty.storage.storage_meta import StorageMeta
 
 
 def add_actions_for_all_storage_factories(
-    target: Dict,
-    marshaller_context: Optional[MarshallerContext] = None
+    target: Dict, marshaller_context: Optional[MarshallerContext] = None
 ):
     if not marshaller_context:
         marshaller_context = get_default_context()
     for storage_factory in find_storage_factories():
-        add_actions_for_storage_factory(
-            storage_factory, target, marshaller_context
-        )
+        add_actions_for_storage_factory(storage_factory, target, marshaller_context)
 
 
 def add_actions_for_storage_factory(
@@ -73,7 +70,11 @@ def add_actions_for_storage_factory(
         ),
         action_for_delete(storage_factory),
         action_for_search(
-            storage_factory, marshaller, item_type, search_filter_type, search_order_type
+            storage_factory,
+            marshaller,
+            item_type,
+            search_filter_type,
+            search_order_type,
         ),
         action_for_count(storage_factory, search_filter_type),
         action_for_read_batch(storage_factory, marshaller, item_type),
@@ -128,7 +129,7 @@ def action_for_read(
                 WebTriggerMethod.GET, "/actions/" + storage_meta.name + "/{key}"
             ),
         ),
-        cache_control=storage_meta.cache_control
+        cache_control=storage_meta.cache_control,
     )
     def read(
         key: str, authorization: Optional[Authorization] = None
@@ -279,7 +280,7 @@ def action_for_read_batch(
                 WebTriggerMethod.GET, "/actions/" + storage_meta.name + "-batch"
             ),
         ),
-        cache_control=storage_meta.cache_control
+        cache_control=storage_meta.cache_control,
     )
     def read_batch(
         keys: List[str], authorization: Optional[Authorization] = None
@@ -351,9 +352,7 @@ def get_item_type(storage_meta: StorageMeta):
         return getattr(output, name)
 
     annotations = {}
-    params = {
-        '__annotations__': annotations
-    }
+    params = {"__annotations__": annotations}
     for f in storage_meta.fields:
         if f.is_readable:
             annotations[f.name] = f.schema.python_type

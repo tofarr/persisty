@@ -2,14 +2,10 @@ from typing import Iterator
 from unittest import TestCase
 
 from marshy.types import ExternalItemType
-from sqlalchemy import create_engine, MetaData
-from sqlalchemy.engine import Engine
+from servey.security.authorization import ROOT
 
-from persisty.impl.sqlalchemy.sqlalchemy_table_converter import SqlalchemyTableConverter
-from persisty.impl.sqlalchemy.sqlalchemy_table_storage import (
-    SqlalchemyTableStorage,
-    sqlalchemy_table_storage,
-)
+from persisty.impl.sqlalchemy.sqlalchemy_context_factory import SqlalchemyContextFactory
+from persisty.impl.sqlalchemy.sqlalchemy_table_storage_factory import SqlalchemyTableStorageFactory
 from persisty.obj_storage.stored import get_storage_meta
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
@@ -22,27 +18,25 @@ from tests.fixtures.storage_tst_abc import StorageTstABC
 
 
 class TestSqlalchemyTableStorage(TestCase, StorageTstABC):
-    converter: SqlalchemyTableConverter
-    engine: Engine
 
     def setUp(self) -> None:
-        self.engine = create_engine(
-            "sqlite+pysqlite:///:memory:", echo=True, future=True
-        )
-        meta_data = MetaData()
-        self.converter = SqlalchemyTableConverter(self.engine, meta_data)
+        self.context = SqlalchemyContextFactory().create()
 
     def tearDown(self) -> None:
         pass
 
     def new_super_bowl_results_storage(self) -> StorageABC:
         storage_meta = get_storage_meta(SuperBowlResult)
+        factory = SqlalchemyTableStorageFactory(storage_meta, self.context)
+        storage = factory.create(ROOT)
         number_names = ({**r.__dict__, "date": r.date} for r in SUPER_BOWL_RESULTS)
-        storage = self.seed_table(storage_meta, number_names)
+        self.seed_table(storage_meta, number_names)
         return storage
 
     def new_number_name_storage(self) -> StorageABC:
         storage_meta = get_storage_meta(NumberName)
+        factory = SqlalchemyTableStorageFactory(storage_meta, self.context)
+        storage = factory.create(ROOT)
         number_names = (
             {
                 **r.__dict__,
@@ -52,19 +46,16 @@ class TestSqlalchemyTableStorage(TestCase, StorageTstABC):
             }
             for r in NUMBER_NAMES
         )
-        storage = self.seed_table(storage_meta, number_names)
+        self.seed_table(storage_meta, number_names)
         return storage
 
     def seed_table(self, storage_meta: StorageMeta, items: Iterator[ExternalItemType]):
-        table = self.converter.to_sqlalchemy_table(storage_meta)
-        table.create(self.engine)
-        with self.engine.begin() as conn:
+        table = self.context.get_table(storage_meta)
+        with self.context.engine.begin() as conn:
             stmt = table.insert()
             for item in items:
                 conn.execute(stmt, item)
             conn.commit()
-        storage = sqlalchemy_table_storage(storage_meta, table, self.engine)
-        return storage
 
     """
     def test_search_all_sorted(self):

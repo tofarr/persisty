@@ -20,6 +20,8 @@ from persisty.impl.sqlalchemy.search_filter.query_filter_converter import (
 from persisty.impl.sqlalchemy.search_filter.search_filter_converter_abc import (
     SearchFilterConverterABC,
 )
+from persisty.impl.sqlalchemy.sqlalchemy_context_factory import SqlalchemyContextFactory
+from persisty.impl.sqlalchemy.sqlalchemy_context_factory_abc import SqlalchemyContextFactoryABC
 
 
 def configure_converters(context: MarshallerContext):
@@ -29,3 +31,7 @@ def configure_converters(context: MarshallerContext):
     register_impl(SearchFilterConverterABC, NotFilterConverter, context)
     register_impl(SearchFilterConverterABC, OrFilterConverter, context)
     register_impl(SearchFilterConverterABC, QueryFilterConverter, context)
+
+
+def configure_sqlalchemy_context(context: MarshallerContext):
+    register_impl(SqlalchemyContextFactoryABC, SqlalchemyContextFactory, context)

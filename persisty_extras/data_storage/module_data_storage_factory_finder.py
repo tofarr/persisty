@@ -7,6 +7,7 @@ from typing import Iterator
 
 from servey.util import get_servey_main
 
+from persisty.data_storage.data_storage_factory_abc import DataStorageFactoryABC
 from persisty.finder.storage_factory_finder_abc import StorageFactoryFinderABC
 from persisty.storage.storage_factory_abc import StorageFactoryABC
 
@@ -20,21 +21,21 @@ class ModuleStorageFactoryFinder(StorageFactoryFinderABC):
     """
 
     root_module_name: str = field(
-        default_factory=lambda: f"{os.environ.get('PERSISTY_MAIN') or get_servey_main()}.storage"
+        default_factory=lambda: f"{os.environ.get('PERSISTY_MAIN') or get_servey_main()}.data_storage"
     )
 
     def find_storage_factories(self) -> Iterator[StorageFactoryABC]:
         try:
             module = importlib.import_module(self.root_module_name)
             # noinspection PyTypeChecker
-            yield from _find_storage_factories_in_module(module)
+            yield from _find_data_storage_factories_in_module(module)
         except ModuleNotFoundError:
-            LOGGER.exception("error_finding_storage")
+            LOGGER.warning("error_finding_data_storage")
 
 
-def _find_storage_factories_in_module(module) -> Iterator[StorageFactoryABC]:
+def _find_data_storage_factories_in_module(module) -> Iterator[StorageFactoryABC]:
     for name, value in module.__dict__.items():
-        if isinstance(value, StorageFactoryABC):
+        if isinstance(value, DataStorageFactoryABC):
             yield value
     if not hasattr(module, "__path__"):
         return  # Module was not a package...
@@ -45,4 +46,4 @@ def _find_storage_factories_in_module(module) -> Iterator[StorageFactoryABC]:
         sub_module_name = module.__name__ + "." + module_info.name
         sub_module = importlib.import_module(sub_module_name)
         # noinspection PyTypeChecker
-        yield from _find_storage_factories_in_module(sub_module)
+        yield from _find_data_storage_factories_in_module(sub_module)

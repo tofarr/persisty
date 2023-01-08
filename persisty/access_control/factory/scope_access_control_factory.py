@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from servey.security.authorization import Authorization
 
@@ -14,6 +15,6 @@ class ScopeAccessControlFactory(AccessControlFactoryABC):
     scope: str
     access_control: AccessControlABC = ALL_ACCESS
 
-    def create_access_control(self, authorization: Authorization):
-        if authorization.has_scope(self.scope):
+    def create_access_control(self, authorization: Optional[Authorization]):
+        if authorization and authorization.has_scope(self.scope):
             return self.access_control

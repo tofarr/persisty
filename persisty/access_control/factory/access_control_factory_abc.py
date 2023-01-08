@@ -9,6 +9,6 @@ from persisty.access_control.access_control import AccessControl
 class AccessControlFactoryABC(ABC):
     @abstractmethod
     def create_access_control(
-        self, authorization: Authorization
+        self, authorization: Optional[Authorization]
     ) -> Optional[AccessControl]:
         """Create an access control based on the authorization given"""

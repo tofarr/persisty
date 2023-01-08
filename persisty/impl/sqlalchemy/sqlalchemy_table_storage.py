@@ -1,8 +1,8 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Iterator, Tuple, Any, Dict
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from uuid import UUID
 
 from marshy.types import ExternalItemType
@@ -10,7 +10,6 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import DatabaseError
 from sqlalchemy.sql.elements import BindParameter, or_
 
-from persisty.access_control.constants import ALL_ACCESS
 from persisty.errors import PersistyError
 from persisty.field.field import Field
 from persisty.field.field_type import FieldType
@@ -18,7 +17,6 @@ from persisty.impl.sqlalchemy.search_filter.search_filter_converter_context impo
     SearchFilterConverterContext,
 )
 from persisty.impl.sqlalchemy.sqlalchemy_column_converter import POSTGRES
-from persisty.impl.sqlalchemy.sqlalchemy_connector import get_default_engine
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.storage.batch_edit import BatchEdit
 from persisty.storage.batch_edit_result import BatchEditResult
@@ -26,28 +24,12 @@ from persisty.storage.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
-from persisty.storage.schema_validating_storage import SchemaValidatingStorage
-from persisty.storage.secured_storage import SecuredStorage
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 
 from sqlalchemy import Table, and_, select, func, Column
 
 from persisty.util import UNDEFINED, from_base64, to_base64
-
-
-def sqlalchemy_table_storage(
-    storage_meta: StorageMeta,
-    table: Table,
-    engine: Optional[Engine] = None,
-):
-    if engine is None:
-        engine = get_default_engine()
-    storage = SqlalchemyTableStorage(storage_meta, table, engine)
-    if storage_meta.access_control is not ALL_ACCESS:
-        storage = SecuredStorage(storage)
-    storage = SchemaValidatingStorage(storage)
-    return storage
 
 
 def catch_db_error(fn):
@@ -68,7 +50,7 @@ class SqlalchemyTableStorage(StorageABC):
 
     storage_meta: StorageMeta
     table: Table
-    engine: Engine = field(default_factory=get_default_engine)
+    engine: Engine
 
     def get_storage_meta(self) -> StorageMeta:
         return self.storage_meta
@@ -343,7 +325,9 @@ class SqlalchemyTableStorage(StorageABC):
             ):
                 value = json.loads(value)
             elif field_.type == FieldType.DATETIME and value:
-                value = value.isoformat()
+                if not value.tzinfo:
+                    value.replace(tzinfo=timezone.utc)
+                value = value.strftime("%Y-%m-%dT%H:%M:%S+00:00")
             loaded[field_.name] = value
         return loaded
 

@@ -1,10 +1,14 @@
 TODO:
 
 Build post processing triggers
+Migrations
 Get Sql Alchemy Storage Working
 Get Dynamodb Storage Working
+Dynamic storage
+Exports
 Extras
 ======
+File storage
 Consider building a user app
 Consider building a rate limiting app (Rate Limit access control)
 

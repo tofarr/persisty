@@ -1,0 +1,3 @@
+"""
+Storage implementation using http
+"""

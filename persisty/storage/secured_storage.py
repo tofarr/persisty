@@ -5,6 +5,7 @@ from marshy.types import ExternalItemType
 from servey.security.authorization import Authorization
 
 from persisty.access_control.access_control import AccessControl
+from persisty.access_control.constants import ALL_ACCESS
 from persisty.errors import PersistyError
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
@@ -57,4 +58,6 @@ def secured_storage(storage: StorageABC, authorization: Authorization) -> Storag
     )
     access_controls = (a for a in access_controls if a)
     access_control = next(access_controls)
+    if access_control == ALL_ACCESS:
+        return storage
     return SecuredStorage(storage, access_control)
