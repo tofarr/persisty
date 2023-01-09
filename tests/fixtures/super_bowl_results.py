@@ -2,8 +2,10 @@ from datetime import datetime
 
 from schemey.schema import int_schema
 
-from persisty.access_control.factory.default_access_control_factory import DefaultAccessControlFactory, \
-    ALL_ACCESS_FACTORY
+from persisty.access_control.factory.default_access_control_factory import (
+    DefaultAccessControlFactory,
+    ALL_ACCESS_FACTORY,
+)
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.obj_storage.attr import Attr
 from persisty.obj_storage.stored import stored
@@ -517,7 +519,10 @@ SUPER_BOWL_RESULT_DICTS = [
 ]
 
 
-@stored(key_config=FieldKeyConfig("code", FieldType.STR), access_control_factories=(ALL_ACCESS_FACTORY,))
+@stored(
+    key_config=FieldKeyConfig("code", FieldType.STR),
+    access_control_factories=(ALL_ACCESS_FACTORY,),
+)
 class SuperBowlResult:
     code: str = Attr()
     year: int = Attr(schema=int_schema(minimum=1967))

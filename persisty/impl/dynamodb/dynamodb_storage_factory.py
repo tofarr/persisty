@@ -19,6 +19,7 @@ from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_factory_abc import StorageFactoryABC
 from persisty.storage.storage_meta import StorageMeta
 from persisty.storage.ttl_cache_storage import TtlCacheStorage
+from persisty.trigger.wrapper import triggered_storage
 from persisty.util import filter_none
 
 
@@ -32,6 +33,7 @@ class DynamodbStorageFactory(StorageFactoryABC):
     global_secondary_indexes: Optional[Dict[str, DynamodbIndex]] = None
     cache: ExternalItemType = field(default_factory=dict)
     cached_result_sets: ExternalItemType = field(default_factory=dict)
+    native_triggers: bool = False
 
     def get_storage_meta(self) -> StorageMeta:
         return self.storage_meta
@@ -54,6 +56,8 @@ class DynamodbStorageFactory(StorageFactoryABC):
                 self.storage_meta.cache_control.ttl,
             )
         storage = secured_storage(storage, authorization)
+        if not self.native_triggers:
+            storage = triggered_storage(storage)
         return storage
 
     def sanitize_storage_meta(self):

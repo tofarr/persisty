@@ -8,7 +8,10 @@ from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
 from servey.action.action import Action
-from servey.servey_aws.event_handler.event_handler_abc import EventHandlerABC, EventHandlerFactoryABC
+from servey.servey_aws.event_handler.event_handler_abc import (
+    EventHandlerABC,
+    EventHandlerFactoryABC,
+)
 
 from persisty.trigger.after_create_trigger import AfterCreateTrigger
 from persisty.trigger.after_delete_trigger import AfterDeleteTrigger
@@ -20,6 +23,7 @@ class DynamodbPostProcessEventHandler(EventHandlerABC):
     """
     Event handler for events in dynamodb format
     """
+
     action: Action
     item_marshaller: MarshallerABC
 
@@ -27,21 +31,21 @@ class DynamodbPostProcessEventHandler(EventHandlerABC):
         # noinspection PyBroadException
         try:
             # noinspection PyTypeChecker
-            result = bool(event['Records'][0]["dynamodb"])
+            result = bool(event["Records"][0]["dynamodb"])
             return result
         except Exception:
             return False
 
     def handle(self, event: ExternalItemType, context) -> ExternalType:
         deserializer = TypeDeserializer()
-        for record in event['Records']:
+        for record in event["Records"]:
             # noinspection PyTypeChecker
-            new_image = record['NewImage']
+            new_image = record["NewImage"]
             if new_image:
                 new_image = deserializer.deserialize(new_image)
                 new_image = self.item_marshaller.load(new_image)
             # noinspection PyTypeChecker
-            old_image = record['OldImage']
+            old_image = record["OldImage"]
             if old_image:
                 old_image = deserializer.deserialize(old_image)
                 old_image = self.item_marshaller.load(old_image)
@@ -63,9 +67,9 @@ class DynamodbPostProcessEventHandlerFactory(EventHandlerFactoryABC):
 
     def create(self, action: Action) -> Optional[EventHandlerABC]:
         if (
-                _has_trigger(action, AfterCreateTrigger) or
-                _has_trigger(action, AfterUpdateTrigger) or
-                _has_trigger(action, AfterDeleteTrigger)
+            _has_trigger(action, AfterCreateTrigger)
+            or _has_trigger(action, AfterUpdateTrigger)
+            or _has_trigger(action, AfterDeleteTrigger)
         ):
             sig = inspect.signature(action.fn)
             item_type = next(iter(sig.parameters.values())).annotation
@@ -74,5 +78,7 @@ class DynamodbPostProcessEventHandlerFactory(EventHandlerFactoryABC):
 
 
 def _has_trigger(action_: Action, trigger_type: Type):
-    result = next((True for t in action_.triggers if isinstance(t, trigger_type)), False)
+    result = next(
+        (True for t in action_.triggers if isinstance(t, trigger_type)), False
+    )
     return result

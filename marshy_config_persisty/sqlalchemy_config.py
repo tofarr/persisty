@@ -21,7 +21,9 @@ from persisty.impl.sqlalchemy.search_filter.search_filter_converter_abc import (
     SearchFilterConverterABC,
 )
 from persisty.impl.sqlalchemy.sqlalchemy_context_factory import SqlalchemyContextFactory
-from persisty.impl.sqlalchemy.sqlalchemy_context_factory_abc import SqlalchemyContextFactoryABC
+from persisty.impl.sqlalchemy.sqlalchemy_context_factory_abc import (
+    SqlalchemyContextFactoryABC,
+)
 
 
 def configure_converters(context: MarshallerContext):

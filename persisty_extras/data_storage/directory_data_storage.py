@@ -20,6 +20,7 @@ class DirectoryDataStorage(DataStorageABC):
     Works in conjunction with route factories for data storage. In an AWS lambda environment, you would almost
     certainly use the S3 implementation instead of this.
     """
+
     name: str
     directory_path: str
     access_control: AccessControlABC
@@ -55,21 +56,23 @@ class DirectoryDataStorage(DataStorageABC):
             _check_key(key)
         else:
             key = str(uuid4())
-        upload_id = key + '/' + str(uuid4())
-        path = Path(self.directory_path, 'uploads', upload_id)
+        upload_id = key + "/" + str(uuid4())
+        path = Path(self.directory_path, "uploads", upload_id)
         path.mkdir(parents=True)
         return upload_id
 
     def upload_chunk(self, upload_id: str, part_number: int, data: bytes):
         _check_key(upload_id)
-        path = Path(self.directory_path, 'uploads', upload_id, str(part_number))
-        with open(path, 'wb') as f:
+        path = Path(self.directory_path, "uploads", upload_id, str(part_number))
+        with open(path, "wb") as f:
             f.write(data)
 
-    def complete_upload(self, upload_id, part_number: Optional[int] = None, data: Optional[bytes] = None) -> str:
+    def complete_upload(
+        self, upload_id, part_number: Optional[int] = None, data: Optional[bytes] = None
+    ) -> str:
         _check_key(upload_id)
-        input_path = Path(self.directory_path, 'uploads', upload_id)
-        output_path = Path(self.directory_path, 'storage', key)
+        input_path = Path(self.directory_path, "uploads", upload_id)
+        output_path = Path(self.directory_path, "storage", key)
         zzzzz
 
     def abort_upload(self, upload_id: str) -> bool:
@@ -87,8 +90,12 @@ class DirectoryDataStorage(DataStorageABC):
     def read(self, key: str, data_range: Optional[Tuple[int, int]] = None) -> DataItem:
         pass
 
-    def search(self, search_filter: Optional[DataMetaFilter] = None, page_key: Optional[str] = None,
-               limit: int = 100) -> ResultSet[DataMeta]:
+    def search(
+        self,
+        search_filter: Optional[DataMetaFilter] = None,
+        page_key: Optional[str] = None,
+        limit: int = 100,
+    ) -> ResultSet[DataMeta]:
         pass
 
 
@@ -183,6 +190,7 @@ class DirectoryDataStorage(DataStorageABC):
             )
 """
 
+
 def _check_key(key: str):
-    if '..' in key or '/' in key or '\\' in key or ':' in key:
-        raise PersistyError('invalid_key')
+    if ".." in key or "/" in key or "\\" in key or ":" in key:
+        raise PersistyError("invalid_key")

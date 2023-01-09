@@ -131,7 +131,7 @@ def configure_sqlalchemy(context: MarshallerContext):
         sqlalchemy_config.configure_converters(context)
         sqlalchemy_config.configure_sqlalchemy_context(context)
     except ModuleNotFoundError:
-        LOGGER.info('sqlalchemy not found - skipping')
+        LOGGER.info("sqlalchemy not found - skipping")
 
 
 def configure_finders(context: MarshallerContext):

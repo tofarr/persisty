@@ -6,4 +6,3 @@ from persisty.obj_storage.stored import stored
 class DataItem:
     meta: DataMeta
     data: bytes
-

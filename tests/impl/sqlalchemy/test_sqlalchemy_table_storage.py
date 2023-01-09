@@ -5,7 +5,9 @@ from marshy.types import ExternalItemType
 from servey.security.authorization import ROOT
 
 from persisty.impl.sqlalchemy.sqlalchemy_context_factory import SqlalchemyContextFactory
-from persisty.impl.sqlalchemy.sqlalchemy_table_storage_factory import SqlalchemyTableStorageFactory
+from persisty.impl.sqlalchemy.sqlalchemy_table_storage_factory import (
+    SqlalchemyTableStorageFactory,
+)
 from persisty.obj_storage.stored import get_storage_meta
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
@@ -18,7 +20,6 @@ from tests.fixtures.storage_tst_abc import StorageTstABC
 
 
 class TestSqlalchemyTableStorage(TestCase, StorageTstABC):
-
     def setUp(self) -> None:
         self.context = SqlalchemyContextFactory().create()
 

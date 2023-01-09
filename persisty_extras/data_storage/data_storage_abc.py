@@ -19,19 +19,19 @@ class DataStorageABC(ABC):
 
     @abstractmethod
     def get_name(self) -> str:
-        """ Get the name of this storage """
+        """Get the name of this storage"""
 
     @abstractmethod
     def get_access_control(self) -> AccessControlABC:
-        """ Get the access control for this storage """
+        """Get the access control for this storage"""
 
     @abstractmethod
     def get_cache_control(self) -> CacheControlABC:
-        """ Get the cache control for this storage """
+        """Get the cache control for this storage"""
 
     @abstractmethod
     def get_max_chunk_size(self) -> int:
-        """ Get the maximum buffer size for multipart upload / downloads """
+        """Get the maximum buffer size for multipart upload / downloads"""
 
     @abstractmethod
     def get_max_upload_age(self) -> int:
@@ -42,50 +42,54 @@ class DataStorageABC(ABC):
 
     @abstractmethod
     def url_for_create(self, key: Optional[str] = None) -> str:
-        """ Create a url which will be the target for multipart uploads. """
+        """Create a url which will be the target for multipart uploads."""
 
     @abstractmethod
     def begin_upload(self, key: Optional[str] = None) -> str:
-        """ Begin a new multipart upload. Return the key for the upload. """
+        """Begin a new multipart upload. Return the key for the upload."""
 
     @abstractmethod
     def upload_chunk(self, upload_id: str, part_number: int, data: bytes):
-        """ Upload part of a data stream. """
+        """Upload part of a data stream."""
 
     @abstractmethod
-    def complete_upload(self, upload_id, part_number: Optional[int] = None, data: Optional[bytes] = None) -> str:
-        """ Finish uploading part of a data stream, and return the key for the upload """
+    def complete_upload(
+        self, upload_id, part_number: Optional[int] = None, data: Optional[bytes] = None
+    ) -> str:
+        """Finish uploading part of a data stream, and return the key for the upload"""
 
     @abstractmethod
     def abort_upload(self, upload_id: str) -> bool:
-        """ Abort an upload. """
+        """Abort an upload."""
 
     @abstractmethod
     def delete(self, key: str) -> bool:
-        """ Delete a resource """
+        """Delete a resource"""
 
     @abstractmethod
     def url_for_read(self, key: Optional[str] = None) -> str:
-        """ Create a Url for downloads """
+        """Create a Url for downloads"""
 
     @abstractmethod
     def read_meta(self, key: str) -> DataMeta:
-        """ Read meta for a key """
+        """Read meta for a key"""
 
     @abstractmethod
     def read(self, key: str, data_range: Optional[Tuple[int, int]] = None) -> DataItem:
-        """ Read data / a range of data for a key """
+        """Read data / a range of data for a key"""
 
-    def search_all(self, search_filter: Optional[DataMetaFilter] = None) -> Iterator[DataMeta]:
+    def search_all(
+        self, search_filter: Optional[DataMetaFilter] = None
+    ) -> Iterator[DataMeta]:
         """
         Search the data storage and return all results
         """
-        kwargs = {'search_filter': search_filter}
+        kwargs = {"search_filter": search_filter}
         while True:
             result_set = self.search(**kwargs)
             yield from result_set.results
             if result_set.next_page_key:
-                kwargs['page_key'] = result_set.next_page_key
+                kwargs["page_key"] = result_set.next_page_key
             else:
                 return
 
@@ -94,6 +98,6 @@ class DataStorageABC(ABC):
         self,
         search_filter: Optional[DataMetaFilter] = None,
         page_key: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> ResultSet[DataMeta]:
-        """ Search the data storage and return a page of results """
+        """Search the data storage and return a page of results"""

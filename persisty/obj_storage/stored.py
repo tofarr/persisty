@@ -1,4 +1,4 @@
-from dataclasses import dataclass, Field
+from dataclasses import dataclass, Field, MISSING
 from typing import get_type_hints, Optional, Tuple
 
 from marshy import get_default_context
@@ -9,6 +9,8 @@ from persisty.access_control.factory.access_control_factory_abc import (
 )
 from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
+
+from persisty.errors import PersistyError
 from persisty.link.link_abc import LinkABC
 from persisty.storage.storage_meta import StorageMeta, DEFAULT_ACCESS_CONTROL_FACTORIES
 from persisty.obj_storage.attr import Attr
@@ -54,15 +56,21 @@ def stored(
                 continue
             if not isinstance(attr, Attr):
                 schema = None
+                write_transform = UNDEFINED
                 if isinstance(attr, Field):
                     schema = attr.metadata.get("schemey")
+                    if attr.default is not MISSING:
+                        write_transform = DefaultValueTransform(marshaller_context.dump(attr.default, type_))
+                    if attr.default_factory is not MISSING:
+                        raise PersistyError('factory_not_supported')
+                    # We don't support factories here right now
+                elif attr is not UNDEFINED:
+                    write_transform = DefaultValueTransform(marshaller_context.dump(attr, type_))
                 attr = Attr(
                     name=name,
                     type=annotations[name],
                     schema=schema,
-                    write_transform=UNDEFINED
-                    if attr is UNDEFINED
-                    else DefaultValueTransform(marshaller_context.dump(attr, type_)),
+                    write_transform=write_transform,
                 )
 
             attr.populate(key_config)

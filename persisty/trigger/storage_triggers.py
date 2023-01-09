@@ -1,4 +1,3 @@
-import asyncio
 import inspect
 from dataclasses import dataclass, field
 from typing import List, Iterator, Awaitable
@@ -58,6 +57,13 @@ class StorageTriggers:
 
     def has_after_delete_actions(self):
         return bool(self.get_after_delete_actions())
+
+    def has_after_edit_actions(self):
+        return (
+            self.has_after_create_actions()
+            or self.has_after_update_actions()
+            or self.has_after_delete_actions()
+        )
 
     async def async_after_create(self, new_item: ExternalItemType):
         for action in self.get_after_create_actions():

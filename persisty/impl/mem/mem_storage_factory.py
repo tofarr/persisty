@@ -5,12 +5,12 @@ from marshy.types import ExternalItemType
 from servey.security.authorization import Authorization
 
 from persisty.impl.mem.mem_storage import MemStorage
-from persisty.storage import storage_meta
 from persisty.storage.schema_validating_storage import SchemaValidatingStorage
-from persisty.storage.secured_storage import SecuredStorage, secured_storage
+from persisty.storage.secured_storage import secured_storage
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_factory_abc import StorageFactoryABC
 from persisty.storage.storage_meta import StorageMeta
+from persisty.trigger.wrapper import triggered_storage
 
 
 @dataclass
@@ -25,4 +25,5 @@ class MemStorageFactory(StorageFactoryABC):
         storage = MemStorage(self.storage_meta, self.items)
         storage = SchemaValidatingStorage(storage)
         storage = secured_storage(storage, authorization)
+        storage = triggered_storage(storage)
         return storage

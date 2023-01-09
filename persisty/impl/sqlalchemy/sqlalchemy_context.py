@@ -14,17 +14,17 @@ class SqlalchemyContext:
 
     @property
     def converter(self) -> SqlalchemyTableConverter:
-        converter = getattr(self, '_converter', None)
+        converter = getattr(self, "_converter", None)
         if not converter:
             converter = SqlalchemyTableConverter(self.engine, self.meta_data)
-            setattr(self, '_converter', converter)
+            setattr(self, "_converter", converter)
         return converter
 
     def get_table(self, storage_meta: StorageMeta) -> Table:
-        tables_by_storage_name = getattr(self, '_tables_by_storage_name', None)
+        tables_by_storage_name = getattr(self, "_tables_by_storage_name", None)
         if not tables_by_storage_name:
             tables_by_storage_name = {}
-            setattr(self, '_tables_by_storage_name', tables_by_storage_name)
+            setattr(self, "_tables_by_storage_name", tables_by_storage_name)
         table = tables_by_storage_name.get(storage_meta.name)
         if table is None:
             table = self.converter.to_sqlalchemy_table(storage_meta)

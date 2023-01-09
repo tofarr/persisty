@@ -385,7 +385,9 @@ class StorageTstABC(ABC):
             ),
             BatchEdit(delete_key="00000000-0000-0000-0002-000000000001"),
         ]
-        now = datetime.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        now = (
+            datetime.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        )
         results = [r.success for r in storage.edit_all(edits)]
         self.assertEqual(results, [True, False, True, False])
         results = list(

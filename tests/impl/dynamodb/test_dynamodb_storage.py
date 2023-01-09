@@ -4,6 +4,7 @@ from unittest import TestCase
 
 from marshy import dump
 from marshy.types import ExternalItemType
+from servey.security.authorization import ROOT
 
 from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex
 from persisty.impl.dynamodb.dynamodb_storage_factory import DynamodbStorageFactory
@@ -30,7 +31,7 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
             storage_meta=get_storage_meta(SuperBowlResult)
         )
         self.seed_table(storage_factory, SUPER_BOWL_RESULT_DICTS)
-        storage = storage_factory.create_storage()
+        storage = storage_factory.create(ROOT)
         return storage
 
     def new_number_name_storage(self) -> StorageABC:
@@ -38,7 +39,7 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
             storage_meta=get_storage_meta(NumberName)
         )
         self.seed_table(storage_factory, NUMBER_NAMES_DICTS)
-        storage = storage_factory.create_storage()
+        storage = storage_factory.create(ROOT)
         return storage
 
     @staticmethod
@@ -68,7 +69,7 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
 
     def test_dynamodb_update_fail_filter(self):
         # noinspection PyUnresolvedReferences
-        storage = self.new_number_name_storage().storage.storage
+        storage = self.new_number_name_storage().storage
         self.spec_for_update_fail_filter(storage)
 
     def test_read_with_sk_missing(self):
@@ -147,7 +148,7 @@ class TestDynamodbStorage(TestCase, StorageTstABC):
             for i in range(1, 1001)
         )
         self.seed_table(storage_factory, tags)
-        storage = storage_factory.create_storage()
+        storage = storage_factory.create(ROOT)
         return storage
 
 

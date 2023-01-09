@@ -35,7 +35,11 @@ class TimestampGenerator(WriteTransformABC):
         if is_update and not self.on_update:
             return UNDEFINED
         else:
-            return datetime.now().astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+            return (
+                datetime.now()
+                .astimezone(timezone.utc)
+                .strftime("%Y-%m-%dT%H:%M:%S+00:00")
+            )
 
 
 CREATED_AT_GENERATOR = TimestampGenerator()

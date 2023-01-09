@@ -3,7 +3,9 @@ from datetime import datetime, timezone
 
 from marshy import dump
 
-from persisty.access_control.factory.default_access_control_factory import ALL_ACCESS_FACTORY
+from persisty.access_control.factory.default_access_control_factory import (
+    ALL_ACCESS_FACTORY,
+)
 from persisty.obj_storage.stored import stored
 
 

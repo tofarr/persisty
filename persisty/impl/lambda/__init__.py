@@ -1,3 +1,0 @@
-"""
-Storage implementation using lambdas
-"""

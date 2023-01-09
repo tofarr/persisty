@@ -102,7 +102,7 @@ def action_for_create(
     @action(
         name=f"{storage_meta.name}_create",
         description=f"Create and return an item in {storage_meta.name}",
-        triggers=(WebTrigger(WebTriggerMethod.PATCH, "/actions/" + storage_meta.name),),
+        triggers=(WebTrigger(WebTriggerMethod.POST, "/actions/" + storage_meta.name),),
     )
     def create(
         item: create_input_type, authorization: Optional[Authorization] = None

@@ -8,8 +8,11 @@ from persisty.access_control.constants import ALL_ACCESS
 from persisty.access_control.factory.default_access_control_factory import (
     DefaultAccessControlFactory,
 )
+from persisty.impl.default_storage_factory import DefaultStorageFactory
 from persisty.impl.mem.mem_storage_factory import MemStorageFactory
-from persisty.impl.sqlalchemy.sqlalchemy_table_storage_factory import SqlalchemyTableStorageFactory
+from persisty.impl.sqlalchemy.sqlalchemy_table_storage_factory import (
+    SqlalchemyTableStorageFactory,
+)
 from persisty.link.belongs_to import BelongsTo
 from persisty.link.has_count import HasCount
 from persisty.link.has_many import HasMany
@@ -39,7 +42,9 @@ class Message:
     user: User = BelongsTo()
 
 
-#user_storage_factory = MemStorageFactory(get_storage_meta(User))
-#message_storage_factory = MemStorageFactory(get_storage_meta(Message))
-user_storage_factory = SqlalchemyTableStorageFactory(get_storage_meta(User))
-message_storage_factory = SqlalchemyTableStorageFactory(get_storage_meta(Message))
+# user_storage_factory = MemStorageFactory(get_storage_meta(User))
+# message_storage_factory = MemStorageFactory(get_storage_meta(Message))
+# user_storage_factory = SqlalchemyTableStorageFactory(get_storage_meta(User))
+# message_storage_factory = SqlalchemyTableStorageFactory(get_storage_meta(Message))
+user_storage_factory = DefaultStorageFactory(get_storage_meta(User))
+message_storage_factory = DefaultStorageFactory(get_storage_meta(Message))

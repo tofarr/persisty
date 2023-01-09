@@ -11,7 +11,7 @@ class SqlalchemyContextFactoryABC(ABC):
 
     @abstractmethod
     def create(self) -> Optional[SqlalchemyContext]:
-        """ Create a new context """
+        """Create a new context"""
 
 
 def create_default_context() -> Optional[SqlalchemyContext]:
