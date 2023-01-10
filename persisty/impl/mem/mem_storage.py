@@ -9,7 +9,6 @@ from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.field.field import load_field_values
-from persisty.storage.schema_validating_storage import SchemaValidatingStorage
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_meta import StorageMeta
 
@@ -19,9 +18,9 @@ from persisty.util.undefined import UNDEFINED
 @dataclass
 class MemStorage(StorageABC):
     """
-    In memory storage, used mostly for mocking and testing
+    In memory storage, used mostly for mocking and testing. Relies on wrappers to provied not apply access control,
+    triggers and schema validation.
     """
-
     storage_meta: StorageMeta = field()
     items: Dict[str, ExternalItemType] = field(default_factory=dict)
 
@@ -49,9 +48,7 @@ class MemStorage(StorageABC):
         key: str,
         item: ExternalItemType,
         updates: ExternalItemType,
-        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
-        search_filter.validate_for_fields(self.storage_meta.fields)
         dumped = self._dump(updates, True)
         item.update(dumped)
         self.items[key] = item
@@ -69,7 +66,7 @@ class MemStorage(StorageABC):
         search_filter: SearchFilterABC = INCLUDE_ALL,
         search_order: Optional[SearchOrder] = None,
     ) -> Iterator[ExternalItemType]:
-        search_filter.validate_for_fields(self.storage_meta.fields)
+        search_filter = search_filter.lock_fields(self.storage_meta.fields)
         if search_order:
             search_order.validate_for_fields(self.storage_meta.fields)
         items = list(self.items.values())  # Copy to list prevents iterator bugs
@@ -85,7 +82,7 @@ class MemStorage(StorageABC):
         return items
 
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
-        search_filter.validate_for_fields(self.storage_meta.fields)
+        search_filter = search_filter.lock_fields(self.storage_meta.fields)
         if search_filter is INCLUDE_ALL:
             return len(self.items)
         count = sum(1 for _ in self.search_all(search_filter))

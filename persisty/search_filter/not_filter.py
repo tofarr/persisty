@@ -23,8 +23,9 @@ class Not(SearchFilterABC):
             return EXCLUDE_ALL
         return super(Not, cls).__new__(cls)
 
-    def validate_for_fields(self, fields: Tuple[Field, ...]):
-        self.search_filter.validate_for_fields(fields)
+    def lock_fields(self, fields: Tuple[Field, ...]) -> SearchFilterABC:
+        result = Not(self.search_filter.lock_fields(fields))
+        return result
 
     def match(self, value: ExternalType, fields: Tuple[Field, ...]) -> bool:
         return not self.search_filter.match(value, fields)

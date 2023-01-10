@@ -8,7 +8,6 @@ from servey.action.action import action, get_action
 from servey.security.authorization import Authorization
 from servey.trigger.web_trigger import WebTrigger, WebTriggerMethod
 
-from persisty.finder.storage_factory_finder_abc import find_storage_factories
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_factory import (
     search_filter_dataclass_for,
@@ -20,10 +19,10 @@ from persisty.search_order.search_order_factory import (
 )
 from persisty.servey import output
 from persisty.servey.input import input_type_for_create, input_type_for_update
+from persisty.secured.secured_storage_factory_abc import SecuredStorageFactoryABC
 from persisty.storage.batch_edit import batch_edit_dataclass_for, BatchEdit
 from persisty.storage.batch_edit_result import batch_edit_result_dataclass_for
 from persisty.storage.result_set import result_set_dataclass_for
-from persisty.storage.storage_factory_abc import StorageFactoryABC
 from persisty.storage.storage_meta import StorageMeta
 
 
@@ -32,16 +31,18 @@ def add_actions_for_all_storage_factories(
 ):
     if not marshaller_context:
         marshaller_context = get_default_context()
-    for storage_factory in find_storage_factories():
+    from persisty.finder.storage_factory_finder_abc import find_secured_storage_factories
+    for storage_factory in find_secured_storage_factories():
         add_actions_for_storage_factory(storage_factory, target, marshaller_context)
 
 
 def add_actions_for_storage_factory(
-    storage_factory: StorageFactoryABC,
+    storage_factory: SecuredStorageFactoryABC,
     target: Dict,
     marshaller_context: MarshallerContext,
 ):
     storage_meta = storage_factory.get_storage_meta()
+    storage_access = storage_meta.storage_access
     item_type = get_item_type(storage_meta)
     marshaller = marshaller_context.get_marshaller(item_type)
     search_filter_type = search_filter_dataclass_for(storage_meta)
@@ -51,47 +52,54 @@ def add_actions_for_storage_factory(
     update_input_type = input_type_for_update(storage_meta)
     update_input_type_marshaller = marshaller_context.get_marshaller(update_input_type)
 
-    actions = [
-        action_for_create(
+    actions = []
+    if storage_access.creatable:
+        actions.append(action_for_create(
             storage_factory,
             marshaller,
             item_type,
             create_input_type,
             create_input_type_marshaller,
-        ),
-        action_for_read(storage_factory, marshaller, item_type),
-        action_for_update(
+        ))
+    if storage_access.readable:
+        actions.append(action_for_read(storage_factory, marshaller, item_type))
+    if storage_access.updatable:
+        actions.append(action_for_update(
             storage_factory,
             marshaller,
             item_type,
             update_input_type,
             update_input_type_marshaller,
             search_filter_type,
-        ),
-        action_for_delete(storage_factory),
-        action_for_search(
+        ))
+    if storage_access.deletable:
+        actions.append(action_for_delete(storage_factory))
+    if storage_access.searchable:
+        actions.append(action_for_search(
             storage_factory,
             marshaller,
             item_type,
             search_filter_type,
             search_order_type,
-        ),
-        action_for_count(storage_factory, search_filter_type),
-        action_for_read_batch(storage_factory, marshaller, item_type),
-        action_for_edit_batch(
+        ))
+        actions.append(action_for_count(storage_factory, search_filter_type))
+    if storage_access.readable:
+        actions.append(action_for_read_batch(storage_factory, marshaller, item_type))
+    if storage_access.editable:
+        actions.append(action_for_edit_batch(
             storage_factory,
             create_input_type,
             create_input_type_marshaller,
             update_input_type,
             update_input_type_marshaller,
-        ),
-    ]
+        ))
+
     for action_ in actions:
         target[get_action(action_).name] = action_
 
 
 def action_for_create(
-    storage_factory: StorageFactoryABC,
+    storage_factory: SecuredStorageFactoryABC,
     marshaller: MarshallerABC,
     item_type: Type,
     create_input_type: Type,
@@ -117,7 +125,7 @@ def action_for_create(
 
 
 def action_for_read(
-    storage_factory: StorageFactoryABC, marshaller: MarshallerABC, item_type: Type
+    storage_factory: SecuredStorageFactoryABC, marshaller: MarshallerABC, item_type: Type
 ) -> Callable:
     storage_meta = storage_factory.get_storage_meta()
 
@@ -143,7 +151,7 @@ def action_for_read(
 
 
 def action_for_update(
-    storage_factory: StorageFactoryABC,
+    storage_factory: SecuredStorageFactoryABC,
     marshaller: MarshallerABC,
     item_type: Type,
     update_input_type: Type,
@@ -178,7 +186,7 @@ def action_for_update(
     return update
 
 
-def action_for_delete(storage_factory: StorageFactoryABC) -> Callable:
+def action_for_delete(storage_factory: SecuredStorageFactoryABC) -> Callable:
     storage_meta = storage_factory.get_storage_meta()
 
     @action(
@@ -200,7 +208,7 @@ def action_for_delete(storage_factory: StorageFactoryABC) -> Callable:
 
 
 def action_for_search(
-    storage_factory: StorageFactoryABC,
+    storage_factory: SecuredStorageFactoryABC,
     marshaller: MarshallerABC,
     item_type: Type,
     search_filter_type: Type[SearchFilterFactoryABC],
@@ -241,7 +249,7 @@ def action_for_search(
 
 
 def action_for_count(
-    storage_factory: StorageFactoryABC,
+    storage_factory: SecuredStorageFactoryABC,
     search_filter_type: Type[SearchFilterFactoryABC],
 ) -> Callable:
     storage_meta = storage_factory.get_storage_meta()
@@ -268,7 +276,7 @@ def action_for_count(
 
 
 def action_for_read_batch(
-    storage_factory: StorageFactoryABC, marshaller: MarshallerABC, item_type: Type
+    storage_factory: SecuredStorageFactoryABC, marshaller: MarshallerABC, item_type: Type
 ) -> Callable:
     storage_meta = storage_factory.get_storage_meta()
 
@@ -294,7 +302,7 @@ def action_for_read_batch(
 
 
 def action_for_edit_batch(
-    storage_factory: StorageFactoryABC,
+    storage_factory: SecuredStorageFactoryABC,
     create_input_type: Type,
     create_input_type_marshaller: MarshallerABC,
     update_input_type: Type,
@@ -352,7 +360,10 @@ def get_item_type(storage_meta: StorageMeta):
         return getattr(output, name)
 
     annotations = {}
-    params = {"__annotations__": annotations}
+    params = {
+        "__annotations__": annotations,
+        "__doc__": f"Stored {storage_meta.name}",
+    }
     for f in storage_meta.fields:
         if f.is_readable:
             annotations[f.name] = f.schema.python_type

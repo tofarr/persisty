@@ -290,8 +290,10 @@ class StorageTstABC(ABC):
             field_name: str
             required_length: int
 
-            def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
-                return next((True for f in fields if f.name == self.field_name), False)
+            def lock_fields(self, fields: Tuple[Field, ...]) -> SearchFilterABC:
+                field = next(field for field in fields if field.name == self.field_name)
+                assert field.is_readable
+                return self
 
             def match(self, item: ExternalType, fields: Tuple[Field, ...]) -> bool:
                 # noinspection PyTypeChecker
@@ -520,8 +522,8 @@ class ValueLessThanFilter(SearchFilterABC):
 
     value: int
 
-    def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
-        return next((True for f in fields if f.name == "value"), False)
+    def lock_fields(self, fields: Tuple[Field, ...]) -> SearchFilterABC:
+        return self
 
     def match(self, item: ExternalItemType, fields: Tuple[Field, ...]) -> bool:
         return item["value"] < self.value

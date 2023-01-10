@@ -1,17 +1,18 @@
 from dataclasses import dataclass
 from typing import Callable, Optional, ForwardRef, Any, Dict, Type, List
 
+import typing_inspect
 from marshy.factory.optional_marshaller_factory import get_optional_type
 from marshy.types import ExternalItemType
+from marshy.utils import resolve_forward_refs
 from schemey.schema import str_schema
 from servey.action.action import action
 from servey.action.batch_invoker import BatchInvoker
 from servey.finder.action_finder_abc import find_actions
-from servey.security.authorization import Authorization
 
 from persisty.field.field import Field
 from persisty.field.field_type import FieldType
-from persisty.finder.storage_factory_finder_abc import find_storage_factories
+from persisty.finder.storage_factory_finder_abc import find_secured_storage_factories
 from persisty.link.link_abc import LinkABC
 from persisty.link.on_delete import OnDelete
 from persisty.servey import output
@@ -42,9 +43,11 @@ class BelongsTo(LinkABC):
         if self.optional is None:
             self.optional = optional
         if self.linked_storage_name is None:
-            self.linked_storage_name = to_snake_case(
-                type_ if isinstance(type_, str) else type_.__name__
-            )
+            if isinstance(type_, ForwardRef):
+                type_ = typing_inspect.get_forward_arg(type_).split('.')[-1]
+            elif isinstance(type_, type):
+                type_ = type_.__name__
+            self.linked_storage_name = to_snake_case(type_)
         if self.key_field_name is None:
             self.key_field_name = f"{name}_id"
 
@@ -65,7 +68,7 @@ class BelongsTo(LinkABC):
     def to_action_fn(self, owner_name: str) -> Callable:
         linked_storage_factory = next(
             f
-            for f in find_storage_factories()
+            for f in find_secured_storage_factories()
             if f.get_storage_meta().name == self.linked_storage_name
         )
         linked_storage_meta = linked_storage_factory.get_storage_meta()

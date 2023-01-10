@@ -10,8 +10,8 @@ from persisty.util.singleton_abc import SingletonABC
 
 
 class IncludeAll(SearchFilterABC, SingletonABC):
-    def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
-        return True
+    def lock_fields(self, fields: Tuple[Field, ...]) -> ExcludeAll:
+        return self
 
     def match(self, item: ExternalType, fields: Tuple[Field, ...]) -> bool:
         return True

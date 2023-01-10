@@ -13,8 +13,8 @@ from persisty.impl.dynamodb.dynamodb_table_storage import DynamodbTableStorage
 from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.obj_storage.attr import Attr
 from persisty.field.field_type import FieldType
+from persisty.storage.restrict_access_storage import restrict_access_storage
 from persisty.storage.schema_validating_storage import SchemaValidatingStorage
-from persisty.storage.secured_storage import secured_storage
 from persisty.storage.storage_abc import StorageABC
 from persisty.storage.storage_factory_abc import StorageFactoryABC
 from persisty.storage.storage_meta import StorageMeta
@@ -38,7 +38,7 @@ class DynamodbStorageFactory(StorageFactoryABC):
     def get_storage_meta(self) -> StorageMeta:
         return self.storage_meta
 
-    def create(self, authorization: Optional[Authorization]) -> Optional[StorageABC]:
+    def create(self) -> Optional[StorageABC]:
         storage = DynamodbTableStorage(
             storage_meta=self.storage_meta,
             table_name=self.table_name,
@@ -55,7 +55,7 @@ class DynamodbStorageFactory(StorageFactoryABC):
                 self.cached_result_sets,
                 self.storage_meta.cache_control.ttl,
             )
-        storage = secured_storage(storage, authorization)
+        storage = restrict_access_storage(storage, self.storage_meta.storage_access)
         if not self.native_triggers:
             storage = triggered_storage(storage)
         return storage

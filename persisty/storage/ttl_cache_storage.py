@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from marshy import dump
 from marshy.types import ExternalItemType
 
-from servey.cache_control.ttl_cache_control import TtlCacheControl
 from persisty.storage.batch_edit import BatchEdit
 from persisty.storage.batch_edit_result import BatchEditResult
 from persisty.storage.result_set import ResultSet
@@ -89,9 +88,8 @@ class TtlCacheStorage(StorageABC):
         key: str,
         item: ExternalItemType,
         updates: ExternalItemType,
-        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
-        item = self.storage._update(key, item, updates, search_filter)
+        item = self.storage._update(key, item, updates)
         if item:
             self.store_item_in_cache(key, item)
         return item

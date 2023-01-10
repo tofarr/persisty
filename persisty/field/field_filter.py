@@ -74,10 +74,11 @@ class FieldFilter(SearchFilterABC):
     op: FieldFilterOp
     value: ExternalType
 
-    def validate_for_fields(self, fields: Tuple[Field, ...]):
+    def lock_fields(self, fields: Tuple[Field, ...]) -> SearchFilterABC:
         try:
             field = next(field for field in fields if field.name == self.name)
             assert field.is_readable and self.op in field.permitted_filter_ops
+            return self
         except (StopIteration, AssertionError):
             raise PersistyError("field_filter_invalid_for_fields")
 

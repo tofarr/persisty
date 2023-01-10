@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 class SearchFilterABC(ABC):
     @abstractmethod
-    def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
+    def lock_fields(self, fields: Tuple[Field, ...]) -> SearchFilterABC:
         """Validate that this search_filter is applicable for the fields given"""
 
     @abstractmethod

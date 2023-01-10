@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 
 
 class ExcludeAll(SearchFilterABC, SingletonABC):
-    def validate_for_fields(self, fields: Tuple[Field, ...]) -> bool:
-        return True
+    def lock_fields(self, fields: Tuple[Field, ...]) -> ExcludeAll:
+        return self
 
     def match(self, value: ExternalType, fields: Tuple[Field, ...]) -> bool:
         return False

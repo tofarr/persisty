@@ -3,13 +3,10 @@ from datetime import datetime, timezone
 
 from marshy import dump
 
-from persisty.access_control.factory.default_access_control_factory import (
-    ALL_ACCESS_FACTORY,
-)
 from persisty.obj_storage.stored import stored
 
 
-@stored(batch_size=10, access_control_factories=(ALL_ACCESS_FACTORY,))
+@stored(batch_size=10)
 class NumberName:
     """Item linking a string representing a number with an integer value. Also has a uuid, and timestamps."""
 

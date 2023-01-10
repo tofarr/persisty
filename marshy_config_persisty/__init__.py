@@ -6,18 +6,6 @@ from marshy.marshaller.property_marshaller import PropertyConfig
 from marshy.marshaller_context import MarshallerContext
 
 from marshy_config_persisty.field_filter_op_marshaller import FieldFilterOpMarshaller
-from persisty.access_control.access_control import AccessControl
-from persisty.access_control.access_control_abc import AccessControlABC
-from persisty.access_control.factory.access_control_factory_abc import (
-    AccessControlFactoryABC,
-)
-from persisty.access_control.factory.default_access_control_factory import (
-    DefaultAccessControlFactory,
-)
-from persisty.access_control.factory.scope_access_control_factory import (
-    ScopeAccessControlFactory,
-)
-from persisty.access_control.field_filter_access_control import FieldFilterAccessControl
 from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from servey.cache_control.timestamp_cache_control import TimestampCacheControl
@@ -68,8 +56,6 @@ def configure(context: MarshallerContext):
     configure_search_filters(context)
     configure_key_configs(context)
     configure_write_transforms(context)
-    configure_access_control(context)
-    configure_access_control_factory(context)
     configure_cache_control(context)
     configure_links(context)
     configure_finders(context)
@@ -99,16 +85,6 @@ def configure_write_transforms(context: MarshallerContext):
     register_impl(WriteTransformABC, StrSequenceGenerator, context)
     register_impl(WriteTransformABC, TimestampGenerator, context)
     register_impl(WriteTransformABC, UuidGenerator, context)
-
-
-def configure_access_control(context: MarshallerContext):
-    register_impl(AccessControlABC, FieldFilterAccessControl, context)
-    register_impl(AccessControlABC, AccessControl, context)
-
-
-def configure_access_control_factory(context: MarshallerContext):
-    register_impl(AccessControlFactoryABC, DefaultAccessControlFactory, context)
-    register_impl(AccessControlFactoryABC, ScopeAccessControlFactory, context)
 
 
 def configure_cache_control(context: MarshallerContext):

@@ -1,0 +1,3 @@
+from persisty.servey import add_actions_for_all_storage_factories
+
+add_actions_for_all_storage_factories(globals())

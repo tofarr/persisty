@@ -80,13 +80,12 @@ class FilteredStorageABC(WrapperStorageABC, ABC):
         self,
         key: str,
         item: ExternalItemType,
-        updates: ExternalItemType,
-        search_filter: SearchFilterABC = INCLUDE_ALL,
+        updates: ExternalItemType
     ) -> Optional[ExternalItemType]:
         updates = self.filter_update(item, updates)
         if not updates:
             return None
-        return self.get_storage()._update(key, item, updates, search_filter)
+        return self.get_storage()._update(key, item, updates)
 
     def _delete(self, key: str, item: ExternalItemType) -> bool:
         if self.allow_delete(item):

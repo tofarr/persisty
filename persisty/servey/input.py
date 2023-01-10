@@ -55,6 +55,8 @@ def input_type_for_create(storage_meta: StorageMeta):
     default_params = {}
     default_annotations = {}
     for field in storage_meta.fields:
+        if not field.is_creatable:
+            continue
         mode = WriteTransformMode.SPECIFIED
         if field.write_transform:
             mode = field.write_transform.get_create_mode()
@@ -85,6 +87,8 @@ def input_type_for_update(storage_meta: StorageMeta):
     default_params = {}
     default_annotations = {}
     for field in storage_meta.fields:
+        if not field.is_updatable:
+            continue
         mode = WriteTransformMode.OPTIONAL
         if field.write_transform:
             mode = field.write_transform.get_update_mode()

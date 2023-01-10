@@ -5,7 +5,9 @@ from dataclasses import dataclass
 
 from marshy.types import ExternalItemType
 
+from persisty.field.field_filter import FieldFilter, FieldFilterOp
 from persisty.field.field_type import FieldType
+from persisty.search_filter.or_filter import Or
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 
 if TYPE_CHECKING:
@@ -19,11 +21,12 @@ class QueryFilter(SearchFilterABC):
     def __post_init__(self):
         object.__setattr__(self, "query", self.query.lower())
 
-    def validate_for_fields(self, fields: Tuple[Field, ...]):
+    def lock_fields(self, fields: Tuple[Field, ...]) -> SearchFilterABC:
+        filters = []
         for field in fields:
             if field.is_readable and field.type is FieldType.STR:
-                return
-        raise ValueError("query_filter_invalid_for_fields")
+                filters.append(FieldFilter(field.name, FieldFilterOp.contains, self.query))
+        return Or(tuple(filters))
 
     def match(self, item: ExternalItemType, fields: Tuple[Field, ...]) -> bool:
         for field in fields:

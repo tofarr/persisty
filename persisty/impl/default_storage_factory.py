@@ -22,8 +22,8 @@ class DefaultStorageFactory(StorageFactoryABC):
     def get_storage_meta(self) -> StorageMeta:
         return self.storage_meta
 
-    def create(self, authorization: Optional[Authorization]) -> Optional[StorageABC]:
-        storage = self.factory.create(authorization)
+    def create(self) -> Optional[StorageABC]:
+        storage = self.factory.create()
         return storage
 
     @property

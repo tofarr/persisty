@@ -39,9 +39,9 @@ class And(SearchFilterABC):
             return And(tuple(flattened))
         return super(And, cls).__new__(cls)
 
-    def validate_for_fields(self, fields: Tuple[Field, ...]):
-        for search_filter in self.search_filters:
-            search_filter.validate_for_fields(fields)
+    def lock_fields(self, fields: Tuple[Field, ...]) -> SearchFilterABC:
+        result = And(tuple(f.lock_fields(fields) for f in self.search_filters))
+        return result
 
     def match(self, value: ExternalType, fields: Tuple[Field, ...]) -> bool:
         match = next(

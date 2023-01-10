@@ -38,9 +38,8 @@ class WrapperStorageABC(StorageABC, ABC):
         key: str,
         item: ExternalItemType,
         updates: ExternalItemType,
-        search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
-        return self.get_storage()._update(key, item, updates, search_filter)
+        return self.get_storage()._update(key, item, updates)
 
     def _delete(self, key: str, item: ExternalItemType) -> bool:
         return self.get_storage()._delete(key, item)

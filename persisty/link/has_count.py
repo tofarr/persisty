@@ -6,7 +6,7 @@ from servey.security.authorization import Authorization
 
 from persisty.errors import PersistyError
 from persisty.field.field_filter import FieldFilter, FieldFilterOp
-from persisty.finder.storage_factory_finder_abc import find_storage_factories
+from persisty.finder.storage_factory_finder_abc import find_secured_storage_factories
 from persisty.link.link_abc import LinkABC
 from persisty.util import to_snake_case
 
@@ -33,7 +33,7 @@ class HasCount(LinkABC):
     def to_action_fn(self, owner_name: str) -> Callable:
         linked_storage_factory = next(
             f
-            for f in find_storage_factories()
+            for f in find_secured_storage_factories()
             if f.get_storage_meta().name == self.linked_storage_name
         )
         key_field_name = self.key_field_name

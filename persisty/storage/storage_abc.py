@@ -58,8 +58,9 @@ class StorageABC(ABC):
         if not key:
             raise PersistyError(f"missing_key:{updates}")
         item = self.read(key)
+        precondition = precondition.lock_fields(self.get_storage_meta().fields)
         if item and precondition.match(item, self.get_storage_meta().fields):
-            return self._update(key, item, updates, precondition)
+            return self._update(key, item, updates)
 
     @abstractmethod
     def _update(
@@ -67,7 +68,6 @@ class StorageABC(ABC):
         key: str,
         item: ExternalItemType,
         updates: ExternalItemType,
-        precondition: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[ExternalItemType]:
         """
         Update (a partial set of values from) an item based upon its key and the constraint given. By convention

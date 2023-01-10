@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, get_type_hints, ForwardRef
+from typing import Optional
 
 from marshy import get_default_context
 from servey.action.action import action
@@ -7,10 +7,10 @@ from servey.security.authorization import Authorization
 
 from persisty.errors import PersistyError
 from persisty.field.field_filter import FieldFilter, FieldFilterOp
-from persisty.finder.storage_factory_finder_abc import find_storage_factories
+from persisty.finder.storage_factory_finder_abc import find_secured_storage_factories
 from persisty.link.link_abc import LinkABC
 from persisty.servey import get_item_type, get_result_set_type
-from persisty.util import to_camel_case, to_snake_case
+from persisty.util import to_snake_case
 
 
 @dataclass
@@ -35,7 +35,7 @@ class HasMany(LinkABC):
     def to_action_fn(self, owner_name: str):
         linked_storage_factory = next(
             f
-            for f in find_storage_factories()
+            for f in find_secured_storage_factories()
             if f.get_storage_meta().name == self.linked_storage_name
         )
         key_field_name = self.key_field_name

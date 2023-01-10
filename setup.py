@@ -15,7 +15,12 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/tofarr/lambsync",
     packages=setuptools.find_packages(exclude=("tests",)),
-    install_requires=["typing-inspect>=0.7.1", "marshy~=2.4.0", "schemey~=5.2.0"],
+    install_requires=[
+        "typing-inspect>=0.7.1",
+        "marshy~=2.4",
+        "schemey~=5.2",
+        "servey[dev,server,aws,serverless]~=2.0"
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

@@ -397,7 +397,7 @@ class SqlalchemyTableStorage(StorageABC):
     def _search_filter_to_where_clause(
         self, search_filter: SearchFilterABC
     ) -> Tuple[Any, bool]:
-        search_filter.validate_for_fields(self.storage_meta.fields)
+        search_filter = search_filter.lock_fields(self.storage_meta.fields)
         context = SearchFilterConverterContext()
         return context.convert(search_filter, self.table, self.storage_meta)
 

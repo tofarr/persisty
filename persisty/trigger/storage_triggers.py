@@ -93,7 +93,7 @@ class StorageTriggers:
         fn = action.fn
         sig = inspect.signature(fn)
         # noinspection PyTypeChecker
-        type_ = next(sig.parameters.values()).annotation
+        type_ = next(iter(sig.parameters.values())).annotation
         loaded = self.marshaller_context.load(type_, item)
         return loaded
 

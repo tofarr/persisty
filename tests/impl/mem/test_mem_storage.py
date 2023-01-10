@@ -28,7 +28,7 @@ class TestMemStorage(TestCase, StorageTstABC):
             get_storage_meta(SuperBowlResult),
             {r.code: dump(r) for r in SUPER_BOWL_RESULTS},
         )
-        return factory.create(None)
+        return factory.create()
 
     def new_number_name_storage(self) -> StorageABC:
         number_names = (dump(r) for r in NUMBER_NAMES)
@@ -37,7 +37,7 @@ class TestMemStorage(TestCase, StorageTstABC):
             get_storage_meta(NumberName),
             {r["id"]: r for r in number_names},
         )
-        return factory.create(None)
+        return factory.create()
 
     def test_search_all_sorted(self):
         storage = self.new_super_bowl_results_storage()
@@ -56,7 +56,7 @@ class TestMemStorage(TestCase, StorageTstABC):
         )
 
     def test_mem_storage_no_dict(self):
-        storage = MemStorageFactory(get_storage_meta(NumberName)).create(None)
+        storage = MemStorageFactory(get_storage_meta(NumberName)).create()
         created = storage.create(dict(value=1, title="One"))
         loaded = storage.read(created["id"])
         self.assertEqual(loaded, created)

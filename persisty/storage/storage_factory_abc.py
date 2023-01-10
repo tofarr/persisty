@@ -13,5 +13,5 @@ class StorageFactoryABC(ABC):
         """Get the storage meta"""
 
     @abstractmethod
-    def create(self, authorization: Optional[Authorization]) -> Optional[StorageABC]:
+    def create(self) -> Optional[StorageABC]:
         """Create a new storage object with the authorization given"""

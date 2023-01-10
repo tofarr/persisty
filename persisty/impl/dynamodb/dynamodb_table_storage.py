@@ -97,7 +97,7 @@ class DynamodbTableStorage(StorageABC):
         self, updates: ExternalItemType, search_filter: SearchFilterABC = INCLUDE_ALL
     ) -> Optional[ExternalItemType]:
         if search_filter is not INCLUDE_ALL:
-            search_filter.validate_for_fields(self.storage_meta.fields)
+            search_filter = search_filter.lock_fields(self.storage_meta.fields)
             item = self.read(self.storage_meta.key_config.to_key_str(updates))
             if not search_filter.match(item, self.storage_meta.fields):
                 return None
@@ -151,7 +151,7 @@ class DynamodbTableStorage(StorageABC):
         if limit is None:
             limit = self.storage_meta.batch_size
         assert limit <= self.storage_meta.batch_size
-        search_filter.validate_for_fields(self.storage_meta.fields)
+        search_filter = search_filter.lock_fields(self.storage_meta.fields)
         if search_order:
             search_order.validate_for_fields(self.storage_meta.fields)
         if search_filter is EXCLUDE_ALL:
@@ -201,7 +201,7 @@ class DynamodbTableStorage(StorageABC):
 
     @catch_client_error
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
-        search_filter.validate_for_fields(self.storage_meta.fields)
+        search_filter = search_filter.lock_fields(self.storage_meta.fields)
         if search_filter is EXCLUDE_ALL:
             return 0
         index_name, condition, filter_expression, handled = self.to_dynamodb_filter(

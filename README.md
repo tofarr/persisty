@@ -1,9 +1,29 @@
 TODO:
 
+Problems:
+
+* Type hinting sucks because we are using generated types
+* Storage use dict items rather than objects
+* Circular dependency hell will get old fast
+
+
+I dunno if I'm happy with the split into editable and non editable endpoints.
+We may need to consolidate.
+No - I dont like this. A lot of endpoints dont make sense.
+"put" read only user. Seriously???
+
+So the options are:
+
+* Hidden logic. (This may be inevitable)
+* Filter storage...
+  * Storage prevent create unless old value is x
+  * Prevent edit unless old value and new value are x
+  * Prevent delete unless old value is x
+    
+
+
 Build post processing triggers
 Migrations
-Get Sql Alchemy Storage Working
-Get Dynamodb Storage Working
 Dynamic storage
 Exports
 Extras
