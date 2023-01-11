@@ -1,0 +1,3 @@
+
+class PersistyError(Exception):
+    pass
