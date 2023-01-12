@@ -155,7 +155,7 @@ class DirectoryDataStorage(DataStorageABC):
     def search_all(self, search_filter: Optional[DataItemFilter] = None) -> Iterator[DataItem]:
         search_filter = search_filter.to_search_filter() if search_filter else INCLUDE_ALL
         dir_list = os.listdir(self.directory_path)
-        fields = get_storage_meta(DataItem).fields
+        attrs = get_storage_meta(DataItem).attrs
         for key in dir_list:
             path = Path(self.directory_path, key)
             stat = path.stat()
@@ -169,7 +169,7 @@ class DirectoryDataStorage(DataStorageABC):
                 yield result
             else:
                 item = dump(result)
-                if search_filter.match(item, fields):
+                if search_filter.match(item, attrs):
                     yield result
 
     def search(

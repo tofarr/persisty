@@ -19,7 +19,7 @@ STORAGE_META = get_storage_meta(User)
 STORAGE_META = dataclasses.replace(
     STORAGE_META,
     # The secured storage meta does not include the password digest, as we don't want this available through web
-    fields=tuple(f for f in STORAGE_META.fields if f.name != 'password_digest'),
+    attrs=tuple(f for f in STORAGE_META.attrs if f.name != 'password_digest'),
     # All create operations are handled from a sign up action where a password is supplied
     storage_access=StorageAccess(creatable=False)
 )

@@ -2,10 +2,10 @@ from datetime import datetime
 
 from schemey.schema import int_schema
 
-from persisty.key_config.field_key_config import FieldKeyConfig
-from persisty.obj_storage.attr import Attr
-from persisty.obj_storage.stored import stored
-from persisty.field.field_type import FieldType
+from persisty.attr.attr import Attr
+from persisty.attr.attr_type import AttrType
+from persisty.key_config.attr_key_config import AttrKeyConfig
+from persisty.stored import stored
 
 SUPER_BOWL_RESULT_DICTS = [
     {
@@ -515,7 +515,7 @@ SUPER_BOWL_RESULT_DICTS = [
 ]
 
 
-@stored(key_config=FieldKeyConfig("code", FieldType.STR))
+@stored(key_config=AttrKeyConfig("code", AttrType.STR))
 class SuperBowlResult:
     code: str = Attr()
     year: int = Attr(schema=int_schema(minimum=1967))

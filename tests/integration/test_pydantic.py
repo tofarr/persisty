@@ -5,16 +5,16 @@ from pydantic import BaseModel
 from schemey.schema import str_schema
 from schemey.string_format import StringFormat
 
-from persisty.integration.pydantic import field_for_pydantic
+from persisty.integration.pydantic import attr_for_pydantic
 
 
 class TestPydantic(TestCase):
-    def test_field_for_pydantic(self):
-        field = field_for_pydantic(str_schema(str_format=StringFormat.EMAIL))
+    def test_attr_for_pydantic(self):
+        attr = attr_for_pydantic(str_schema(str_format=StringFormat.EMAIL))
 
         class SomeModel(BaseModel):
             id: Optional[int]
-            email: field
+            email: attr
 
             class Config:
                 arbitrary_types_allowed = True

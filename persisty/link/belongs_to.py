@@ -1,0 +1,105 @@
+from dataclasses import dataclass
+from typing import Callable, Optional, ForwardRef, Dict
+
+import typing_inspect
+from marshy.factory.optional_marshaller_factory import get_optional_type
+from marshy.types import ExternalItemType
+from schemey.schema import str_schema
+from servey.action.action import action
+from servey.action.batch_invoker import BatchInvoker
+from servey.finder.action_finder_abc import find_actions
+
+from persisty.attr.attr import Attr
+from persisty.attr.attr_type import AttrType
+from persisty.finder.store_factory_finder_abc import find_secured_store_factories
+from persisty.link.link_abc import LinkABC
+from persisty.link.on_delete import OnDelete
+from persisty.util import to_snake_case
+
+
+@dataclass
+class BelongsTo(LinkABC):
+    name: Optional[str] = None
+    private_name: Optional[str] = None
+    linked_store_name: Optional[str] = None
+    key_attr_name: Optional[str] = None
+    optional: Optional[bool] = None
+    on_delete: OnDelete = OnDelete.BLOCK
+
+    def get_name(self) -> str:
+        return self.name
+
+    def __set_name__(self, owner, name):
+        self.name = name
+        annotations = owner.__annotations__
+        type_ = annotations[name]
+        optional = bool(get_optional_type(type_))
+        if optional:
+            type_ = get_optional_type(type_)
+        if self.private_name is None:
+            self.private_name = f"_{name}"
+        if self.optional is None:
+            self.optional = optional
+        if self.linked_store_name is None:
+            if isinstance(type_, ForwardRef):
+                type_ = typing_inspect.get_forward_arg(type_).split('.')[-1]
+            elif isinstance(type_, type):
+                type_ = type_.__name__
+            self.linked_store_name = to_snake_case(type_)
+        if self.key_attr_name is None:
+            self.key_attr_name = f"{name}_id"
+
+    def update_attrs(self, attrs: Dict[str, Attr]):
+        if self.key_attr_name not in attrs:
+            attrs[self.key_attr_name] = Attr(
+                self.key_attr_name,
+                AttrType.STR,
+                str_schema(),
+                sortable=False
+            )
+
+    def to_action_fn(self, owner_name: str) -> Callable:
+        linked_store_factory = next(
+            f
+            for f in find_secured_store_factories()
+            if f.get_meta().name == self.linked_store_name
+        )
+        linked_store_meta = linked_store_factory.get_meta()
+        key_attr_name = self.key_attr_name
+        linked_type_name = f"persisty.servey.output.{self.linked_store_name.title()}"
+        batch_read_action_name = f"{self.linked_store_name}_batch_read"
+        batch_read_fn_ = None
+
+        async def batch_fn(items):
+            nonlocal batch_read_fn_
+            if not batch_read_fn_:
+                batch_read_fn_ = next(
+                    a.fn for a in find_actions() if a.name == batch_read_action_name
+                )
+            keys = [getattr(item, key_attr_name) for item in items]
+            result = batch_read_fn_(keys)
+            return result
+
+        return_type = ForwardRef(linked_type_name)
+        if self.optional:
+            return_type = Optional[return_type]
+
+        # noinspection PyShadowingNames, PyUnusedLocal
+        @action(
+            name=owner_name + "_" + self.name,
+            batch_invoker=BatchInvoker(
+                fn=batch_fn, max_batch_size=linked_store_meta.batch_size
+            ),
+        )
+        def action_fn(self) -> return_type:
+            """Dummy - always batched"""
+
+        action_fn.__name__ = owner_name + "_" + self.name
+        return action_fn
+
+    def update_json_schema(self, json_schema: ExternalItemType):
+        id_attr_schema = json_schema.get("properties").get(self.key_attr_name)
+        id_attr_schema["persistyBelongsTo"] = self.linked_store_name
+
+        id_attr_schema = json_schema.get("properties").get(self.key_attr_name)
+        id_attr_schema["persistyBelongsTo"] = self.linked_store_name

@@ -9,7 +9,7 @@ from servey.security.authorization import AuthorizationError, Authorization
 from servey.security.authorizer.authorizer_factory_abc import get_default_authorizer
 from servey.trigger.web_trigger import WEB_POST
 
-from persisty.field.field_filter import FieldFilter, FieldFilterOp
+from persisty.attr.attr_filter import FieldFilter, FieldFilterOp
 import servey_main.actions  # This means that the generated output exists...
 from servey_main.storage import user_storage_factory
 

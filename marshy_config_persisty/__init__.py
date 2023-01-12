@@ -5,15 +5,20 @@ from marshy.marshaller.obj_marshaller import AttrConfig
 from marshy.marshaller.property_marshaller import PropertyConfig
 from marshy.marshaller_context import MarshallerContext
 
-from marshy_config_persisty.field_filter_op_marshaller import FieldFilterOpMarshaller
 from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from servey.cache_control.timestamp_cache_control import TimestampCacheControl
 from servey.cache_control.ttl_cache_control import TtlCacheControl
-from persisty.finder.module_storage_factory_finder import ModuleStorageFactoryFinder
-from persisty.finder.storage_factory_finder_abc import StorageFactoryFinderABC
+
+from persisty.attr.attr_filter import AttrFilter
+from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorABC
+from persisty.attr.generator.default_value_generator import DefaultValueGenerator
+from persisty.attr.generator.timestamp_generator import TimestampGenerator
+from persisty.attr.generator.uuid_generator import UuidGenerator
+from persisty.finder.module_store_factory_finder import ModuleStoreFactoryFinder
+from persisty.finder.store_factory_finder_abc import StoreFactoryFinderABC
+from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.composite_key_config import CompositeKeyConfig
-from persisty.key_config.field_key_config import FieldKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.belongs_to import BelongsTo
 from persisty.link.has_count import HasCount
@@ -26,21 +31,6 @@ from persisty.search_filter.not_filter import Not
 from persisty.search_filter.or_filter import Or
 from persisty.search_filter.query_filter import QueryFilter
 from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.field.field_filter import FieldFilter
-from persisty.field.write_transform.default_value_transform import (
-    DefaultValueTransform,
-)
-from persisty.field.write_transform.int_sequence_generator import (
-    IntSequenceGenerator,
-)
-from persisty.field.write_transform.str_sequence_genrator import (
-    StrSequenceGenerator,
-)
-from persisty.field.write_transform.timestamp_generator import (
-    TimestampGenerator,
-)
-from persisty.field.write_transform.uuid_generator import UuidGenerator
-from persisty.field.write_transform.write_transform_abc import WriteTransformABC
 from persisty.util import UNDEFINED
 
 priority = 100
@@ -52,10 +42,9 @@ def configure(context: MarshallerContext):
     AttrConfig.filter_dumped_values = (UNDEFINED,)
     PropertyConfig.filter_dumped_values = (UNDEFINED,)
 
-    context.register_marshaller(FieldFilterOpMarshaller())
     configure_search_filters(context)
     configure_key_configs(context)
-    configure_write_transforms(context)
+    configure_attr_value_generator(context)
     configure_cache_control(context)
     configure_links(context)
     configure_finders(context)
@@ -68,7 +57,7 @@ def configure_search_filters(context: MarshallerContext):
     register_impl(SearchFilterABC, And, context)
     register_impl(SearchFilterABC, Or, context)
     register_impl(SearchFilterABC, ExcludeAll, context)
-    register_impl(SearchFilterABC, FieldFilter, context)
+    register_impl(SearchFilterABC, AttrFilter, context)
     register_impl(SearchFilterABC, IncludeAll, context)
     register_impl(SearchFilterABC, Not, context)
     register_impl(SearchFilterABC, QueryFilter, context)
@@ -76,15 +65,15 @@ def configure_search_filters(context: MarshallerContext):
 
 def configure_key_configs(context: MarshallerContext):
     register_impl(KeyConfigABC, CompositeKeyConfig, context)
-    register_impl(KeyConfigABC, FieldKeyConfig, context)
+    register_impl(KeyConfigABC, AttrKeyConfig, context)
 
 
-def configure_write_transforms(context: MarshallerContext):
-    register_impl(WriteTransformABC, DefaultValueTransform, context)
-    register_impl(WriteTransformABC, IntSequenceGenerator, context)
-    register_impl(WriteTransformABC, StrSequenceGenerator, context)
-    register_impl(WriteTransformABC, TimestampGenerator, context)
-    register_impl(WriteTransformABC, UuidGenerator, context)
+def configure_attr_value_generator(context: MarshallerContext):
+    register_impl(AttrValueGeneratorABC, DefaultValueGenerator, context)
+    register_impl(AttrValueGeneratorABC, TimestampGenerator, context)
+    register_impl(AttrValueGeneratorABC, UuidGenerator, context)
+    register_impl(AttrValueGeneratorABC, TimestampGenerator, context)
+    register_impl(AttrValueGeneratorABC, UuidGenerator, context)
 
 
 def configure_cache_control(context: MarshallerContext):
@@ -111,17 +100,17 @@ def configure_sqlalchemy(context: MarshallerContext):
 
 
 def configure_finders(context: MarshallerContext):
-    register_impl(StorageFactoryFinderABC, ModuleStorageFactoryFinder, context)
+    register_impl(StoreFactoryFinderABC, ModuleStoreFactoryFinder, context)
 
 
 def configure_celery(context: MarshallerContext):
     try:
         from servey.servey_celery.celery_config.celery_config_abc import CeleryConfigABC
-        from persisty.trigger.celery_storage_trigger_config import (
-            CeleryStorageTriggerConfig,
+        from persisty.trigger.celery_store_trigger_config import (
+            CeleryStoreTriggerConfig,
         )
 
-        register_impl(CeleryConfigABC, CeleryStorageTriggerConfig, context)
+        register_impl(CeleryConfigABC, CeleryStoreTriggerConfig, context)
     except ModuleNotFoundError as e:
         LOGGER.error(e)
         LOGGER.info("Celery module not found: skipping")

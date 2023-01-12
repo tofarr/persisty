@@ -4,9 +4,7 @@ from marshy.marshaller_context import MarshallerContext
 from persisty.impl.sqlalchemy.search_filter.and_filter_converter import (
     AndFilterConverter,
 )
-from persisty.impl.sqlalchemy.search_filter.field_filter_converter import (
-    FieldFilterConverter,
-)
+from persisty.impl.sqlalchemy.search_filter.field_filter_converter import AttrFilterConverter
 from persisty.impl.sqlalchemy.search_filter.include_all_converter import (
     IncludeAllConverter,
 )
@@ -28,7 +26,7 @@ from persisty.impl.sqlalchemy.sqlalchemy_context_factory_abc import (
 
 def configure_converters(context: MarshallerContext):
     register_impl(SearchFilterConverterABC, AndFilterConverter, context)
-    register_impl(SearchFilterConverterABC, FieldFilterConverter, context)
+    register_impl(SearchFilterConverterABC, AttrFilterConverter, context)
     register_impl(SearchFilterConverterABC, IncludeAllConverter, context)
     register_impl(SearchFilterConverterABC, NotFilterConverter, context)
     register_impl(SearchFilterConverterABC, OrFilterConverter, context)

@@ -18,9 +18,9 @@ STORAGE_META = get_storage_meta(Message)
 STORAGE_META = dataclasses.replace(
     STORAGE_META,
     # We make sure that the author_id is not updatable, and will not appear as such in the external APIs
-    fields=tuple(
+    attrs=tuple(
         dataclasses.replace(f, is_updatable=False, is_creatable=False) if f.name == 'author_id' else f
-        for f in STORAGE_META.fields
+        for f in STORAGE_META.attrs
     ),
 )
 

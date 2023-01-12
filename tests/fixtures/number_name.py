@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from marshy import dump
 
-from persisty.obj_storage.stored import stored
+from persisty.stored import stored
 
 
 @stored(batch_size=10)
