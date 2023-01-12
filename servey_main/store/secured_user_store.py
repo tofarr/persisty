@@ -1,61 +1,59 @@
 import dataclasses
 from typing import Optional, List
 
-from marshy.types import ExternalItemType
 from servey.security.authorization import Authorization, AuthorizationError
 
-from persisty.obj_storage.stored import get_storage_meta
-from persisty.secured.secured_storage_factory_abc import SecuredStorageFactoryABC
-from persisty.storage.batch_edit import BatchEdit
-from persisty.storage.batch_edit_result import BatchEditResult
-from persisty.storage.storage_abc import StorageABC
-from persisty.storage.storage_access import StorageAccess
-from persisty.storage.storage_meta import StorageMeta
-from persisty.storage.wrapper_storage_abc import WrapperStorageABC
+from persisty.secured.secured_store_factory_abc import SecuredStoreFactoryABC
+from persisty.batch_edit import BatchEdit
+from persisty.batch_edit_result import BatchEditResult
+from persisty.store.store_abc import StoreABC
+from persisty.store.wrapper_store_abc import WrapperStoreABC
+from persisty.store_access import StoreAccess
+from persisty.store_meta import StoreMeta, get_meta
 from servey_main.models.user import User
-from servey_main.storage import user_storage_factory
+from servey_main.storage import user_store_factory
 
-STORAGE_META = get_storage_meta(User)
+STORAGE_META = get_meta(User)
 STORAGE_META = dataclasses.replace(
     STORAGE_META,
-    # The secured storage meta does not include the password digest, as we don't want this available through web
+    # The secured store meta does not include the password digest, as we don't want this available through web
     attrs=tuple(f for f in STORAGE_META.attrs if f.name != 'password_digest'),
     # All create operations are handled from a sign up action where a password is supplied
-    storage_access=StorageAccess(creatable=False)
+    store_access=StoreAccess(creatable=False)
 )
 
 
 @dataclasses.dataclass
-class SecuredUserStorage(WrapperStorageABC):
-    storage: StorageABC
+class SecuredUserStore(WrapperStoreABC[User]):
+    store: StoreABC
     authorization: Authorization
 
-    def get_storage(self) -> StorageABC:
-        return self.storage
+    def get_store(self) -> StoreABC:
+        return self.store
 
     def _update(
         self,
         key: str,
-        item: ExternalItemType,
-        updates: ExternalItemType,
-    ) -> Optional[ExternalItemType]:
+        item: User,
+        updates: User,
+    ) -> Optional[User]:
         """
         Users are allowed to edit themselves. Root users can edit anybody, but cannot remove the root flag
         from themselves.
         """
         if self.authorization.has_scope('admin'):
-            if item['id'] == self.authorization.subject_id and item['admin'] is False:
+            if item.id == self.authorization.subject_id and item.admin is False:
                 raise AuthorizationError('forbidden')  # Can't remove admin permission from self
-        elif item['id'] != self.authorization.subject_id or item['admin'] is True:
+        elif item.id != self.authorization.subject_id or item.admin is True:
             raise AuthorizationError('forbidden')  # Can't edit others or add admin permission to self
-        return self.storage._update(key, item, updates)
+        return self.store._update(key, item, updates)
 
     def delete(self, key: str) -> bool:
         if not self.authorization.has_scope('admin') or key == self.authorization.subject_id:
             raise AuthorizationError('forbidden')
-        return self.storage.delete(key)
+        return self.store.delete(key)
 
-    def edit_batch(self, edits: List[BatchEdit]) -> List[BatchEditResult]:
+    def edit_batch(self, edits: List[BatchEdit[User]]) -> List[BatchEditResult[User]]:
         if not self.authorization.has_scope('admin'):
             raise AuthorizationError('forbidden')  # only admins can use the batch operation
         for edit in edits:
@@ -63,8 +61,8 @@ class SecuredUserStorage(WrapperStorageABC):
                 raise AuthorizationError('forbidden')  # Can't create users directly
             if (
                 edit.update_item
-                and edit.update_item['id'] == self.authorization.subject_id
-                and edit.update_item['admin'] is False
+                and edit.update_item.id == self.authorization.subject_id
+                and edit.update_item.admin is False
             ):
                 raise AuthorizationError('forbidden')  # Can't remove admin from self
             if edit.delete_key == self.authorization.subject_id:
@@ -72,16 +70,16 @@ class SecuredUserStorage(WrapperStorageABC):
         for edit in edits:
             if edit.create_item or (edit.delete_key == self.authorization.subject_id):
                 raise AuthorizationError('forbidden')
-        return self.storage.edit_batch(edits)
+        return self.store.edit_batch(edits)
 
 
-class SecuredUserStorageFactory(SecuredStorageFactoryABC):
+class SecuredUserStoreFactory(SecuredStoreFactoryABC[User]):
 
-    def get_storage_meta(self) -> StorageMeta:
+    def get_meta(self) -> StoreMeta:
         return STORAGE_META
 
-    def create(self, authorization: Optional[Authorization]) -> Optional[StorageABC]:
-        return SecuredUserStorage(user_storage_factory.create(), authorization)
+    def create(self, authorization: Optional[Authorization]) -> Optional[StoreABC[User]]:
+        return SecuredUserStore(user_store_factory.create(), authorization)
 
 
-secured_user_storage_factory = SecuredUserStorageFactory()
+secured_user_store_factory = SecuredUserStoreFactory()
