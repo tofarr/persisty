@@ -133,6 +133,9 @@ class TestDynamodbStore(TestCase, StoreTstABC):
         expected = {"some_int": Decimal("10"), "some_float": Decimal(0.5)}
         self.assertEqual(expected, converted)
 
+    def test_dammit(self):
+        self.test_create_with_float()
+
     def new_tag_store(self) -> StoreABC:
         store_meta = get_meta(Tag)
         store_factory = DynamodbStoreFactory(

@@ -21,7 +21,6 @@ from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_attr import SearchOrderAttr
 from persisty.store.store_abc import StoreABC, T
-from persisty.util.undefined import UNDEFINED
 from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULTS, SuperBowlResult
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES
 
@@ -520,7 +519,7 @@ class StoreTstABC(ABC):
         loaded = store.read(id)  # Again - type is wrong - this should be a str
         self.assertIsNotNone(loaded.created_at)
         self.assertIsNotNone(loaded.updated_at)
-        item.id=id
+        item.id = id
         item.created_at = loaded.created_at
         item.updated_at = loaded.updated_at
         self.assertEqual(item, loaded)
@@ -531,10 +530,9 @@ class StoreTstABC(ABC):
         self.assertEqual([item], results)
 
         # noinspection PyTypeChecker
-        self.assertTrue(store.delete(id)) # Again - type is wrong - this should be a str
+        self.assertTrue(store.delete(id))  # Again - type is wrong - this should be a str
         # noinspection PyTypeChecker
-        self.assertFalse(store.read(id)) # Again - type is wrong - this should be a str
-
+        self.assertFalse(store.read(id))  # Again - type is wrong - this should be a str
 
 
 @dataclass

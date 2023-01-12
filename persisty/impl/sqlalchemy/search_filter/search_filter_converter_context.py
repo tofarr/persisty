@@ -1,4 +1,4 @@
-from dataclasses import dataclass, attr
+from dataclasses import dataclass, field
 from typing import List, Tuple, Any
 
 from marshy import get_default_context
@@ -25,7 +25,7 @@ def get_converters() -> List[SearchFilterConverterABC]:
 
 @dataclass
 class SearchFilterConverterContext:
-    converters: List[SearchFilterConverterABC] = attr(default_factory=get_converters)
+    converters: List[SearchFilterConverterABC] = field(default_factory=get_converters)
 
     def convert(
         self, search_filter: SearchFilterABC, table: Table, store_meta: StoreMeta

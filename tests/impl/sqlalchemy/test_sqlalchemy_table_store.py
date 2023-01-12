@@ -2,21 +2,19 @@ from typing import Iterator
 from unittest import TestCase
 
 from marshy.types import ExternalItemType
-from servey.security.authorization import ROOT
 
 from persisty.impl.sqlalchemy.sqlalchemy_context_factory import SqlalchemyContextFactory
 from persisty.impl.sqlalchemy.sqlalchemy_table_store_factory import (
     SqlalchemyTableStoreFactory,
 )
-from persisty.obj_store.stored import get_meta
 from persisty.store.store_abc import StoreABC
-from persisty.store.store_meta import StoreMeta
+from persisty.store_meta import StoreMeta, get_meta
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES
+from tests.fixtures.storage_tst_abc import StoreTstABC
 from tests.fixtures.super_bowl_results import (
     SuperBowlResult,
     SUPER_BOWL_RESULTS,
 )
-from tests.fixtures.store_tst_abc import StoreTstABC
 
 
 class TestSqlalchemyTableStore(TestCase, StoreTstABC):
@@ -29,7 +27,7 @@ class TestSqlalchemyTableStore(TestCase, StoreTstABC):
     def new_super_bowl_results_store(self) -> StoreABC:
         store_meta = get_meta(SuperBowlResult)
         factory = SqlalchemyTableStoreFactory(store_meta, self.context)
-        store = factory.create(ROOT)
+        store = factory.create()
         number_names = ({**r.__dict__, "date": r.date} for r in SUPER_BOWL_RESULTS)
         self.seed_table(store_meta, number_names)
         return store
@@ -37,7 +35,7 @@ class TestSqlalchemyTableStore(TestCase, StoreTstABC):
     def new_number_name_store(self) -> StoreABC:
         store_meta = get_meta(NumberName)
         factory = SqlalchemyTableStoreFactory(store_meta, self.context)
-        store = factory.create(ROOT)
+        store = factory.create()
         number_names = (
             {
                 **r.__dict__,

@@ -86,7 +86,7 @@ def stored(
         # Check that all attributes required by the key actually exist...
         key_config_ = key_config
         if key_config_:
-            for attr_name in key_config_.get_required_attrs():
+            for attr_name in key_config_.get_key_attrs():
                 if not next((True for a in attrs if a.name == attr_name), False):
                     raise PersistyError(f'invalid_key_attr:{attr_name}')
         else:

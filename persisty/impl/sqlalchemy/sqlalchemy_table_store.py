@@ -1,17 +1,17 @@
 import json
-from datetime import datetime, timezone
+from datetime import timezone
 from typing import Optional, List, Iterator, Tuple, Any, Dict
 
 from dataclasses import dataclass
 from uuid import UUID
 
+import marshy
 from marshy.types import ExternalItemType
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import DatabaseError
 from sqlalchemy.sql.elements import BindParameter, or_
 
 from persisty.errors import PersistyError
-from persisty.attr.attr import Attr
 from persisty.attr.attr_type import AttrType
 from persisty.impl.sqlalchemy.search_filter.search_filter_converter_context import (
     SearchFilterConverterContext,
@@ -24,7 +24,7 @@ from persisty.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
-from persisty.store.store_abc import StoreABC
+from persisty.store.store_abc import StoreABC, T
 from persisty.store_meta import StoreMeta
 
 from sqlalchemy import Table, and_, select, func, Column
@@ -48,50 +48,56 @@ class SqlalchemyTableStore(StoreABC):
     This class uses sql alchemy at a lower level than the standard orm usage
     """
 
-    store_meta: StoreMeta
+    meta: StoreMeta
     table: Table
     engine: Engine
 
     def get_meta(self) -> StoreMeta:
-        return self.store_meta
+        return self.meta
 
     @catch_db_error
-    def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
+    def create(self, item: T) -> Optional[T]:
         dumped = self._dump(item, False)
         with self.engine.begin() as connection:
             result = connection.execute(self.table.insert(), parameters=dumped)
             if result.inserted_primary_key:
-                item.update(self._load_row(result.inserted_primary_key))
+                row = self._load_row(result.inserted_primary_key)
+                for attr in self.meta.attrs:
+                    value = getattr(row, attr.name)
+                    if value is UNDEFINED:
+                        setattr(row, attr.name, value)
             connection.commit()
             return item
 
     @catch_db_error
-    def read(self, key: str) -> Optional[ExternalItemType]:
+    def read(self, key: str) -> Optional[T]:
         with self.engine.begin() as connection:
-            return self._read(connection, self._key_from_str(key))
+            key_dict = self.meta.key_config.to_key_dict(key)
+            return self._read(connection, key_dict)
 
-    def _read(self, connection, key: Dict) -> Optional[Dict]:
+    def _read(self, connection, key_dict: ExternalItemType) -> Optional[Dict]:
         stmt = self.table.select(whereclause=self._key_where_clause())
-        row = connection.execute(stmt, key).first()
+        row = connection.execute(stmt, key_dict).first()
         if row:
             item = self._load_row(row)
             return item
 
-    def read_batch(self, keys: List[str]) -> List[Optional[ExternalItemType]]:
+    def read_batch(self, keys: List[str]) -> List[Optional[T]]:
         with self.engine.begin() as connection:
-            key_config = self.store_meta.key_config
-            key_dicts = [key_config.from_key_str(k) for k in keys]
-            items = self._read_batch(connection, key_dicts)
+            key_config = self.meta.key_config
+            stored_dataclass = self.meta.get_stored_dataclass()
+            key_objs = [key_config.to_key_dict(key) for key in keys]
+            items = self._read_batch(connection, key_objs)
             items_by_key = {key_config.to_key_str(item): item for item in items}
             items = [items_by_key.get(k) for k in keys]
             return items
 
     def _read_batch(
-        self, connection, keys: List[Dict], cols: Optional[List[Column]] = None
+        self, connection, keys: List[T], cols: Optional[List[Column]] = None
     ) -> List[Dict]:
         # NB: Does not enforce ordering
-        assert len(keys) <= self.store_meta.batch_size
-        where_clause = self._key_where_clause_from_items(keys)
+        assert len(keys) <= self.meta.batch_size
+        where_clause = self._key_where_clause_from_dicts(keys)
         if cols:
             stmt = select(*cols)
         else:
@@ -105,30 +111,30 @@ class SqlalchemyTableStore(StoreABC):
     def _update(
         self,
         key: str,
-        item: ExternalItemType,
-        updates: ExternalItemType,
+        item: T,
+        updates: T,
         search_filter: SearchFilterABC = INCLUDE_ALL,
-    ) -> Optional[ExternalItemType]:
+    ) -> Optional[T]:
         with self.engine.begin() as connection:
-            updates = self._dump(updates, True)
             stmt = self.table.update(self._key_where_clause_from_item(updates))
+            updates = self._dump(updates, True)
             connection.execute(stmt, updates)
-            key = self.store_meta.key_config.from_key_str(key)
-            loaded = self._read(connection, key)
+            key_dict = self.meta.key_config.to_key_dict(key)
+            loaded = self._read(connection, key_dict)
             connection.commit()
             return loaded
 
     @catch_db_error
     def delete(self, key: str) -> bool:
         with self.engine.begin() as connection:
-            key = self.store_meta.key_config.from_key_str(key)
+            key = self.meta.key_config.to_key_dict(key)
             stmt = self.table.delete(whereclause=self._key_where_clause())
             result = connection.execute(stmt, key)
             connection.commit()
             return bool(result.rowcount)
 
     @catch_db_error
-    def _delete(self, key: str, item: ExternalItemType) -> bool:
+    def _delete(self, key: str, item: T) -> bool:
         return self.delete(key)
 
     @catch_db_error
@@ -153,8 +159,8 @@ class SqlalchemyTableStore(StoreABC):
         search_order: Optional[SearchOrder] = None,
         page_key: Optional[str] = None,
         limit: Optional[int] = None,
-    ) -> ResultSet[ExternalItemType]:
-        assert limit <= self.store_meta.batch_size
+    ) -> ResultSet[T]:
+        assert limit <= self.meta.batch_size
         where_clause, handled = self._search_filter_to_where_clause(search_filter)
         order_by = self._search_order_to_order_by(search_order)
         if order_by is None:
@@ -167,8 +173,8 @@ class SqlalchemyTableStore(StoreABC):
             else:
                 # noinspection PyTypeChecker
                 key_where_clause = and_(
-                    self.table.columns.get(f.name) > page_key[1][f.name]
-                    for f in self._key_attrs()
+                    self.table.columns.get(a) > page_key[1][a]
+                    for a in self.meta.key_config.get_key_attrs()
                 )
                 where_clause = (
                     and_(where_clause, key_where_clause)
@@ -191,7 +197,7 @@ class SqlalchemyTableStore(StoreABC):
             next_page_key = None
             for row in rows:
                 result = self._load_row(row)
-                if handled or search_filter.match(result, self.store_meta.attrs):
+                if handled or search_filter.match(result, self.meta.attrs):
                     results.append(result)
                     if len(results) == limit:
                         if search_order and search_order.orders:
@@ -199,7 +205,7 @@ class SqlalchemyTableStore(StoreABC):
                         if not search_order or not search_order.orders:
                             next_page_key = [
                                 "id",
-                                {f.name: result[f.name] for f in self._key_attrs()},
+                                {a: _transform_type(getattr(result, a)) for a in self.meta.key_config.get_key_attrs()},
                             ]
                         next_page_key = to_base64(next_page_key)
                         break
@@ -210,7 +216,7 @@ class SqlalchemyTableStore(StoreABC):
         self,
         search_filter: SearchFilterABC = INCLUDE_ALL,
         search_order: Optional[SearchOrder] = None,
-    ) -> Iterator[ExternalItemType]:
+    ) -> Iterator[T]:
         if search_filter is EXCLUDE_ALL:
             return ResultSet([])
         where_clause, handled = self._search_filter_to_where_clause(search_filter)
@@ -225,14 +231,14 @@ class SqlalchemyTableStore(StoreABC):
             for row in rows:
                 item = self._load_row(row)
                 if not handled and not search_filter.match(
-                    item, self.store_meta.attrs
+                    item, self.meta.attrs
                 ):
                     continue
                 yield item
 
     @catch_db_error
     def edit_batch(self, edits: List[BatchEdit]) -> List[BatchEditResult]:
-        assert len(edits) <= self.store_meta.batch_size
+        assert len(edits) <= self.meta.batch_size
         results_by_id = {}
         inserts = [e for e in edits if e.create_item]
         updates = [e for e in edits if e.update_item]
@@ -268,18 +274,33 @@ class SqlalchemyTableStore(StoreABC):
     ):
         edits_by_key = {}
         key_dicts_to_load_row = []
-        key_attrs = [f.name for f in self._key_attrs()]
-        to_key_str = self.store_meta.key_config.to_key_str
+        key_attrs = self.meta.key_config.get_key_attrs()
+        to_key_str = self.meta.key_config.to_key_str
         for edit in edits:
             edit_key = to_key_str(edit.update_item)
             edits_by_key[edit_key] = edit
-            key_dicts_to_load_row.append({k: edit.update_item[k] for k in key_attrs})
+            key_dicts_to_load_row.append({
+                k: _transform_type(getattr(edit.update_item, k))
+                for k in key_attrs
+            })
             results_by_id[edit.id] = BatchEditResult(edit)
         existing_items = self._read_batch(connection, key_dicts_to_load_row)
         for item in existing_items:
             key = to_key_str(item)
             edit = edits_by_key[key]
-            item.update(**edit.update_item)
+            for attr in self.meta.attrs:
+                value = UNDEFINED
+                if attr.update_generator:
+                    if attr.updatable:
+                        value = attr.update_generator.transform(getattr(edit.update_item, attr.name))
+                    else:
+                        value = attr.update_generator.transform(UNDEFINED)
+                elif attr.updatable:
+                    value = getattr(edit.update_item, attr.name)
+                    if value is UNDEFINED:
+                        value = getattr(item, attr.name)
+                if value is not UNDEFINED:
+                    setattr(item, attr.name, _transform_type(value))
             item_updates = self._dump(item, True)
             stmt = self.table.update(self._key_where_clause_from_item(item))
             connection.execute(stmt, item_updates)
@@ -291,10 +312,10 @@ class SqlalchemyTableStore(StoreABC):
         edits: List[BatchEdit],
         results_by_id: Dict[UUID, BatchEditResult],
     ):
-        key_config = self.store_meta.key_config
-        delete_keys = [key_config.from_key_str(d.delete_key) for d in edits]
+        key_config = self.meta.key_config
+        delete_keys = [key_config.to_key_dict(d.delete_key) for d in edits]
         existing_keys = self._get_existing_keys(connection, delete_keys)
-        where_clause = self._key_where_clause_from_items(delete_keys)
+        where_clause = self._key_where_clause_from_dicts(delete_keys)
         stmt = self.table.delete(whereclause=where_clause)
         connection.execute(stmt)
         deleted_keys = {key_config.to_key_str(k) for k in existing_keys}
@@ -303,7 +324,7 @@ class SqlalchemyTableStore(StoreABC):
             results_by_id[delete.id] = BatchEditResult(delete, deleted)
 
     def _get_existing_keys(self, connection, keys: List[Dict]) -> List[Dict]:
-        key_cols = [self.table.columns[k.name] for k in self._key_attrs()]
+        key_cols = [self.table.columns[a] for a in self.meta.key_config.get_key_attrs()]
         existing_keys = self._read_batch(connection, keys, key_cols)
         return existing_keys
 
@@ -315,7 +336,7 @@ class SqlalchemyTableStore(StoreABC):
 
     def _load(self, item: Dict):
         loaded = {}
-        for attr_ in self.store_meta.attrs:
+        for attr_ in self.meta.attrs:
             if attr_.name not in item:
                 continue
             value = item.get(attr_.name)
@@ -329,15 +350,21 @@ class SqlalchemyTableStore(StoreABC):
                     value.replace(tzinfo=timezone.utc)
                 value = value.strftime("%Y-%m-%dT%H:%M:%S+00:00")
             loaded[attr_.name] = value
-        return loaded
+        # noinspection PyTypeChecker
+        result = marshy.load(self.meta.get_read_dataclass(), loaded)
+        return result
 
-    def _dump(self, item: ExternalItemType, is_update: bool):
+    def _dump(self, item: T, is_update: bool):
         dumped = {}
-        for attr_ in self.store_meta.attrs:
-            value = item.get(attr_.name, UNDEFINED)
-            if attr_.write_transform:
-                value = attr_.write_transform.transform(value, is_update)
-                item[attr_.name] = value
+        for attr_ in self.meta.attrs:
+            value = getattr(item, attr_.name, UNDEFINED)
+            if is_update:
+                generator = attr_.update_generator
+            else:
+                generator = attr_.create_generator
+            if generator:
+                value = generator.transform(value)
+            setattr(item, attr_.name, value)
             if value is UNDEFINED:
                 continue
             if (
@@ -345,48 +372,52 @@ class SqlalchemyTableStore(StoreABC):
                 and not self.engine.dialect.name == POSTGRES
             ):
                 value = json.dumps(value)
-            if attr_.attr_type == AttrType.DATETIME and value:
-                value = datetime.fromisoformat(value)
-            dumped[attr_.name] = value
+            dumped[attr_.name] = _transform_type(value)
 
         return dumped
 
-    def _key_attrs(self) -> Iterator[Attr]:
-        for attr_ in self.store_meta.attrs:
-            if self.store_meta.key_config.is_required_attr(attr_.name):
-                yield attr_
-
-    def _non_key_attrs(self) -> Iterator[Attr]:
-        for attr_ in self.store_meta.attrs:
-            if not self.store_meta.key_config.is_required_attr(attr_.name):
-                yield attr_
-
     def _key_where_clause(self):
         key_where_clause = None
-        for attr_ in self._key_attrs():
+        for attr_name in self.meta.key_config.get_key_attrs():
             # exp = self.table.columns.get(attr_.name) == f':{attr_.name}'
-            exp = self.table.columns.get(attr_.name) == BindParameter(attr_.name)
+            exp = self.table.columns.get(attr_name) == BindParameter(attr_name)
             if key_where_clause:
                 key_where_clause &= exp
             else:
                 key_where_clause = exp
         return key_where_clause
 
-    def _key_from_str(self, key: str):
-        return self.store_meta.key_config.from_key_str(key)
+    def _key_where_clause_from_dicts(self, dicts: List[ExternalItemType]):
+        key_attrs = list(self.meta.key_config.get_key_attrs())
+        if len(key_attrs) == 1:
+            keys_for_where = [d.get(key_attrs[0]) for d in dicts]
+            where_clause = self.table.columns[key_attrs[0]].in_(keys_for_where)
+        else:
+            where_clause = []
+            for d in dicts:
+                where_clause.append(self._key_where_clause_from_dict(d))
+            where_clause = or_(*where_clause)
+        return where_clause
 
-    def _key_where_clause_from_item(self, item: ExternalItemType):
+    def _key_where_clause_from_dict(self, item: ExternalItemType):
         where_clause = and_(
-            self.table.columns.get(attr_.name) == item[attr_.name]
-            for attr_ in self._key_attrs()
+            self.table.columns.get(attr_name) == item.get(attr_name)
+            for attr_name in self.meta.key_config.get_key_attrs()
         )
         return where_clause
 
-    def _key_where_clause_from_items(self, items: List[ExternalItemType]):
-        key_attrs = list(self._key_attrs())
+    def _key_where_clause_from_item(self, item: T):
+        where_clause = and_(
+            self.table.columns.get(attr_name) == getattr(item, attr_name)
+            for attr_name in self.meta.key_config.get_key_attrs()
+        )
+        return where_clause
+
+    def _key_where_clause_from_items(self, items: List[T]):
+        key_attrs = list(self.meta.key_config.get_key_attrs())
         if len(key_attrs) == 1:
-            keys_for_where = [item[key_attrs[0].name] for item in items]
-            where_clause = self.table.columns[key_attrs[0].name].in_(keys_for_where)
+            keys_for_where = [getattr(item, key_attrs[0]) for item in items]
+            where_clause = self.table.columns[key_attrs[0]].in_(keys_for_where)
         else:
             where_clause = []
             for item in items:
@@ -397,14 +428,14 @@ class SqlalchemyTableStore(StoreABC):
     def _search_filter_to_where_clause(
         self, search_filter: SearchFilterABC
     ) -> Tuple[Any, bool]:
-        search_filter = search_filter.lock_attrs(self.store_meta.attrs)
+        search_filter = search_filter.lock_attrs(self.meta.attrs)
         context = SearchFilterConverterContext()
-        return context.convert(search_filter, self.table, self.store_meta)
+        return context.convert(search_filter, self.table, self.meta)
 
     def _search_order_to_order_by(self, search_order: SearchOrder):
         if not search_order:
             return
-        search_order.validate_for_attrs(self.store_meta.attrs)
+        search_order.validate_for_attrs(self.meta.attrs)
         orders = []
         for order_attr in search_order.orders:
             order = self.table.columns.get(order_attr.attr)
@@ -414,5 +445,19 @@ class SqlalchemyTableStore(StoreABC):
         return orders
 
     def _default_order_by(self) -> List[Column]:
-        orders = [self.table.columns.get(f.name) for f in self._key_attrs()]
+        orders = [self.table.columns.get(attr_name) for attr_name in self.meta.key_config.get_key_attrs()]
         return orders
+
+    def _key_as_dict(self, item: T):
+        result = self.meta.get_stored_dataclass()()
+        required = self.meta.key_config.get_key_attrs()
+        for attr in self.meta.attrs:
+            if attr.name in required:
+                setattr(result, attr.name, getattr(item, attr.name))
+        return marshy.dump(result)
+
+
+def _transform_type(value):
+    if isinstance(value, UUID):
+        return str(value)
+    return value

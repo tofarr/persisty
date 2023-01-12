@@ -1,6 +1,10 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional, Iterator
 from uuid import UUID
+
+import marshy
+from marshy.types import ExternalItemType, ExternalType
 
 from persisty.attr.attr_type import AttrType
 from persisty.errors import PersistyError
@@ -21,35 +25,36 @@ class AttrKeyConfig(KeyConfigABC[T]):
             value = str(value)
         return value
 
-    def from_key_str(self, key: Optional[str], target: T):
-        if key is not None:
-            if key is None or key is UNDEFINED:
-                key = UNDEFINED
+    def from_key_str(self, key: str, target: T):
+        setattr(target, self.attr_name, self.to_key_attr(key))
+
+    def to_key_dict(self, key: str) -> ExternalItemType:
+        result = {self.attr_name: self.to_key_attr(key)}
+        return result
+
+    def to_key_attr(self, key: str) -> ExternalType:
+        if key not in (None, UNDEFINED):
             if self.attr_type is AttrType.INT:
-                key = int(key)
+                return int(key)
             elif self.attr_type is AttrType.FLOAT:
-                key = float(key)
-            elif self.attr_type is AttrType.UUID:
-                key = UUID(key)
-        setattr(target, self.attr_name, key)
+                return float(key)
+            elif self.attr_type in (AttrType.UUID, AttrType.STR):
+                return str(key)
+            elif self.attr_name is AttrType.DATETIME:
+                if isinstance(key, datetime):
+                    return marshy.dump(key)
+                elif isinstance(key, str):
+                    return key
+            elif self.attr_name is AttrType.BOOL:
+                return bool(key)
+        raise PersistyError('invalid_type')
 
-    def get_required_attrs(self) -> Iterator[str]:
-        yield self.attr_name
-
-    def get_value_for(self, item):
-        if hasattr(item, "__getitem__"):
-            return item.get(self.attr_name)
-        else:
-            return getattr(item, self.attr_name)
-
-    def set_value_for(self, item, value):
-        if item is None:
-            item = {}
-        if hasattr(item, "__setitem__"):
-            item.__setitem__(self.attr_name, value)
-        else:
-            setattr(item, self.attr_name, value)
-        return item
+    def get_key_attrs(self) -> Iterator[str]:
+        key_attrs = getattr(self, '_key_attrs', None)
+        if not key_attrs:
+            key_attrs = frozenset((self.attr_name,))
+            object.__setattr__(self, '_key_attrs', key_attrs)
+        return key_attrs
 
 
 ATTR_KEY_CONFIG = AttrKeyConfig()

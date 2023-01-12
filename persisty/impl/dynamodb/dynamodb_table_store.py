@@ -70,7 +70,7 @@ class DynamodbTableStore(StoreABC[T]):
         table = self._dynamodb_table()
         if not isinstance(key, str):
             key = str(key)
-        key_dict = self._key_to_dict(key)
+        key_dict = self.meta.key_config.to_key_dict(key)
         response = table.get_item(Key=key_dict)
         loaded = self._load(response.get("Item"))
         return loaded
@@ -84,7 +84,7 @@ class DynamodbTableStore(StoreABC[T]):
         kwargs = {
             "RequestItems": {
                 self.table_name: {
-                    "Keys": [self._key_to_dict(key) for key in set(keys)]
+                    "Keys": [key_config.to_key_dict(key) for key in set(keys)]
                 }
             }
         }
@@ -139,7 +139,7 @@ class DynamodbTableStore(StoreABC[T]):
     @catch_client_error
     def delete(self, key: str) -> bool:
         table = self._dynamodb_table()
-        key_dict = self._key_to_dict(key)
+        key_dict = self.meta.key_config.to_key_dict(key)
         response = table.delete_item(Key=key_dict, ReturnValues="ALL_OLD")
         attributes = response.get("Attributes")
         return bool(attributes)
@@ -179,7 +179,7 @@ class DynamodbTableStore(StoreABC[T]):
             }
         )
         if page_key:
-            query_args["ExclusiveStartKey"] = self._key_to_dict(page_key)
+            query_args["ExclusiveStartKey"] = self.meta.key_config.to_key_dict(page_key)
         table = self._dynamodb_table()
         results = []
         while True:
@@ -276,7 +276,7 @@ class DynamodbTableStore(StoreABC[T]):
                     edit.update_item = deepcopy(item)  # In case of multi put
                     results.append(BatchEditResult(edit, True))
                 else:
-                    key = self._key_to_dict(edit.delete_key)
+                    key = key_config.to_key_dict(edit.delete_key)
                     batch.delete_item(Key=key)
                     results.append(BatchEditResult(edit, True))
         return results
@@ -307,15 +307,6 @@ class DynamodbTableStore(StoreABC[T]):
                 return float(item)
         else:
             return item
-
-    def _key_to_dict(self, key: str) -> ExternalItemType:
-        try:
-            target = self.meta.get_read_dataclass()()
-            self.meta.key_config.from_key_str(key, target)
-            key = marshy.dump(target)
-            return key
-        except ValueError:
-            raise PersistyError('invalid_key')
 
     def _dump_create(self, to_create: T):
         result = {}

@@ -1,4 +1,5 @@
 from typing import Optional, Tuple, Any
+from uuid import UUID
 
 from sqlalchemy import Table, Column
 
@@ -32,6 +33,8 @@ class AttrFilterConverter(AndFilterConverter):
         does not do a direct comparison, but rather produces a where clause for comparing the contents of a column
         to the value given.
         """
+        if isinstance(value, UUID):
+            value = str(value)
         if op == AttrFilterOp.contains:
             return col.contains(value)
         if op == AttrFilterOp.endswith:

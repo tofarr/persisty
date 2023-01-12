@@ -40,12 +40,12 @@ class SqlalchemyColumnConverter:
     dialect: str
 
     def create_column(self, attr: Attr) -> Column:
-        fn_name = f"_create_{attr.type.value}"
+        fn_name = f"_create_{attr.attr_type.value}"
         args = [attr.name, getattr(self, fn_name)(attr)]
         kwargs = {
             "nullable": bool(get_optional_type(attr.schema.python_type)),
         }
-        if self.key_config.is_required_attr(attr.name):
+        if attr.name in self.key_config.get_key_attrs():
             kwargs["primary_key"] = True
         column = Column(*args, **kwargs)
         return column

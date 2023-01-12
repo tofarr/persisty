@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Optional, TypeVar, Generic, Iterator
+from typing import Optional, TypeVar, Generic, Iterator, FrozenSet
+
+from marshy.types import ExternalItemType
 
 T = TypeVar("T")
 
@@ -16,5 +18,9 @@ class KeyConfigABC(ABC, Generic[T]):
         """Set the key for the stored given"""
 
     @abstractmethod
-    def get_required_attrs(self) -> Iterator[str]:
+    def to_key_dict(self, key: Optional[str]) -> ExternalItemType:
+        """Set the key for the stored given"""
+
+    @abstractmethod
+    def get_key_attrs(self) -> FrozenSet[str]:
         """ Get the required attributes for this key """
