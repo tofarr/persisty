@@ -159,7 +159,7 @@ def _dynamo_attr_to_attr(dynamo_attr: Dict):
         name=dynamo_attr["AttributeName"],
         attr_type=db_type,
         schema=schema_from_type(python_type),
-        permitted_filter_ops=TYPE_FILTER_OPS.get(db_type)
+        permitted_filter_ops=TYPE_FILTER_OPS.get(db_type),
     )
     return attr
 
@@ -171,4 +171,4 @@ def _get_attrs_from_key(key_config: KeyConfigABC) -> Iterator[str]:
         for k in key_config.attrs:
             yield from _get_attrs_from_key(k)
     else:
-        raise PersistyError('unsupported_key')
+        raise PersistyError("unsupported_key")

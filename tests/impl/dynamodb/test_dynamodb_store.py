@@ -30,25 +30,19 @@ from tests.utils import mock_dynamodb_with_super
 @mock_dynamodb_with_super
 class TestDynamodbStore(TestCase, StoreTstABC):
     def new_super_bowl_results_store(self) -> StoreABC:
-        store_factory = DynamodbStoreFactory(
-            meta=get_meta(SuperBowlResult)
-        )
+        store_factory = DynamodbStoreFactory(meta=get_meta(SuperBowlResult))
         self.seed_table(store_factory, SUPER_BOWL_RESULT_DICTS)
         store = store_factory.create()
         return store
 
     def new_number_name_store(self) -> StoreABC:
-        store_factory = DynamodbStoreFactory(
-            meta=get_meta(NumberName)
-        )
+        store_factory = DynamodbStoreFactory(meta=get_meta(NumberName))
         self.seed_table(store_factory, NUMBER_NAMES_DICTS)
         store = store_factory.create()
         return store
 
     @staticmethod
-    def seed_table(
-        store_factory: DynamodbStoreFactory, items: List[ExternalItemType]
-    ):
+    def seed_table(store_factory: DynamodbStoreFactory, items: List[ExternalItemType]):
         store_factory.derive_from_meta()
         store_factory.create_table_in_aws()
         dynamodb = store_factory.get_session().resource("dynamodb")
@@ -162,10 +156,9 @@ class TestDynamodbStore(TestCase, StoreTstABC):
 
 @stored(
     batch_size=10,
-    key_config=CompositeKeyConfig((
-        AttrKeyConfig('pk', AttrType.INT),
-        AttrKeyConfig('sk', AttrType.INT)
-    ))
+    key_config=CompositeKeyConfig(
+        (AttrKeyConfig("pk", AttrType.INT), AttrKeyConfig("sk", AttrType.INT))
+    ),
 )
 class Tag:
     pk: int

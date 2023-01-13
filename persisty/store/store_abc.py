@@ -197,7 +197,9 @@ class StoreABC(Generic[T], ABC):
                 results.append(BatchEditResult(edit, False, "exception", str(e)))
         return results
 
-    def edit_all(self, edits: Iterator[BatchEdit[T, T]]) -> Iterator[BatchEditResult[T, T]]:
+    def edit_all(
+        self, edits: Iterator[BatchEdit[T, T]]
+    ) -> Iterator[BatchEditResult[T, T]]:
         edits = iter(edits)
         while True:
             page = list(islice(edits, self.get_meta().batch_size))

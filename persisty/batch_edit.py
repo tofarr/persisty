@@ -4,8 +4,8 @@ from uuid import UUID, uuid4
 
 from persisty.key_config.key_config_abc import KeyConfigABC
 
-C = TypeVar('C')
-U = TypeVar('U')
+C = TypeVar("C")
+U = TypeVar("U")
 
 
 @dataclass

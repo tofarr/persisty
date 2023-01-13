@@ -40,15 +40,18 @@ class StoreTstABC(ABC):
     def test_read(self):
         store = self.new_super_bowl_results_store()
         found = store.read("iii")
-        expected = marshy.load(SuperBowlResult, {
-            "code": "iii",
-            "year": 1969,
-            "date": "1969-01-12T00:00:00+00:00",
-            "winner_code": "new_york_jets",
-            "runner_up_code": "baltimore",
-            "winner_score": 16,
-            "runner_up_score": 7,
-        })
+        expected = marshy.load(
+            SuperBowlResult,
+            {
+                "code": "iii",
+                "year": 1969,
+                "date": "1969-01-12T00:00:00+00:00",
+                "winner_code": "new_york_jets",
+                "runner_up_code": "baltimore",
+                "winner_score": 16,
+                "runner_up_score": 7,
+            },
+        )
         self.assertEqual(expected, found)
 
     def test_read_not_existing(self):
@@ -60,34 +63,43 @@ class StoreTstABC(ABC):
         store = self.new_super_bowl_results_store()
         super_bowl_results = list(store.read_all(("vii", "no-code-i", "ii", "xx")))
         expected = [
-            marshy.load(SuperBowlResult, {
-                "code": "vii",
-                "year": 1973,
-                "date": "1973-01-14T00:00:00+00:00",
-                "winner_code": "miami",
-                "runner_up_code": "washington",
-                "winner_score": 14,
-                "runner_up_score": 7,
-            }),
+            marshy.load(
+                SuperBowlResult,
+                {
+                    "code": "vii",
+                    "year": 1973,
+                    "date": "1973-01-14T00:00:00+00:00",
+                    "winner_code": "miami",
+                    "runner_up_code": "washington",
+                    "winner_score": 14,
+                    "runner_up_score": 7,
+                },
+            ),
             None,
-            marshy.load(SuperBowlResult, {
-                "code": "ii",
-                "year": 1968,
-                "date": "1968-01-14T00:00:00+00:00",
-                "winner_code": "green_bay",
-                "runner_up_code": "oakland",
-                "winner_score": 33,
-                "runner_up_score": 14,
-            }),
-            marshy.load(SuperBowlResult, {
-                "code": "xx",
-                "year": 1986,
-                "date": "1986-01-26T00:00:00+00:00",
-                "winner_code": "chicago",
-                "runner_up_code": "new_england",
-                "winner_score": 46,
-                "runner_up_score": 10,
-            }),
+            marshy.load(
+                SuperBowlResult,
+                {
+                    "code": "ii",
+                    "year": 1968,
+                    "date": "1968-01-14T00:00:00+00:00",
+                    "winner_code": "green_bay",
+                    "runner_up_code": "oakland",
+                    "winner_score": 33,
+                    "runner_up_score": 14,
+                },
+            ),
+            marshy.load(
+                SuperBowlResult,
+                {
+                    "code": "xx",
+                    "year": 1986,
+                    "date": "1986-01-26T00:00:00+00:00",
+                    "winner_code": "chicago",
+                    "runner_up_code": "new_england",
+                    "winner_score": 46,
+                    "runner_up_score": 10,
+                },
+            ),
         ]
         self.assertEqual(expected, super_bowl_results)
 
@@ -96,15 +108,18 @@ class StoreTstABC(ABC):
         self.spec_for_create(store)
 
     def spec_for_create(self, store):
-        item = marshy.load(SuperBowlResult, {
-            "code": "c",
-            "year": 2067,
-            "date": "2067-01-15T00:00:00+00:00",
-            "winner_code": "robots",
-            "runner_up_code": "humans",
-            "winner_score": 1234,
-            "runner_up_score": 0,
-        })
+        item = marshy.load(
+            SuperBowlResult,
+            {
+                "code": "c",
+                "year": 2067,
+                "date": "2067-01-15T00:00:00+00:00",
+                "winner_code": "robots",
+                "runner_up_code": "humans",
+                "winner_score": 1234,
+                "runner_up_score": 0,
+            },
+        )
         self.assertEqual(56, store.count())
         created = store.create(item)
         self.assertEqual(item, created)
@@ -114,15 +129,17 @@ class StoreTstABC(ABC):
 
     def test_create_invalid_schema(self):
         store = self.new_super_bowl_results_store()
-        item = SuperBowlResult(**{
-            "code": "c",
-            "year": "not_a_year",
-            "date": datetime.fromisoformat("2067-01-15T00:00:00+00:00"),
-            "winner_code": "robots",
-            "runner_up_code": "humans",
-            "winner_score": 1234,
-            "runner_up_score": 0,
-        })
+        item = SuperBowlResult(
+            **{
+                "code": "c",
+                "year": "not_a_year",
+                "date": datetime.fromisoformat("2067-01-15T00:00:00+00:00"),
+                "winner_code": "robots",
+                "runner_up_code": "humans",
+                "winner_score": 1234,
+                "runner_up_score": 0,
+            }
+        )
         try:
             store.create(deepcopy(item)) and self.assertTrue(False)
         except PersistyError:
@@ -130,15 +147,18 @@ class StoreTstABC(ABC):
 
     def test_create_existing_key(self):
         store = self.new_super_bowl_results_store()
-        item = marshy.load(SuperBowlResult, {
-            "code": "i",
-            "year": 1971,
-            "date": "1967-01-15T00:00:00+00:00",
-            "winner_code": "green_bay",
-            "runner_up_code": "kansas_city",
-            "winner_score": 35,
-            "runner_up_score": 10,
-        })
+        item = marshy.load(
+            SuperBowlResult,
+            {
+                "code": "i",
+                "year": 1971,
+                "date": "1967-01-15T00:00:00+00:00",
+                "winner_code": "green_bay",
+                "runner_up_code": "kansas_city",
+                "winner_score": 35,
+                "runner_up_score": 10,
+            },
+        )
         try:
             store.create(deepcopy(item)) and self.assertTrue(False)
         except PersistyError:
@@ -149,20 +169,26 @@ class StoreTstABC(ABC):
         self.spec_for_update(store)
 
     def spec_for_update(self, store):
-        item = marshy.load(SuperBowlResult, {
-            "code": "li",
-            "winner_code": "tom_brady_fan_club",
-        })
+        item = marshy.load(
+            SuperBowlResult,
+            {
+                "code": "li",
+                "winner_code": "tom_brady_fan_club",
+            },
+        )
         updated = store.update(item)
-        expected = marshy.load(SuperBowlResult, {
-            "code": "li",
-            "year": 2017,
-            "date": "2017-02-05T00:00:00+00:00",
-            "winner_code": "tom_brady_fan_club",
-            "runner_up_code": "atlanta",
-            "winner_score": 34,
-            "runner_up_score": 28,
-        })
+        expected = marshy.load(
+            SuperBowlResult,
+            {
+                "code": "li",
+                "year": 2017,
+                "date": "2017-02-05T00:00:00+00:00",
+                "winner_code": "tom_brady_fan_club",
+                "runner_up_code": "atlanta",
+                "winner_score": 34,
+                "runner_up_score": 28,
+            },
+        )
         self.assertEqual(expected, updated)
         self.assertEqual(56, store.count())
         item = store.read("li")
@@ -189,15 +215,18 @@ class StoreTstABC(ABC):
             store.update(SuperBowlResult(code="i", date="not_a_date"))
         self.assertEqual(56, store.count())
         read = store.read("i")
-        expected = marshy.load(SuperBowlResult, {
-            "code": "i",
-            "year": 1967,
-            "date": "1967-01-15T00:00:00+00:00",
-            "winner_code": "green_bay",
-            "runner_up_code": "kansas_city",
-            "winner_score": 35,
-            "runner_up_score": 10,
-        })
+        expected = marshy.load(
+            SuperBowlResult,
+            {
+                "code": "i",
+                "year": 1967,
+                "date": "1967-01-15T00:00:00+00:00",
+                "winner_code": "green_bay",
+                "runner_up_code": "kansas_city",
+                "winner_score": 35,
+                "runner_up_score": 10,
+            },
+        )
         self.assertEqual(56, store.count())
         self.assertEqual(expected, read)
 
@@ -207,40 +236,39 @@ class StoreTstABC(ABC):
             code="li",
             winner_code="tom_brady_fan_club",
         )
-        self.assertTrue(
-            store.update(item, AttrFilter("year", AttrFilterOp.eq, 2017))
-        )
+        self.assertTrue(store.update(item, AttrFilter("year", AttrFilterOp.eq, 2017)))
         item = store.read("li")
-        expected = marshy.load(SuperBowlResult, {
-            "code": "li",
-            "year": 2017,
-            "date": "2017-02-05T00:00:00+00:00",
-            "winner_code": "tom_brady_fan_club",
-            "runner_up_code": "atlanta",
-            "winner_score": 34,
-            "runner_up_score": 28,
-        })
+        expected = marshy.load(
+            SuperBowlResult,
+            {
+                "code": "li",
+                "year": 2017,
+                "date": "2017-02-05T00:00:00+00:00",
+                "winner_code": "tom_brady_fan_club",
+                "runner_up_code": "atlanta",
+                "winner_score": 34,
+                "runner_up_score": 28,
+            },
+        )
         self.assertEqual(expected, item)
 
     def test_update_invalid_filter(self):
         store = self.new_super_bowl_results_store()
-        item = SuperBowlResult(
-            code="li",
-            winner_code="tom_brady_fan_club"
-        )
-        self.assertIsNone(
-            store.update(item, AttrFilter("year", AttrFilterOp.eq, 2018))
-        )
+        item = SuperBowlResult(code="li", winner_code="tom_brady_fan_club")
+        self.assertIsNone(store.update(item, AttrFilter("year", AttrFilterOp.eq, 2018)))
         item = store.read("li")
-        expected = marshy.load(SuperBowlResult, {
-            "code": "li",
-            "year": 2017,
-            "date": "2017-02-05T00:00:00+00:00",
-            "winner_code": "new_england",
-            "runner_up_code": "atlanta",
-            "winner_score": 34,
-            "runner_up_score": 28,
-        })
+        expected = marshy.load(
+            SuperBowlResult,
+            {
+                "code": "li",
+                "year": 2017,
+                "date": "2017-02-05T00:00:00+00:00",
+                "winner_code": "new_england",
+                "runner_up_code": "atlanta",
+                "winner_score": 34,
+                "runner_up_score": 28,
+            },
+        )
         self.assertEqual(expected, item)
 
     def test_delete(self):
@@ -375,7 +403,7 @@ class StoreTstABC(ABC):
             BatchEdit(
                 update_item=NumberName(
                     id=UUID("00000000-0000-0000-0002-000000000001"),
-                    title="Not existing"
+                    title="Not existing",
                 )
             ),
             BatchEdit(
@@ -424,7 +452,7 @@ class StoreTstABC(ABC):
                 title="Three",
                 updated_at=datetime.fromisoformat("1970-01-01T00:00:00+00:00"),
                 value=3,
-            )
+            ),
         ]
         self.assertEqual(expected_results, results)
 
@@ -447,7 +475,9 @@ class StoreTstABC(ABC):
 
     def spec_for_update_fail_filter(self, store):
         item = store.update(
-            NumberName(id=UUID("00000000-0000-0000-0000-000000000001"), title="Not One"),
+            NumberName(
+                id=UUID("00000000-0000-0000-0000-000000000001"), title="Not One"
+            ),
             filter_factory(NumberName).title.ne("One"),
         )
         self.assertIsNone(item)
@@ -511,8 +541,8 @@ class StoreTstABC(ABC):
         id = uuid4()
         item = NumberName(
             id=str(id),  # The type is wrong here, but we should handle it
-            title='A Gazillion',
-            value=-1
+            title="A Gazillion",
+            value=-1,
         )
         store.create(item)
         # noinspection PyTypeChecker
@@ -530,7 +560,9 @@ class StoreTstABC(ABC):
         self.assertEqual([item], results)
 
         # noinspection PyTypeChecker
-        self.assertTrue(store.delete(id))  # Again - type is wrong - this should be a str
+        self.assertTrue(
+            store.delete(id)
+        )  # Again - type is wrong - this should be a str
         # noinspection PyTypeChecker
         self.assertFalse(store.read(id))  # Again - type is wrong - this should be a str
 

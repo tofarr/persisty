@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass
 
 from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorABC
@@ -11,6 +10,7 @@ class StrSequenceGenerator(AttrValueGeneratorABC):
     filtered storage, it could open a way for attackers to check if an id exists. (By trying to create it)
     Typically sql based keys will generate this value in the database rather than relying on a client.
     """
+
     format = "{value}"
     always: bool = True
     value: int = 1

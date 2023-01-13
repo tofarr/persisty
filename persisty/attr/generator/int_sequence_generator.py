@@ -10,6 +10,7 @@ class IntSequenceGenerator(AttrValueGeneratorABC):
     filtered storage, it could open a way for attackers to check if an id exists. (By trying to create it)
     Typically sql based keys will generate this value in the database rather than relying on a client.
     """
+
     always: bool = True
     value: int = 1
     step: int = 1
@@ -20,4 +21,3 @@ class IntSequenceGenerator(AttrValueGeneratorABC):
             self.value += self.step
             return value
         return value
-

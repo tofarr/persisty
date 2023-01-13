@@ -17,8 +17,9 @@ class AccessControlStoreFactoryABC(SecuredStoreFactoryABC[T]):
     """
     Factory for store objects based on an access control
     """
+
     store_factory: StoreFactoryABC[T]
-    access_control: AccessControlABC = ScopeAccessControl('root')
+    access_control: AccessControlABC = ScopeAccessControl("root")
 
     def get_meta(self) -> StoreMeta:
         return self.store_factory.get_meta()
@@ -33,8 +34,8 @@ class AccessControlStoreFactoryABC(SecuredStoreFactoryABC[T]):
 
     @abstractmethod
     def allow_store(self, store: StoreABC[T]) -> StoreABC[T]:
-        """ Filter when access is allowed"""
+        """Filter when access is allowed"""
 
     @abstractmethod
     def deny_store(self, store: StoreABC[T]) -> StoreABC[T]:
-        """ Filter when access is denied"""
+        """Filter when access is denied"""

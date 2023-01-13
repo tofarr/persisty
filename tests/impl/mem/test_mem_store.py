@@ -64,7 +64,11 @@ class TestMemStore(TestCase, StoreTstABC):
             name=store_meta.name,
             attrs=tuple(
                 dataclasses.replace(
-                    f, create_generator=None, update_generator=None, creatable=True, updatable=True
+                    f,
+                    create_generator=None,
+                    update_generator=None,
+                    creatable=True,
+                    updatable=True,
                 )
                 for f in store_meta.attrs
             ),
@@ -80,7 +84,11 @@ class TestMemStore(TestCase, StoreTstABC):
             name=store_meta.name,
             attrs=tuple(
                 dataclasses.replace(
-                    f, create_generator=None, update_generator=None, creatable=True, updatable=True
+                    f,
+                    create_generator=None,
+                    update_generator=None,
+                    creatable=True,
+                    updatable=True,
                 )
                 for f in store_meta.attrs
             ),

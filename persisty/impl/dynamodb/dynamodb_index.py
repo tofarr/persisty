@@ -9,7 +9,6 @@ from persisty.impl.dynamodb.dynamodb_key_config import DynamodbKeyConfig
 from persisty.key_config.attr_key_config import AttrKeyConfig
 
 
-
 @dataclass(frozen=True)
 class DynamodbIndex:
     pk: str

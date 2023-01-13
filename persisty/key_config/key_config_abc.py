@@ -23,4 +23,4 @@ class KeyConfigABC(ABC, Generic[T]):
 
     @abstractmethod
     def get_key_attrs(self) -> FrozenSet[str]:
-        """ Get the required attributes for this key """
+        """Get the required attributes for this key"""

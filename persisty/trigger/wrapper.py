@@ -10,6 +10,7 @@ def triggered_store(store: StoreABC):
     if store_triggers.has_after_edit_actions():
         if has_celery_broker():
             from persisty.trigger.celery_trigger_store import CeleryTriggerStore
+
             store = CeleryTriggerStore(store, store_triggers)
         else:
             store = AsyncioTriggerStore(store, store_triggers)

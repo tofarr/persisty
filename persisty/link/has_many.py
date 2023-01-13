@@ -1,62 +1,61 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Type, Generic, TypeVar, ForwardRef
 
-from marshy import get_default_context
-from servey.action.action import action
+import typing_inspect
 from servey.security.authorization import Authorization
 
-from persisty.errors import PersistyError
 from persisty.attr.attr_filter import AttrFilter, AttrFilterOp
-from persisty.finder.store_factory_finder_abc import find_secured_store_factories
-from persisty.link.link_abc import LinkABC
+from persisty.link.linked_store_abc import LinkedStoreABC
+from persisty.result_set import ResultSet
+from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.search_order.search_order import SearchOrder
+from persisty.secured.secured_store_factory_abc import SecuredStoreFactoryABC
 from persisty.util import to_snake_case
+
+T = TypeVar('T')
 
 
 @dataclass
-class HasMany(LinkABC):
+class HasManyCallable(Generic[T]):
+    store_factory: SecuredStoreFactoryABC
+    search_filter: SearchFilterABC
+    search_order: Optional[SearchOrder] = None
+    limit: Optional[int] = None
+
+    def __call__(self, authorization: Optional[Authorization] = None) -> ResultSet[T]:
+        store = self.store_factory.create(authorization)
+        result_set = store.search(
+            search_filter=self.search_filter,
+            search_order=self.search_order,
+            limit=self.limit
+        )
+        return result_set
+
+
+@dataclass
+class HasMany(LinkedStoreABC, Generic[T]):
     name: Optional[str] = None  # Allows None so __set_name__ can exist
-    linked_store_name: Optional[str] = None
     key_attr_name: Optional[str] = None
+    local_key_attr_name: str = 'id'
+    remote_key_attr_name: Optional[str] = None
+    limit: int = 10
+    search_order: Optional[SearchOrder] = None
 
     def __set_name__(self, owner, name):
         self.name = name
-        if not self.linked_store_name:
-            if name.endswith("_result_set"):
-                self.linked_store_name = name[:-11]
-            else:
-                raise PersistyError(f"Please specify store name for: {name}")
-        if self.key_attr_name is None:
-            self.key_attr_name = f"{to_snake_case(owner.__name__)}_id"
+        if self.remote_key_attr_name is None:
+            self.remote_key_attr_name = f"{to_snake_case(owner.__name__)}_id"
 
     def get_name(self) -> str:
         return self.name
 
-    def to_action_fn(self, owner_name: str):
-        linked_store_factory = next(
-            f
-            for f in find_secured_store_factories()
-            if f.get_meta().name == self.linked_store_name
+    def get_linked_type(self, forward_ref_ns: str) -> ForwardRef:
+        return ForwardRef(forward_ref_ns + '.' + self.get_linked_store_name().title().replace('_', '') + 'ResultSet')
+
+    def __get__(self, obj, obj_type) -> HasManyCallable[T]:
+        key = getattr(obj, self.local_key_attr_name)
+        return HasManyCallable(
+            store_factory=self.get_linked_store_factory(),
+            search_filter=AttrFilter(self.remote_key_attr_name, AttrFilterOp.eq, key),
+            search_order=self.search_order
         )
-        key_attr_name = self.key_attr_name
-        meta = linked_store_factory.get_meta()
-        item_type = meta.get_read_dataclass()
-        marshaller = get_default_context().get_marshaller(item_type)
-        result_set_type = meta.get_result_set_dataclass()
-
-        # noinspection PyShadowingNames
-        @action(name=owner_name + "_" + self.name)
-        def action_fn(self, authorization: Optional[Authorization]) -> result_set_type:
-            store = linked_store_factory.create(authorization)
-            key = store.get_meta().key_config.to_key_str(self)
-            result_set = store.search(
-                search_filter=AttrFilter(key_attr_name, AttrFilterOp.eq, key)
-            )
-            # noinspection PyArgumentList
-            result_set = result_set_type(
-                results=[marshaller.load(r) for r in result_set.results],
-                next_page_key=result_set.next_page_key,
-            )
-            return result_set
-
-        action_fn.__name__ = owner_name + "_" + self.name
-        return action_fn

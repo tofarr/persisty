@@ -72,12 +72,7 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
         items = [self.filter_read(item) if item else None for item in items]
         return items
 
-    def _update(
-        self,
-        key: str,
-        item: T,
-        updates: T
-    ) -> Optional[T]:
+    def _update(self, key: str, item: T, updates: T) -> Optional[T]:
         updates = self.filter_update(item, updates)
         if not updates:
             return None
@@ -101,9 +96,7 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
             assert limit <= self.get_meta().batch_size
         search_filter, fully_handled = self.filter_search_filter(search_filter)
         if fully_handled:
-            return self.get_store().search(
-                search_filter, search_order, page_key, limit
-            )
+            return self.get_store().search(search_filter, search_order, page_key, limit)
         # Since the nested search_filter was not fully able to handle the constraint, we handle it here...
         nested_page_key = None
         nested_item_key = None

@@ -190,9 +190,7 @@ class DynamodbTableStore(StoreABC[T]):
             items = [self._load(item) for item in response["Items"]]
             if not handled:
                 items = [
-                    item
-                    for item in items
-                    if search_filter.match(item, self.meta.attrs)
+                    item for item in items if search_filter.match(item, self.meta.attrs)
                 ]
             results.extend(items)
             if len(results) >= limit:
@@ -260,7 +258,9 @@ class DynamodbTableStore(StoreABC[T]):
                         value = UNDEFINED
                         if attr.update_generator:
                             if attr.updatable:
-                                value = attr.update_generator.transform(getattr(updates, attr.name))
+                                value = attr.update_generator.transform(
+                                    getattr(updates, attr.name)
+                                )
                             else:
                                 value = attr.update_generator.transform(UNDEFINED)
                         elif attr.updatable:
@@ -311,17 +311,27 @@ class DynamodbTableStore(StoreABC[T]):
     def _dump_create(self, to_create: T):
         result = {}
         for attr in self.meta.attrs:
-            self._dump_attr(to_create, attr, attr.creatable, attr.create_generator, result)
+            self._dump_attr(
+                to_create, attr, attr.creatable, attr.create_generator, result
+            )
         return result
 
     def _dump_update(self, to_update: T):
         result = {}
         for attr in self.meta.attrs:
-            self._dump_attr(to_update, attr, attr.updatable, attr.update_generator, result)
+            self._dump_attr(
+                to_update, attr, attr.updatable, attr.update_generator, result
+            )
         return result
 
-    def _dump_attr(self, item: T, attr: Attr, accepts_input: bool, generator: Optional[AttrValueGeneratorABC],
-                   target: ExternalItemType):
+    def _dump_attr(
+        self,
+        item: T,
+        attr: Attr,
+        accepts_input: bool,
+        generator: Optional[AttrValueGeneratorABC],
+        target: ExternalItemType,
+    ):
         value = UNDEFINED
         if accepts_input:
             value = getattr(item, attr.name, UNDEFINED)
@@ -433,9 +443,7 @@ def _get_top_level_eq_filters(search_filter: SearchFilterABC) -> List[AttrFilter
 
 
 def _is_eq_filter(search_filter: SearchFilterABC) -> bool:
-    return (
-        isinstance(search_filter, AttrFilter) and search_filter.op == AttrFilterOp.eq
-    )
+    return isinstance(search_filter, AttrFilter) and search_filter.op == AttrFilterOp.eq
 
 
 def _separate_index_filters(

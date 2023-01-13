@@ -35,6 +35,7 @@ class DefaultStoreFactory(StoreFactoryABC):
                 factory = DynamodbStoreFactory(self.store_meta)
             else:
                 from persisty.io.seed import get_seed_data
+
                 seed_items = get_seed_data(self.store_meta)
                 key_config = self.store_meta.key_config
                 seed_data = {key_config.to_key_str(i): i for i in seed_items}

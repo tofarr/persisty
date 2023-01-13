@@ -10,20 +10,17 @@ from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 
 from persisty.attr.attr import Attr
-from persisty.batch_edit import batch_edit_dataclass_for
-from persisty.batch_edit_result import batch_edit_result_dataclass_for
 from persisty.index import Index
 from persisty.key_config.attr_key_config import ATTR_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
-from persisty.result_set import ResultSet, result_set_dataclass_for
 from persisty.store_access import StoreAccess, ALL_ACCESS
 
 from persisty.entity import EntityABC
 from persisty.util import to_camel_case
 from persisty.util.undefined import UNDEFINED
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass
@@ -31,6 +28,7 @@ class StoreMeta:
     """
     Metadata object for a store. Contains info on the type of data being stored.
     """
+
     name: str
     attrs: Tuple[Attr, ...]
     key_config: KeyConfigABC = ATTR_KEY_CONFIG
@@ -42,93 +40,105 @@ class StoreMeta:
     indexes: Tuple[Index, ...] = tuple()
 
     def get_stored_dataclass(self) -> Type:
-        return self._get_dataclass('_stored_dataclass', self.name.title().replace('_', ''), iter(self.attrs))
+        return self._get_dataclass(
+             "_stored_dataclass", self.name.title().replace("_", ""), iter(self.attrs), self.links
+        )
 
     def get_read_dataclass(self) -> Type:
         attrs = (a for a in self.attrs if a.readable)
-        return self._get_dataclass('_read_dataclass', self.name.title().replace('_', ''), attrs)
+        return self._get_dataclass(
+            "_read_dataclass", self.name.title().replace("_", ""), attrs, self.links
+        )
 
     def get_create_dataclass(self) -> Type:
         attrs = (a for a in self.attrs if a.creatable)
-        return self._get_dataclass('_create_dataclass', self.name.title().replace('_', '')+'CreateInput', attrs)
+        return self._get_dataclass(
+            "_create_dataclass",
+            self.name.title().replace("_", "") + "CreateInput",
+            attrs,
+        )
 
     def get_update_dataclass(self) -> Type:
         attrs = (a for a in self.attrs if a.updatable)
-        return self._get_dataclass('_update_dataclass', self.name.title().replace('_', '')+'UpdateInput', attrs)
+        return self._get_dataclass(
+            "_update_dataclass",
+            self.name.title().replace("_", "") + "UpdateInput",
+            attrs,
+        )
 
     def get_search_filter_factory_dataclass(self) -> Optional[Type]:
-        search_filter_factory_dataclass = getattr(self, '_search_filter_factory_dataclass', UNDEFINED)
+        search_filter_factory_dataclass = getattr(
+            self, "_search_filter_factory_dataclass", UNDEFINED
+        )
         if search_filter_factory_dataclass is UNDEFINED:
-            from persisty.search_filter.search_filter_factory import search_filter_dataclass_for
+            from persisty.search_filter.search_filter_factory import (
+                search_filter_dataclass_for,
+            )
+
             search_filter_factory_dataclass = search_filter_dataclass_for(self)
-            setattr(self, '_search_filter_factory_dataclass', search_filter_factory_dataclass)
+            setattr(
+                self,
+                "_search_filter_factory_dataclass",
+                search_filter_factory_dataclass,
+            )
         return search_filter_factory_dataclass
 
     def get_sort_order_factory_dataclass(self) -> Optional[Type]:
-        search_order_factory_dataclass = getattr(self, '_search_order_factory_dataclass', UNDEFINED)
+        search_order_factory_dataclass = getattr(
+            self, "_search_order_factory_dataclass", UNDEFINED
+        )
         if search_order_factory_dataclass is UNDEFINED:
-            from persisty.search_order.search_order_factory import search_order_dataclass_for
+            from persisty.search_order.search_order_factory import (
+                search_order_dataclass_for,
+            )
+
             search_order_factory_dataclass = search_order_dataclass_for(self)
-            setattr(self, '_search_order_factory_dataclass', search_order_factory_dataclass)
+            setattr(
+                self, "_search_order_factory_dataclass", search_order_factory_dataclass
+            )
         return search_order_factory_dataclass
 
     def get_sortable_attrs_as_enum(self) -> Optional[Enum]:
-        result = getattr(self, '_sortable_attrs', UNDEFINED)
+        result = getattr(self, "_sortable_attrs", UNDEFINED)
         if result is UNDEFINED:
             attrs = {f.name: f.name for f in self.attrs if f.sortable}
             if attrs:
                 result = Enum(f"{to_camel_case(self.name)}Sortable", attrs)
             else:
                 result = None
-            setattr(self, '_sortable_attrs', result)
-        return result
-
-    def get_result_set_dataclass(self) -> Type[ResultSet]:
-        result = getattr(self, '_result_set', None)
-        if result is None:
-            # noinspection PyTypeChecker
-            result = result_set_dataclass_for(self.get_read_dataclass())
-            setattr(self, '_result_set', result)
-        return result
-
-    def get_batch_edit_dataclass(self):
-        result = getattr(self, '_batch_edit', None)
-        if result is None:
-            # noinspection PyTypeChecker
-            result = batch_edit_dataclass_for(
-                self.name.title().replace('_', '')+'BatchEdit',
-                self.get_create_dataclass(),
-                self.get_update_dataclass()
-            )
-            setattr(self, '_batch_edit', result)
-        return result
-
-    def get_batch_edit_result_dataclass(self):
-        result = getattr(self, '_batch_edit_result', None)
-        if result is None:
-            # noinspection PyTypeChecker
-            result = batch_edit_result_dataclass_for(self.get_batch_edit_dataclass())
-            setattr(self, '_batch_edit_result', result)
+            setattr(self, "_sortable_attrs", result)
         return result
 
     def get_entity_class(self) -> EntityABC:
         assert False
 
-    def _get_dataclass(self, attr_name: str, name: str, attrs: Iterator[Attr]) -> Optional[Type]:
+    def _get_dataclass(
+        self,
+        attr_name: str,
+        name: str,
+        attrs: Iterator[Attr],
+        links: Optional[Tuple[LinkABC, ...]] = None,
+    ) -> Optional[Type]:
         result = getattr(self, attr_name, None)
         if result is None:
             annotations = {}
             params = {
-                '__annotations__': annotations
+                "__annotations__": annotations,
+                "__stored_type__": attr_name
             }
             for attr in attrs:
                 params[attr.name] = attr.to_field()
                 annotations[attr.name] = attr.schema.python_type
             if annotations:
-                params['__persisty_store_meta__'] = self
-                params['__schema_factory__'] = _schema_factory
-                params['__marshaller_factory__'] = _marshaller_factory
-                params['__eq__'] = _eq
+                if links:
+                    for link in links:
+                        params[link.get_name()] = link
+                if self.description:
+                    params["__doc__"] = self.description
+                params["__persisty_store_meta__"] = self
+                params["__schema_factory__"] = _schema_factory
+                params["__marshaller_factory__"] = _marshaller_factory
+                params["__eq__"] = _eq
                 result = dataclass(type(name, tuple(), params))
             else:
                 result = None
@@ -137,7 +147,7 @@ class StoreMeta:
 
 
 def get_meta(type_: Type) -> Optional[StoreMeta]:
-    meta = getattr(type_, '__persisty_store_meta__', None)
+    meta = getattr(type_, "__persisty_store_meta__", None)
     return meta
 
 
@@ -165,16 +175,17 @@ def get_update_dataclass(type_: Type[T]) -> Type[T]:
     return get_meta(type_).get_update_dataclass()
 
 
-# noinspection PyDecorator
+# noinspection PyDecorator,PyUnusedLocal
 @classmethod
-def _schema_factory(cls, context: SchemaContext, path: str, ref_schemas: Dict[Type, Schema]):
-    """ Override the default schemey behavior and do not include defaults with these generated dataclasses """
+def _schema_factory(
+    cls, context: SchemaContext, path: str, ref_schemas: Dict[Type, Schema]
+):
+    """Override the default schemey behavior and do not include defaults with these generated dataclasses"""
     # noinspection PyDataclass
     schema = {
         "type": "object",
         "properties": {
-            f.name: f.metadata.get('schemey').schema
-            for f in dataclasses.fields(cls)
+            f.name: f.metadata.get("schemey").schema for f in dataclasses.fields(cls)
         },
         "additionalProperties": False,
     }
@@ -187,7 +198,9 @@ def _schema_factory(cls, context: SchemaContext, path: str, ref_schemas: Dict[Ty
 # noinspection PyDecorator
 @classmethod
 def _marshaller_factory(cls, marshaller_context: MarshallerContext):
-    return dataclass_marshaller(cls, marshaller_context, exclude_dumped_values=(UNDEFINED,))
+    return dataclass_marshaller(
+        cls, marshaller_context, exclude_dumped_values=(UNDEFINED,)
+    )
 
 
 def _eq(self, other):

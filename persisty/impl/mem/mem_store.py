@@ -18,6 +18,7 @@ class MemStore(StoreABC[T]):
     In memory store, used mostly for mocking, testing and caches. Relies on wrappers to provide access control,
     triggers and schema validation.
     """
+
     meta: StoreMeta = field()
     items: Dict[str, T] = field(default_factory=dict)
 
@@ -89,9 +90,7 @@ class MemStore(StoreABC[T]):
         items = list(self.items.values())  # Copy to list prevents iterator bugs
         if search_filter is not INCLUDE_ALL:
             items = (
-                item
-                for item in items
-                if search_filter.match(item, self.meta.attrs)
+                item for item in items if search_filter.match(item, self.meta.attrs)
             )
         if search_order and search_order.orders:
             items = search_order.sort(items)

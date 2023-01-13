@@ -1,7 +1,7 @@
 from typing import List
 from unittest import TestCase
 
-from dataclasses import dataclass, attr
+from dataclasses import dataclass, field
 
 from persisty.util.logify import logify
 from persisty.util.singleton_abc import SingletonABC
@@ -24,7 +24,7 @@ class Greeter(SingletonABC):
 
 @dataclass
 class MockLogger:
-    infos: List = attr(default_factory=list)
+    infos: List = field(default_factory=list)
 
     def info(self, msg):
         self.infos.append(msg)

@@ -16,8 +16,8 @@ class SecuredStoreFactoryABC(Generic[T], ABC):
 
     @abstractmethod
     def get_meta(self) -> StoreMeta:
-        """ Get the meta for the store """
+        """Get the meta for the store"""
 
     @abstractmethod
     def create(self, authorization: Optional[Authorization]) -> Optional[StoreABC[T]]:
-        """ Create a new store instance """
+        """Create a new store instance"""

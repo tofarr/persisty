@@ -26,17 +26,21 @@ class Attr:
     def __set_name__(self, owner, name):
         if self.name is UNDEFINED:
             self.name = name
-        annotations = owner.__dict__.get('__annotations__')
+        annotations = owner.__dict__.get("__annotations__")
         type_ = annotations.get(name)
         if self.attr_type is UNDEFINED:
             self.attr_type = attr_type(type_)
         if self.schema is UNDEFINED:
             self.schema = schema_from_type(type_)
         if self.permitted_filter_ops is UNDEFINED:
-            self.permitted_filter_ops = TYPE_FILTER_OPS.get(self.attr_type) or DEFAULT_PERMITTED_FILTER_OPS
+            self.permitted_filter_ops = (
+                TYPE_FILTER_OPS.get(self.attr_type) or DEFAULT_PERMITTED_FILTER_OPS
+            )
 
     def to_field(self) -> Field:
-        result = field(default=UNDEFINED, metadata=dict(schemey=self.schema, persisty=self))
+        result = field(
+            default=UNDEFINED, metadata=dict(schemey=self.schema, persisty=self)
+        )
         result.name = self.name
         result.type = self.schema.python_type
         return result

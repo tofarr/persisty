@@ -31,8 +31,8 @@ class CompositeKeyConfig(KeyConfigABC[T]):
         return result
 
     def get_key_attrs(self) -> Iterator[str]:
-        key_attrs = getattr(self, '_key_attrs', None)
+        key_attrs = getattr(self, "_key_attrs", None)
         if not key_attrs:
             key_attrs = frozenset(a.attr_name for a in self.attrs)
-            object.__setattr__(self, '_key_attrs', key_attrs)
+            object.__setattr__(self, "_key_attrs", key_attrs)
         return key_attrs

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from persisty.attr.attr import Attr
 from persisty.util.undefined import UNDEFINED
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)

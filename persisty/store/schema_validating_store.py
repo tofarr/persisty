@@ -24,25 +24,33 @@ class SchemaValidatingStore(FilteredStoreABC[T]):
             object.__setattr__(
                 self,
                 "schema_for_create",
-                get_default_schema_context().schema_from_type(self.get_meta().get_create_dataclass())
+                get_default_schema_context().schema_from_type(
+                    self.get_meta().get_create_dataclass()
+                ),
             )
         if not self.schema_for_update:
             object.__setattr__(
                 self,
                 "schema_for_update",
-                get_default_schema_context().schema_from_type(self.get_meta().get_update_dataclass())
+                get_default_schema_context().schema_from_type(
+                    self.get_meta().get_update_dataclass()
+                ),
             )
         if not self.marshaller_for_create:
             object.__setattr__(
                 self,
                 "marshaller_for_create",
-                get_default_context().get_marshaller(self.get_meta().get_create_dataclass())
+                get_default_context().get_marshaller(
+                    self.get_meta().get_create_dataclass()
+                ),
             )
         if not self.marshaller_for_update:
             object.__setattr__(
                 self,
                 "marshaller_for_update",
-                get_default_context().get_marshaller(self.get_meta().get_update_dataclass())
+                get_default_context().get_marshaller(
+                    self.get_meta().get_update_dataclass()
+                ),
             )
 
     def get_store(self) -> StoreABC:
@@ -58,12 +66,10 @@ class SchemaValidatingStore(FilteredStoreABC[T]):
             raise PersistyError(error)
         return item
 
-    def filter_update(
-        self, old_item: T, updates: T
-    ) -> T:
+    def filter_update(self, old_item: T, updates: T) -> T:
         new_item = {
             **self.marshaller_for_update.dump(old_item),
-            **self.marshaller_for_update.dump(updates)
+            **self.marshaller_for_update.dump(updates),
         }
         error = next(self.schema_for_update.iter_errors(new_item), None)
         if error:

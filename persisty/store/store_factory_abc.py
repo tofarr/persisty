@@ -4,7 +4,7 @@ from typing import Optional, Generic, TypeVar
 from persisty.store.store_abc import StoreABC
 from persisty.store_meta import StoreMeta
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class StoreFactoryABC(Generic[T], ABC):

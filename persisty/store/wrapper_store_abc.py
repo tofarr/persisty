@@ -61,5 +61,7 @@ class WrapperStoreABC(StoreABC[T], ABC):
     ) -> List[BatchEditResult[T, T]]:
         return self.get_store()._edit_batch(edits, items_by_key)
 
-    def edit_all(self, edits: Iterator[BatchEdit[T, T]]) -> Iterator[BatchEditResult[T, T]]:
+    def edit_all(
+        self, edits: Iterator[BatchEdit[T, T]]
+    ) -> Iterator[BatchEditResult[T, T]]:
         return self.get_store().edit_all(edits)

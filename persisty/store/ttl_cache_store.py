@@ -37,7 +37,9 @@ class TtlCacheStore(StoreABC[T]):
             object.__setattr__(
                 self,
                 "marshaller",
-                get_default_context().get_marshaller(self.get_meta().get_read_dataclass())
+                get_default_context().get_marshaller(
+                    self.get_meta().get_read_dataclass()
+                ),
             )
 
     def clear_cache(self):
@@ -47,9 +49,7 @@ class TtlCacheStore(StoreABC[T]):
     def get_meta(self) -> StoreMeta:
         return self.store.get_meta()
 
-    def store_item_in_cache(
-        self, key: str, item: T, expire_at: Optional[int] = None
-    ):
+    def store_item_in_cache(self, key: str, item: T, expire_at: Optional[int] = None):
         if expire_at is None:
             expire_at = int(time()) + self.ttl
         self.cache[key] = TtlEntry(deepcopy(item), expire_at)

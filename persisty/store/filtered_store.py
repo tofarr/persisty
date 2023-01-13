@@ -22,9 +22,7 @@ class FilteredStore(FilteredStoreABC[T]):
         return item
 
     # noinspection PyUnusedLocal
-    def filter_update(
-        self, old_item: T, updates: T
-    ) -> T:
+    def filter_update(self, old_item: T, updates: T) -> T:
         # old_item has already been checked in read operation
         item = {**old_item, **updates}
         if not self.search_filter.match(item, self.get_meta().attrs):

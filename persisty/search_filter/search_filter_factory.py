@@ -36,7 +36,7 @@ def search_filter_dataclass_for(
 ) -> Optional[Type[SearchFilterFactoryABC]]:
     annotations = {}
     has_str = next(
-        (True for f in storage_meta.attrs if f.type == AttrType.STR), False
+        (True for f in storage_meta.attrs if f.attr_type == AttrType.STR), False
     )
     if has_str:
         annotations["query"] = Optional[str]

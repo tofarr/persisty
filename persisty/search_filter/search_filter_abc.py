@@ -5,7 +5,7 @@ from typing import Tuple, Optional, Any, TYPE_CHECKING, Generic, TypeVar
 if TYPE_CHECKING:
     from persisty.attr.attr import Attr
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class SearchFilterABC(ABC, Generic[T]):

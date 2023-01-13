@@ -23,7 +23,9 @@ class SqlalchemyTableConverter:
     metadata: MetaData
     schema: Dict[str, StoreMeta] = field(default_factory=dict)
 
-    def to_sqlalchemy_table_and_indexes(self, store_meta: StoreMeta) -> Tuple[Table, List[Index]]:
+    def to_sqlalchemy_table_and_indexes(
+        self, store_meta: StoreMeta
+    ) -> Tuple[Table, List[Index]]:
         args = [
             store_meta.name,
             self.metadata,
@@ -39,7 +41,9 @@ class SqlalchemyTableConverter:
         for index in store_meta.indexes:
             name = f"idx_{'__'.join(index.attr_names)}"
             if len(name) > 62:
-                name = base64.b64decode(hashlib.md5(name.encode('UTF-8'))).decode('UTF-8')
+                name = base64.b64decode(hashlib.md5(name.encode("UTF-8"))).decode(
+                    "UTF-8"
+                )
             index_cols = [columns_by_name[a] for a in index.attr_names]
             index_obj = Index(name, *index_cols, unique=index.unique)
             indexes.append(index_obj)

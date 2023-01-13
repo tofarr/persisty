@@ -57,12 +57,12 @@ def export_content(directory: str, store: StoreABC, page_size: int = 500):
         index += 1
 
 
-def import_all(directory: str, store_factory_type: Type = DefaultStoreFactory) -> List[StoreFactoryABC]:
+def import_all(
+    directory: str, store_factory_type: Type = DefaultStoreFactory
+) -> List[StoreFactoryABC]:
     results = []
     for store_name in os.listdir(directory):
-        store_factory = import_store_factory(
-            directory, store_name, store_factory_type
-        )
+        store_factory = import_store_factory(directory, store_name, store_factory_type)
         results.append(store_factory)
         import_content(directory, store_factory)
     return results
@@ -91,7 +91,9 @@ def import_content(directory: str, store_factory: StoreFactoryABC):
     directory = Path(directory, store_meta.name)
     store = store_factory.create()
     to_key_str = store_meta.key_config.to_key_str
-    existing_item_edits = (BatchEdit(delete_key=to_key_str(i)) for i in store.search_all())
+    existing_item_edits = (
+        BatchEdit(delete_key=to_key_str(i)) for i in store.search_all()
+    )
     store.edit_all(existing_item_edits)
     items = read_all_items(directory)
     store.edit_all((BatchEdit(create_item=i) for i in items))
@@ -100,7 +102,7 @@ def import_content(directory: str, store_factory: StoreFactoryABC):
 def read_all_items(directory: Path) -> Iterator[ExternalItemType]:
     index = 1
     while True:
-        file = Path(directory, str(index) + '.yml')
+        file = Path(directory, str(index) + ".yml")
         if not exists(file):
             return
         with open(file, "r") as f:

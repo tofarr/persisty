@@ -21,7 +21,7 @@ class AttrKeyConfig(KeyConfigABC[T]):
         value = getattr(item, self.attr_name)
         if not isinstance(value, str):
             if value in (None, UNDEFINED):
-                raise PersistyError('invalid_key')
+                raise PersistyError("invalid_key")
             value = str(value)
         return value
 
@@ -47,13 +47,13 @@ class AttrKeyConfig(KeyConfigABC[T]):
                     return key
             elif self.attr_name is AttrType.BOOL:
                 return bool(key)
-        raise PersistyError('invalid_type')
+        raise PersistyError("invalid_type")
 
     def get_key_attrs(self) -> Iterator[str]:
-        key_attrs = getattr(self, '_key_attrs', None)
+        key_attrs = getattr(self, "_key_attrs", None)
         if not key_attrs:
             key_attrs = frozenset((self.attr_name,))
-            object.__setattr__(self, '_key_attrs', key_attrs)
+            object.__setattr__(self, "_key_attrs", key_attrs)
         return key_attrs
 
 

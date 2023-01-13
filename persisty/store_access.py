@@ -11,17 +11,21 @@ class StoreAccess:
     searchable: bool = True
 
     def __and__(self, other: StoreAccess) -> StoreAccess:
-        result = StoreAccess(**{
-            f.name: getattr(self, f.name) and getattr(other, f.name)
-            for f in fields(StoreAccess)
-        })
+        result = StoreAccess(
+            **{
+                f.name: getattr(self, f.name) and getattr(other, f.name)
+                for f in fields(StoreAccess)
+            }
+        )
         return result
 
     def __or__(self, other: StoreAccess) -> StoreAccess:
-        result = StoreAccess(**{
-            f.name: getattr(self, f.name) or getattr(other, f.name)
-            for f in fields(StoreAccess)
-        })
+        result = StoreAccess(
+            **{
+                f.name: getattr(self, f.name) or getattr(other, f.name)
+                for f in fields(StoreAccess)
+            }
+        )
         return result
 
     @property

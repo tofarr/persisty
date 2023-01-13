@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Type, Union, ForwardRef
 
 from marshy.types import ExternalItemType
 
@@ -19,13 +19,12 @@ class LinkABC(ABC):
     def get_name(self) -> str:
         """Get the name of this link"""
 
-    @abstractmethod
-    def to_action_fn(self, owner_name: str):
-        """ Create an action function for this link (When in entity mode, this is wrapped by a property descriptor) """
+    def get_linked_type(self, forward_ref_ns: str) -> Union[ForwardRef, Type]:
+        """ Get the type for the linked object (May be an int, Optional[T], ResultSet[T], or something else """
 
-    def update_attrs(self, attrs: Dict[str, Attr]):
+    def update_attrs(self, attrs: List[Attr]):
         """
-        Update parameters
+        Update parameters to include anything required by this link that may be missing. (e.g. linked_id)
         """
 
     def update_json_schema(self, json_schema: ExternalItemType):

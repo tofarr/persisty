@@ -205,7 +205,10 @@ class SqlalchemyTableStore(StoreABC):
                         if not search_order or not search_order.orders:
                             next_page_key = [
                                 "id",
-                                {a: _transform_type(getattr(result, a)) for a in self.meta.key_config.get_key_attrs()},
+                                {
+                                    a: _transform_type(getattr(result, a))
+                                    for a in self.meta.key_config.get_key_attrs()
+                                },
                             ]
                         next_page_key = to_base64(next_page_key)
                         break
@@ -230,9 +233,7 @@ class SqlalchemyTableStore(StoreABC):
             rows = connection.execute(stmt)
             for row in rows:
                 item = self._load_row(row)
-                if not handled and not search_filter.match(
-                    item, self.meta.attrs
-                ):
+                if not handled and not search_filter.match(item, self.meta.attrs):
                     continue
                 yield item
 
@@ -279,10 +280,9 @@ class SqlalchemyTableStore(StoreABC):
         for edit in edits:
             edit_key = to_key_str(edit.update_item)
             edits_by_key[edit_key] = edit
-            key_dicts_to_load_row.append({
-                k: _transform_type(getattr(edit.update_item, k))
-                for k in key_attrs
-            })
+            key_dicts_to_load_row.append(
+                {k: _transform_type(getattr(edit.update_item, k)) for k in key_attrs}
+            )
             results_by_id[edit.id] = BatchEditResult(edit)
         existing_items = self._read_batch(connection, key_dicts_to_load_row)
         for item in existing_items:
@@ -292,7 +292,9 @@ class SqlalchemyTableStore(StoreABC):
                 value = UNDEFINED
                 if attr.update_generator:
                     if attr.updatable:
-                        value = attr.update_generator.transform(getattr(edit.update_item, attr.name))
+                        value = attr.update_generator.transform(
+                            getattr(edit.update_item, attr.name)
+                        )
                     else:
                         value = attr.update_generator.transform(UNDEFINED)
                 elif attr.updatable:
@@ -445,7 +447,10 @@ class SqlalchemyTableStore(StoreABC):
         return orders
 
     def _default_order_by(self) -> List[Column]:
-        orders = [self.table.columns.get(attr_name) for attr_name in self.meta.key_config.get_key_attrs()]
+        orders = [
+            self.table.columns.get(attr_name)
+            for attr_name in self.meta.key_config.get_key_attrs()
+        ]
         return orders
 
     def _key_as_dict(self, item: T):

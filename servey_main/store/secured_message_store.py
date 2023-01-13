@@ -1,5 +1,6 @@
 import dataclasses
 from typing import Optional, List
+from uuid import UUID
 
 from servey.security.authorization import Authorization, AuthorizationError
 
@@ -11,14 +12,16 @@ from persisty.store.store_abc import StoreABC
 from persisty.store_meta import StoreMeta
 from persisty.store.wrapper_store_abc import WrapperStoreABC
 from servey_main.models.message import Message
-from servey_main.storage import message_store_factory
+from servey_main.store import message_store_factory
 
 STORAGE_META = get_meta(Message)
 STORAGE_META = dataclasses.replace(
     STORAGE_META,
     # We make sure that the author_id is not updatable, and will not appear as such in the external APIs
     attrs=tuple(
-        dataclasses.replace(f, updatable=False, creatable=False) if f.name == 'author_id' else f
+        dataclasses.replace(f, updatable=False, creatable=False)
+        if f.name == "author_id"
+        else f
         for f in STORAGE_META.attrs
     ),
 )
@@ -33,20 +36,27 @@ class SecuredMessageStore(WrapperStoreABC[Message]):
         return self.store
 
     def create(self, item: Message) -> Message:
-        item.author_id = self.authorization.subject_id  # Auto set the author
+        item.author_id = UUID(self.authorization.subject_id)  # Auto set the author
         return self.store.create(item)
 
     def _delete(self, key: str, item: Message) -> bool:
         if item.author_id != self.authorization.subject_id:
-            raise AuthorizationError('forbidden')  # Can't edit messages created by others
+            raise AuthorizationError(
+                "forbidden"
+            )  # Can't edit messages created by others
         return self.store._delete(key, item)
 
     def delete(self, key: str) -> bool:
-        if not self.authorization.has_scope('admin') or key == self.authorization.subject_id:
-            raise AuthorizationError('forbidden')
+        if (
+            not self.authorization.has_scope("admin")
+            or key == self.authorization.subject_id
+        ):
+            raise AuthorizationError("forbidden")
         return self.store.delete(key)
 
-    def edit_batch(self, edits: List[BatchEdit[Message]]) -> List[BatchEditResult[Message]]:
+    def edit_batch(
+        self, edits: List[BatchEdit[Message, Message]]
+    ) -> List[BatchEditResult[Message, Message]]:
         for edit in edits:
             if edit.create_item:
                 edit.create_item.author_id = self.authorization.subject_id
@@ -54,11 +64,12 @@ class SecuredMessageStore(WrapperStoreABC[Message]):
 
 
 class SecuredMessageStoreFactory(SecuredStoreFactoryABC[Message]):
-
     def get_meta(self) -> StoreMeta:
         return STORAGE_META
 
-    def create(self, authorization: Optional[Authorization]) -> Optional[StoreABC[Message]]:
+    def create(
+        self, authorization: Optional[Authorization]
+    ) -> Optional[StoreABC[Message]]:
         return SecuredMessageStore(message_store_factory.create(), authorization)
 
 

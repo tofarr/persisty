@@ -8,6 +8,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 def configure(context: MarshallerContext):
-    from servey.security.authenticator.password_authenticator_abc import PasswordAuthenticatorABC
+    from servey.security.authenticator.password_authenticator_abc import (
+        PasswordAuthenticatorABC,
+    )
     from servey_main.user_authenticator import UserAuthenticator
+
     register_impl(PasswordAuthenticatorABC, UserAuthenticator, context)
