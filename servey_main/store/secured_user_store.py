@@ -10,6 +10,7 @@ from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC
 from persisty.store_access import StoreAccess
 from persisty.store_meta import StoreMeta, get_meta
+from persisty.trigger.wrapper import triggered_store
 from servey_main.models.user import User
 from servey_main.store import user_store_factory
 
@@ -91,7 +92,9 @@ class SecuredUserStoreFactory(SecuredStoreFactoryABC[User]):
     def create(
         self, authorization: Optional[Authorization]
     ) -> Optional[StoreABC[User]]:
-        return SecuredUserStore(user_store_factory.create(), authorization)
+        store = SecuredUserStore(user_store_factory.create(), authorization)
+        store = triggered_store(store)
+        return store
 
 
 secured_user_store_factory = SecuredUserStoreFactory()

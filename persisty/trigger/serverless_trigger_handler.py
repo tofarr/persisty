@@ -1,4 +1,4 @@
-from dataclasses import attr
+from dataclasses import field
 from typing import Dict
 
 from marshy.types import ExternalItemType
@@ -14,7 +14,7 @@ from persisty.trigger.after_update_trigger import AfterUpdateTrigger
 
 
 class ServerlessTriggerHandler(TriggerHandlerABC):
-    unmanaged_table_arns_by_store_name: Dict[str, str] = attr(default_factory=dict)
+    unmanaged_table_arns_by_store_name: Dict[str, str] = field(default_factory=dict)
 
     def handle_trigger(
         self, action: Action, trigger: TriggerABC, lambda_definition: ExternalItemType

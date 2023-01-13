@@ -65,37 +65,25 @@ class StoreTriggers:
             or self.has_after_delete_actions()
         )
 
-    async def async_after_create(self, new_item: ExternalItemType):
+    async def async_after_create(self, new_item):
         for action in self.get_after_create_actions():
-            loaded_new = self.load_item(action, new_item)
-            result = action.fn(loaded_new)
+            result = action.fn(new_item)
             if isinstance(result, Awaitable):
                 await result
 
     async def async_after_update(
-        self, old_item: ExternalItemType, new_item: ExternalItemType
+        self, old_item, new_item
     ):
         for action in self.get_after_create_actions():
-            loaded_old = self.load_item(action, old_item)
-            loaded_new = self.load_item(action, new_item)
-            result = action.fn(loaded_old, loaded_new)
+            result = action.fn(old_item, new_item)
             if isinstance(result, Awaitable):
                 await result
 
-    async def async_after_delete(self, old_item: ExternalItemType):
+    async def async_after_delete(self, old_item):
         for action in self.get_after_create_actions():
-            loaded_old = self.load_item(action, old_item)
-            result = action.fn(loaded_old)
+            result = action.fn(old_item)
             if isinstance(result, Awaitable):
                 await result
-
-    def load_item(self, action: Action, item: ExternalItemType):
-        fn = action.fn
-        sig = inspect.signature(fn)
-        # noinspection PyTypeChecker
-        type_ = next(iter(sig.parameters.values())).annotation
-        loaded = self.marshaller_context.load(type_, item)
-        return loaded
 
 
 def _get_triggered_actions(store_name: str, trigger_type) -> Iterator[Action]:

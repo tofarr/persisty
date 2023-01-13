@@ -9,12 +9,12 @@ from servey.servey_celery import celery_app
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.store.store_abc import StoreABC
-from persisty.store.wrapper_store_abc import WrapperStoreABC
+from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 from persisty.trigger.store_triggers import StoreTriggers
 
 
 @dataclass
-class CeleryTriggerStore(WrapperStoreABC):
+class CeleryTriggerStore(WrapperStoreABC[T]):
     """
     Store which triggers actions after edits using celery
     """
@@ -25,13 +25,12 @@ class CeleryTriggerStore(WrapperStoreABC):
     def get_store(self) -> StoreABC:
         return self.store
 
-    def create(self, item: ExternalItemType) -> Optional[ExternalItemType]:
+    def create(self, item: T) -> Optional[T]:
         result = self.store.create(item)
         if result:
             for action_ in self.store_triggers.get_after_create_actions():
-                loaded = self.store_triggers.load_item(action_, result)
                 task = getattr(celery_app, action_.name)
-                task.apply_async(loaded)
+                task.apply_async(item)
             return result
 
     def update(
@@ -45,24 +44,21 @@ class CeleryTriggerStore(WrapperStoreABC):
             new_item = self.store.update(updates, precondition)
             if new_item:
                 for action_ in self.store_triggers.get_after_create_actions():
-                    loaded_new = self.store_triggers.load_item(action_, new_item)
-                    loaded_old = self.store_triggers.load_item(action_, old_item)
                     task = getattr(celery_app, action_.name)
-                    task.apply_async(loaded_old, loaded_new)
+                    task.apply_async(old_item, new_item)
                 return new_item
 
     def delete(self, key: str) -> bool:
-        if not self.storage_triggers.has_after_delete_actions():
-            return self.storage.delete(key)
+        if not self.store_triggers.has_after_delete_actions():
+            return self.store.delete(key)
         result = False
-        item = self.storage.read(key)
+        item = self.store.read(key)
         if item:
-            result = self.storage.delete(key)
+            result = self.store.delete(key)
             if result:
-                for action_ in self.storage_triggers.get_after_create_actions():
-                    loaded = self.storage_triggers.load_item(action_, item)
+                for action_ in self.store_triggers.get_after_create_actions():
                     task = getattr(celery_app, action_.name)
-                    task.apply_async(loaded)
+                    task.apply_async(item)
         return result
 
 

@@ -11,6 +11,7 @@ from persisty.batch_edit_result import BatchEditResult
 from persisty.store.store_abc import StoreABC
 from persisty.store_meta import StoreMeta
 from persisty.store.wrapper_store_abc import WrapperStoreABC
+from persisty.trigger.wrapper import triggered_store
 from servey_main.models.message import Message
 from servey_main.store import message_store_factory
 
@@ -70,7 +71,9 @@ class SecuredMessageStoreFactory(SecuredStoreFactoryABC[Message]):
     def create(
         self, authorization: Optional[Authorization]
     ) -> Optional[StoreABC[Message]]:
-        return SecuredMessageStore(message_store_factory.create(), authorization)
+        store = SecuredMessageStore(message_store_factory.create(), authorization)
+        store = triggered_store(store)
+        return store
 
 
 secured_message_store_factory = SecuredMessageStoreFactory()
