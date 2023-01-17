@@ -1,7 +1,7 @@
 import dataclasses
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Tuple, Type, Iterator, Union, TypeVar, Dict
+from typing import Optional, Tuple, Type, Iterator, TypeVar, Dict
 
 from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
 from marshy.marshaller_context import MarshallerContext
@@ -16,7 +16,6 @@ from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
 from persisty.store_access import StoreAccess, ALL_ACCESS
 
-from persisty.entity import EntityABC
 from persisty.util import to_camel_case
 from persisty.util.undefined import UNDEFINED
 
@@ -109,9 +108,6 @@ class StoreMeta:
             setattr(self, "_sortable_attrs", result)
         return result
 
-    def get_entity_class(self) -> EntityABC:
-        assert False
-
     def _get_dataclass(
         self,
         attr_name: str,
@@ -149,10 +145,6 @@ class StoreMeta:
 def get_meta(type_: Type) -> Optional[StoreMeta]:
     meta = getattr(type_, "__persisty_store_meta__", None)
     return meta
-
-
-def get_entity_class(type_: Type[T]) -> Type[Union[T, EntityABC]]:
-    return get_meta(type_).get_entity_class()
 
 
 def get_stored_dataclass(type_: Type[T]) -> Type[T]:

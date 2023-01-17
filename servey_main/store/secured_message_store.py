@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Optional, List
+from typing import Optional, List, Dict
 from uuid import UUID
 
 from servey.security.authorization import Authorization, AuthorizationError
@@ -47,20 +47,20 @@ class SecuredMessageStore(WrapperStoreABC[Message]):
             )  # Can't edit messages created by others
         return self.store._delete(key, item)
 
-    def delete(self, key: str) -> bool:
-        if (
-            not self.authorization.has_scope("admin")
-            or key == self.authorization.subject_id
-        ):
-            raise AuthorizationError("forbidden")
-        return self.store.delete(key)
-
-    def edit_batch(
-        self, edits: List[BatchEdit[Message, Message]]
+    def _edit_batch(
+            self, edits: List[BatchEdit[Message, Message]], items_by_key: Dict[str, Message]
     ) -> List[BatchEditResult[Message, Message]]:
+        subject_id = self.authorization.subject_id
         for edit in edits:
             if edit.create_item:
-                edit.create_item.author_id = self.authorization.subject_id
+                edit.create_item.author_id = subject_id
+            if edit.update_item:
+                key = self.get_meta().key_config.to_key_str(edit.update_item)
+                old_item = items_by_key[key]
+                if edit.update_item.author_id != subject_id or old_item.author_id != subject_id:
+                    raise AuthorizationError(
+                        "forbidden"
+                    )  # Can't edit messages created by others
         return self.store.edit_batch(edits)
 
 
