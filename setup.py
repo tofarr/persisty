@@ -19,7 +19,7 @@ setuptools.setup(
         "typing-inspect>=0.7.1",
         "marshy~=2.4",
         "schemey~=5.2",
-        "servey[dev,server,aws,serverless]~=2.0"
+        "servey[dev,server,serverless]~=2.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

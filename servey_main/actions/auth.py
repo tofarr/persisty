@@ -17,7 +17,7 @@ from servey_main.models.user import User
 from servey_main.store import user_store_factory
 
 
-@action(triggers=(WEB_POST,))
+@action(triggers=WEB_POST)
 def sign_up(
     username: str,
     password: str,
@@ -28,7 +28,7 @@ def sign_up(
     password_digest_base64 = base64.b64encode(password_digest)
     password_digest_base64_str = password_digest_base64.decode("UTF-8")
     storage = user_store_factory.create()
-    search_filter = filter_factory(User).username == username
+    search_filter = filter_factory(User).username.eq(username)
     existing_user = next(storage.search_all(search_filter), None)
     if existing_user:
         raise AuthorizationError()
@@ -46,7 +46,7 @@ def sign_up(
     return token
 
 
-@action(triggers=(WEB_POST,))
+@action(triggers=WEB_POST)
 def login(username: str, password: str) -> Optional[str]:
     authenticator = get_default_password_authenticator()
     authorization = authenticator.authenticate(username, password)

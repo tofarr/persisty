@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Messages</title>
+    <style>
+        html{
+            font-family: Arial,serif;
+        }
+        div, form, input, textarea, label{
+            box-sizing: border-box;
+        }
+        form, #content{
+            display: block;
+            position: fixed;
+            background: #FFF;
+            border: 1px solid #06C;
+            border-radius: 10px;
+            box-shadow: 10px 10px 5px rgba(0,0,0,0.1);
+            left: 10%;
+            top: 10%;
+            width: 80%;
+            max-height: 80%;
+            overflow: scroll;
+            padding: 1em 10%;
+        }
+        label {
+            display:block;
+            width: 100%;
+            font-weight: bold;
+            color: #666;
+            padding-bottom: 0.5em;
+        }
+        .row{
+            padding-bottom: 1em;
+        }
+        input, textarea {
+            width: 100%;
+            border: 1px solid #CCC;
+            border-radius: 5px;
+            padding: 0.5em 1em;
+        }
+        #postMessageForm {
+            display: flex;
+            flex-direction: column;
+        }
+        #postMessageForm .row{
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        textarea {
+            flex-grow: 1;
+            resize: none;
+        }
+        .formControls{
+            padding: 1em 0;
+            display: flex;
+        }
+        input[type=submit]{
+            padding: 0.5em 0;
+            color: #FFF;
+            background: #06C;
+            font-weight: bold;
+            transition: color 0s 0.4s, background 0.4s linear;
+        }
+        input[type=submit]:hover{
+            padding: 0.5em 0;
+            color: #FFF;
+            background: #06C;
+            font-weight: bold;
+            transition: color 0s 0.4s, background 0.4s linear;
+        }
+        input[type=button]:hover{
+            border-color: #06C;
+            background: #06C;
+            color: #FFF;
+            font-weight: bold;
+            transition: color 0s 0.4s, background 0.4s linear;
+        }
+        input[type=button]{
+            border-color: #06C;
+            background: #FFF;
+            color: #06C;
+            font-weight: bold;
+            transition: color 0s 0.4s, background 0.4s linear;
+        }
+        .initialHidden{
+            visibility: hidden;
+            opacity: 0;
+        }
+        .visible {
+          visibility: visible;
+          opacity: 1;
+          transition: opacity 0.4s linear;
+        }
+        .hidden {
+          visibility: hidden;
+          opacity: 0;
+          transition: visiblity 0s 0.4s, opacity 0.4s linear;
+        }
+        .formHeader{
+            display: flex;
+            align-items: center;
+        }
+        .formHeader h1{
+            flex-grow: 1
+        }
+        .formHeader input{
+            flex-grow: 0;
+            width: auto;
+        }
+        .messageBody{
+            margin-bottom: 2em;
+        }
+        .messageAuthor{
+            font-weight: bold;
+            color: #CCC;
+        }
+        
+    </style>
+    <script type="text/javascript">
+
+        function renderMessage(message){
+            const element = document.createElement('div')
+            element.innerHTML = `
+                <div class="messageAuthor"></div>
+                <div class="messageBody"></div>
+            `;
+            element.className = 'message'
+            element.getElementsByClassName("messageAuthor")[0].appendChild(document.createTextNode(message.author.username))
+            element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.text))
+            const messageContent= document.createElement('div')
+            messageContent.className = 'messageContent'
+            return element
+        }
+
+        function loadAndRenderMoreMessages(pageKey){
+            fetch('graphql', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`
+                },
+                body: JSON.stringify({
+                    query: `
+                      query($pageKey: String) {
+                        messageSearch(pageKey: $pageKey, limit: 10) {
+                          nextPageKey
+                        results{
+                            id
+                            text
+                            createdAt
+                            author{
+                              id
+                              username
+                            }
+                          }
+                        }
+                      }
+                    `,
+                    variables: {
+                        'pageKey': pageKey
+                    }
+                })
+            }).then(response => response.json()).then(body => {
+                const resultSet = body.data.messageSearch
+                const messages = document.getElementById("messages")
+                resultSet.results.map(renderMessage).forEach(m => messages.appendChild(m))
+                document.getElementById("loadMore").className = resultSet.nextPageKey ? "visible" : "hidden"
+            });
+        }
+
+        function loadAndRenderMessages(){
+            setVisible("content")
+            const messages = document.getElementById("messages")
+            messages.innerHTML = ""
+            loadAndRenderMoreMessages()
+        }
+
+        function handleLogin(){
+            fetch('actions/login', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: document.getElementById('loginUsername').value,
+                    password: document.getElementById('loginPassword').value
+                })
+            }).then(response => response.json()).then(body => {
+                if (body) {
+                    sessionStorage.setItem('authorization', body)
+                    loadAndRenderMessages()
+                } else {
+                    alert('Uncorrect Username or Password')
+                }
+            })
+        }
+
+        function handlePostMessage() {
+            fetch('actions/message', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`
+                },
+                body: JSON.stringify({
+                    item: {
+                        text: document.getElementById('messageText').value
+                    }
+                })
+            }).then(response => response.json()).then(loadAndRenderMessages)
+        }
+
+        let currentDisplayElement = null
+
+        function setVisible(elementId){
+            if (currentDisplayElement) {
+                currentDisplayElement.className = "hidden";
+            }
+            currentDisplayElement = document.getElementById(elementId)
+            currentDisplayElement.className = "visible";
+        }
+
+
+        function handleLoad(){
+            const authorization =  sessionStorage.getItem('authorization')
+            if (authorization) {
+                loadAndRenderMessages()
+            } else {
+                setVisible("loginForm")
+            }
+        }
+
+        function handleLogout(){
+            sessionStorage.removeItem('authorization')
+            setVisible('loginForm')
+        }
+
+    </script>
+</head>
+<body onload="handleLoad()">
+
+    <div id="content" class="initialHidden">
+        <div class="formHeader">
+            <h1>Messages</h1>
+            <input id="postMessage" type="button" value="Post Message" onclick="setVisible('postMessageForm')" />
+            <input id="logout" type="button" value="Logout" onclick="handleLogout()" />
+        </div>
+        <div id="messages"></div>
+        <div class="formControls">
+            <input id="loadMore" type="button" value="Load More Message" />
+        </div>
+    </div>
+
+    <form id="signupForm" onsubmit="handleSignup(); return false" class="initialHidden">
+        <h1>Sign Up</h1>
+        <div class="row">
+            <label for="signupUsername">Username</label>
+            <input type="text" id="signupUsername" />
+        </div>
+        <div class="row">
+            <label for="signupPassword">Password</label>
+            <input type="password" id="signupPassword" />
+        </div>
+        <div class="row">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" />
+        </div>
+        <div class="row">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" />
+        </div>
+        <div class="row">
+            <label for="emailAddress">Email Address</label>
+            <input type="text" id="emailAddress" />
+        </div>
+        <div class="formControls">
+            <input type="submit" value="Sign Up" />
+            <input type="button" value="Login" onclick="setVisible('loginForm')" />
+        </div>
+    </form>
+
+    <form id="loginForm" onsubmit="handleLogin(); return false" class="initialHidden">
+        <h1>Login</h1>
+        <div class="row">
+            <label for="loginUsername">Username</label>
+            <input type="text" id="loginUsername" />
+        </div>
+        <div class="row">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" />
+        </div>
+        <div class="formControls">
+            <input type="submit" value="Login" />
+            <input type="button" value="Sign Up" onclick="setVisible('signupForm')" />
+        </div>
+    </form>
+
+    <form id="postMessageForm" onsubmit="handlePostMessage(); return false" class="initialHidden">
+        <div class="formHeader">
+            <h1>Post Message</h1>
+            <input id="viewMessages" type="button" value="View Messages" onclick="setVisible('content')" />
+        </div>
+        <div class="row">
+            <label for="messageText">Message</label>
+            <textarea
+                id="messageText"
+                oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
+        </div>
+        <div class="formControls">
+            <input type="submit" value="Post Message" />
+            <input type="button" value="Cancel" onclick="setVisible('content')" />
+        </div>
+    </form>
+
+</body>
+</html>
