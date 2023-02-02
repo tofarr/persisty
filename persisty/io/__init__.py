@@ -8,11 +8,11 @@ from typing import Type, List, Iterator
 import marshy
 from marshy.types import ExternalItemType
 
-from persisty.finder.store_factory_finder_abc import find_store_factories
-from persisty.impl.default_store_factory import DefaultStoreFactory
+from persisty.factory.store_factory_abc import StoreFactoryABC
+from persisty.finder.store_finder_abc import find_stores
 from persisty.batch_edit import BatchEdit
+from persisty.impl.default_store import DefaultStore
 from persisty.store.store_abc import StoreABC
-from persisty.store.store_factory_abc import StoreFactoryABC
 from persisty.store_meta import StoreMeta
 
 
@@ -20,8 +20,7 @@ def export_all(directory: str):
     """
     Export all store to yml files
     """
-    for factory in find_store_factories():
-        store = factory.create()
+    for store in find_stores():
         export_meta(directory, store)
         export_content(directory, store)
 
@@ -58,23 +57,23 @@ def export_content(directory: str, store: StoreABC, page_size: int = 500):
 
 
 def import_all(
-    directory: str, store_factory_type: Type = DefaultStoreFactory
+    directory: str, store_type: Type = DefaultStore
 ) -> List[StoreFactoryABC]:
     results = []
     for store_name in os.listdir(directory):
-        store_factory = import_store_factory(directory, store_name, store_factory_type)
+        store_factory = import_store(directory, store_name, store_type)
         results.append(store_factory)
         import_content(directory, store_factory)
     return results
 
 
-def import_store_factory(
+def import_store(
     directory: str,
     store_name: str,
-    store_factory_type: Type = DefaultStoreFactory,
+    store_type: Type = DefaultStore,
 ) -> StoreFactoryABC:
     store_meta = import_meta(directory, store_name)
-    factory = store_factory_type(store_meta)
+    factory = store_type(store_meta)
     return factory
 
 
@@ -86,10 +85,9 @@ def import_meta(directory: str, store_name: str) -> StoreMeta:
     return store_meta
 
 
-def import_content(directory: str, store_factory: StoreFactoryABC):
-    store_meta = store_factory.get_meta()
+def import_content(directory: str, store: StoreABC):
+    store_meta = store.get_meta()
     directory = Path(directory, store_meta.name)
-    store = store_factory.create()
     to_key_str = store_meta.key_config.to_key_str
     existing_item_edits = (
         BatchEdit(delete_key=to_key_str(i)) for i in store.search_all()

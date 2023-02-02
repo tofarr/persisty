@@ -4,16 +4,16 @@ from typing import Optional, Type
 from servey.security.authorization import Authorization
 
 from persisty.attr.attr_filter import AttrFilter, AttrFilterOp
+from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.secured.secured_store_factory_abc import SecuredStoreFactoryABC
 from persisty.util import to_snake_case, UNDEFINED
 
 
 @dataclass
 class HasCountCallable:
-    store_factory: SecuredStoreFactoryABC
+    store_factory: StoreFactoryABC
     search_filter: SearchFilterABC
 
     def __call__(self, authorization: Optional[Authorization] = None) -> int:

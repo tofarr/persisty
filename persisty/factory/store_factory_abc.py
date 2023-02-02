@@ -9,7 +9,7 @@ from persisty.store_meta import StoreMeta
 
 
 @dataclass
-class SecuredStoreFactoryABC(Generic[T], ABC):
+class StoreFactoryABC(Generic[T], ABC):
     """
     Factory for store objects which allows defining access control rules for store.
     """

@@ -5,11 +5,11 @@ import typing_inspect
 from servey.security.authorization import Authorization
 
 from persisty.attr.attr_filter import AttrFilter, AttrFilterOp
+from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.result_set import ResultSet
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
-from persisty.secured.secured_store_factory_abc import SecuredStoreFactoryABC
 from persisty.util import to_snake_case
 
 T = TypeVar('T')
@@ -17,7 +17,7 @@ T = TypeVar('T')
 
 @dataclass
 class HasManyCallable(Generic[T]):
-    store_factory: SecuredStoreFactoryABC
+    store_factory: StoreFactoryABC
     search_filter: SearchFilterABC
     search_order: Optional[SearchOrder] = None
     limit: Optional[int] = None

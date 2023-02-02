@@ -44,7 +44,8 @@ class WrapperStoreABC(StoreABC[T], ABC):
         page_key: Optional[str] = None,
         limit: Optional[int] = None,
     ) -> ResultSet[T]:
-        return self.get_store().search(search_filter, search_order, page_key, limit)
+        store = self.get_store()
+        return store.search(search_filter, search_order, page_key, limit)
 
     def search_all(
         self,

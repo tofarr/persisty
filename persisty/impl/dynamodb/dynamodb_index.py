@@ -35,11 +35,11 @@ class DynamodbIndex:
 
     def key_config_from_attrs(self, attrs: Iterable[Attr]):
         pk_attr = next(a for a in attrs if a.name == self.pk)
-        pk = AttrKeyConfig(self.pk, pk_attr.type)
+        pk = AttrKeyConfig(self.pk, pk_attr.attr_type)
         if not self.sk:
             return pk
         sk_attr = next(a for a in attrs if a.name == self.sk)
-        sk = AttrKeyConfig(self.sk, sk_attr.type)
+        sk = AttrKeyConfig(self.sk, sk_attr.attr_type)
         return DynamodbKeyConfig(pk, sk)
 
     def _to_key_config(self, configs: List[AttrKeyConfig]):

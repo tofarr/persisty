@@ -7,7 +7,7 @@ from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 
 from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
-from persisty.attr.attr_filter_op import TYPE_FILTER_OPS
+from persisty.attr.attr_filter_op import TYPE_FILTER_OPS, SORTABLE_TYPES
 from persisty.attr.attr_type import attr_type
 from persisty.attr.generator.default_value_generator import DefaultValueGenerator
 from persisty.attr.generator.defaults import (
@@ -38,8 +38,32 @@ def stored(
         schema_context = get_default_schema_context()
 
     def wrapper(cls_):
-        cls_dict = cls_.__dict__
-        annotations = cls_dict.get("__annotations__")
+        nonlocal key_config, cache_control, batch_size, indexes
+        links = []
+        mro = list(cls_.__mro__[:-1])
+        for c in mro[1:]:
+            store_meta = c.__dict__.get('__persisty_store_meta__')
+            if store_meta:
+                if key_config is None:
+                    key_config = store_meta.key_config
+                if isinstance(cache_control, SecureHashCacheControl):
+                    cache_control = store_meta.cache_control
+                if batch_size == 100:
+                    batch_size = store_meta.batch_size
+                if store_meta.links:
+                    links.extend(store_meta.links)
+                if indexes is None:
+                    indexes = store_meta.indexes
+
+
+        mro.reverse()
+        cls_dict = {}
+        annotations = {}
+        for c in mro:
+            cls_dict.update(**c.__dict__)
+            a = c.__dict__.get("__annotations__")
+            if a:
+                annotations.update(**a)
         attrs = []
         for name, type_ in annotations.items():
             if name.startswith("__"):
@@ -91,6 +115,7 @@ def stored(
                 schema=schema,
                 creatable=creatable,
                 updatable=updatable,
+                sortable=db_type in SORTABLE_TYPES,
                 create_generator=create_generator,
                 update_generator=update_generator,
                 permitted_filter_ops=permitted_filter_ops,
@@ -104,10 +129,11 @@ def stored(
                 if not next((True for a in attrs if a.name == attr_name), False):
                     raise PersistyError(f"invalid_key_attr:{attr_name}")
         else:
-            key_attr = next(a for a in attrs if a.name in ("id", "key"))
+            key_attr = next((a for a in attrs if a.name in ("id", "key")), None)
+            if not key_attr:
+                raise PersistyError(f'could_not_derive_key:{cls}')
             key_config_ = AttrKeyConfig(key_attr.name, key_attr.attr_type)
 
-        links = []
         for name, value in cls_dict.items():
             if isinstance(value, LinkABC):
                 links.append(value)

@@ -5,7 +5,6 @@ from typing import Iterable
 from importlib import resources
 
 import marshy
-from marshy.types import ExternalItemType
 
 from persisty.store_meta import StoreMeta, T
 

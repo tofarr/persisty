@@ -5,7 +5,7 @@ from typing import Optional, ForwardRef, Union, Type
 import typing_inspect
 from werkzeug.datastructures import Authorization
 
-from persisty.finder.store_factory_finder_abc import find_secured_store_factories
+from persisty.finder.store_finder_abc import find_store_factories
 from persisty.link.link_abc import LinkABC
 from persisty.util import to_snake_case
 
@@ -31,7 +31,7 @@ class LinkedStoreABC(LinkABC, ABC):
         linked_store_factory = getattr(self, '_linked_store_factory', None)
         if not linked_store_factory:
             linked_store_factory = next(
-                f for f in find_secured_store_factories()
+                f for f in find_store_factories()
                 if f.get_meta().name == self.get_linked_store_name()
             )
             setattr(self, '_linked_store_factory', linked_store_factory)

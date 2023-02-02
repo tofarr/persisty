@@ -1,0 +1,75 @@
+from abc import ABC, abstractmethod
+from typing import Optional, Callable, Iterator
+
+from servey.action.action import action, Action, get_action
+from servey.security.authorization import Authorization
+from servey.trigger.web_trigger import WEB_GET
+
+from persisty_data.upload_config import UploadConfig
+
+_ROUTE = "starlette.routing.Route"
+
+
+class DataStoreABC(ABC):
+    """ Factory for stores related to data and uploads, which are all linked internally. """
+
+    @abstractmethod
+    def get_name(self) -> str:
+        """ Get a name for this factory (Used in actions) """
+
+    @abstractmethod
+    def create_routes(self) -> Iterator[_ROUTE]:
+        """
+        Create routes for this factory. In hosted mode, uploads and downloads may go through python.
+        In a lambda environment, uploads and downloads should be based on S3 and not go through the python
+        environment.
+        """
+
+    def create_actions(self) -> Iterator[Action]:
+        """ add actions for this factory """
+        yield self.create_get_upload_config_action()
+        yield self.create_get_download_url_action()
+
+    @abstractmethod
+    def url_for_download(self, authorization: Optional[Authorization], key: str) -> Optional[str]:
+        """
+        Create a url which may be used to download this resource using the authorization given. Assumes that any
+        required actions have been linked to the url by `add_actions`. Depending on the implementation, url may have
+        an expiration timestamp
+        """
+
+    @abstractmethod
+    def config_for_upload(
+        self,
+        authorization: Optional[Authorization],
+        key: Optional[str]
+    ) -> UploadConfig:
+        """
+        Create a url which may be used to upload this resource using the authorization given. Assumes that any
+        required actions have been linked to the url by `add_actions`. Depending on the implementation, url may have
+        an expiration timestamp
+        """
+
+    def create_get_upload_config_action(self) -> Action:
+        @action(
+            name=f"{self.get_name()}_config_for_upload",
+            triggers=WEB_GET,
+            description="Create a url which may be used to upload files"
+        )
+        def url_for_upload(authorization: Optional[Authorization], key: str) -> Optional[UploadConfig]:
+            result = self.config_for_upload(authorization, key)
+            return result
+
+        return get_action(url_for_upload)
+
+    def create_get_download_url_action(self) -> Action:
+        @action(
+            name=f"{self.get_name()}_url_for_download",
+            triggers=WEB_GET,
+            description="Create a url which may be used to download files"
+        )
+        def url_for_download(authorization: Optional[Authorization], key: str) -> Optional[str]:
+            result = self.url_for_download(authorization, key)
+            return result
+
+        return get_action(url_for_download)

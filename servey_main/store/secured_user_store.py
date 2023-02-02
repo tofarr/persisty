@@ -3,16 +3,16 @@ from typing import Optional, List
 
 from servey.security.authorization import Authorization, AuthorizationError
 
-from persisty.secured.secured_store_factory_abc import SecuredStoreFactoryABC
 from persisty.batch_edit import BatchEdit
 from persisty.batch_edit_result import BatchEditResult
+from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC
 from persisty.store_access import StoreAccess
 from persisty.store_meta import StoreMeta, get_meta
 from persisty.trigger.wrapper import triggered_store
 from servey_main.models.user import User
-from servey_main.store import user_store_factory
+from servey_main.store import user_store
 
 STORAGE_META = get_meta(User)
 STORAGE_META = dataclasses.replace(
@@ -85,14 +85,14 @@ class SecuredUserStore(WrapperStoreABC[User]):
         return self.store.edit_batch(edits)
 
 
-class SecuredUserStoreFactory(SecuredStoreFactoryABC[User]):
+class SecuredUserStoreFactory(StoreFactoryABC[User]):
     def get_meta(self) -> StoreMeta:
         return STORAGE_META
 
     def create(
         self, authorization: Optional[Authorization]
     ) -> Optional[StoreABC[User]]:
-        store = SecuredUserStore(user_store_factory.create(), authorization)
+        store = SecuredUserStore(user_store, authorization)
         store = triggered_store(store)
         return store
 

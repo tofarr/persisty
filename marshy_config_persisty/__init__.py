@@ -4,19 +4,22 @@ from marshy.factory.impl_marshaller_factory import register_impl
 from marshy.marshaller.obj_marshaller import AttrConfig
 from marshy.marshaller.property_marshaller import PropertyConfig
 from marshy.marshaller_context import MarshallerContext
+from marshy_config_servey import raise_non_ignored
 
 from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from servey.cache_control.timestamp_cache_control import TimestampCacheControl
 from servey.cache_control.ttl_cache_control import TtlCacheControl
+from servey.servey_aws.serverless.yml_config.yml_config_abc import YmlConfigABC
 
 from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorABC
 from persisty.attr.generator.default_value_generator import DefaultValueGenerator
 from persisty.attr.generator.timestamp_generator import TimestampGenerator
 from persisty.attr.generator.uuid_generator import UuidGenerator
-from persisty.finder.module_store_factory_finder import ModuleStoreFactoryFinder
-from persisty.finder.store_factory_finder_abc import StoreFactoryFinderABC
+from persisty.finder.module_store_finder import ModuleStoreFactoryFinder
+from persisty.finder.store_finder_abc import StoreFactoryFinderABC
+from persisty.impl.dynamodb.serverless_config import ServerlessConfig
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
@@ -51,6 +54,7 @@ def configure(context: MarshallerContext):
 
     configure_sqlalchemy(context)
     configure_celery(context)
+    configure_serverless(context)
 
 
 def configure_search_filters(context: MarshallerContext):
@@ -95,8 +99,8 @@ def configure_sqlalchemy(context: MarshallerContext):
 
         sqlalchemy_config.configure_converters(context)
         sqlalchemy_config.configure_sqlalchemy_context(context)
-    except ModuleNotFoundError:
-        LOGGER.info("sqlalchemy not found - skipping")
+    except ModuleNotFoundError as e:
+        raise_non_ignored(e)
 
 
 def configure_finders(context: MarshallerContext):
@@ -112,5 +116,11 @@ def configure_celery(context: MarshallerContext):
 
         register_impl(CeleryConfigABC, CeleryStoreTriggerConfig, context)
     except ModuleNotFoundError as e:
-        LOGGER.error(e)
-        LOGGER.info("Celery module not found: skipping")
+        raise_non_ignored(e)
+
+
+def configure_serverless(context: MarshallerContext):
+    try:
+        register_impl(YmlConfigABC, ServerlessConfig, context)
+    except ModuleNotFoundError as e:
+        raise_non_ignored(e)

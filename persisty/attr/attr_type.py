@@ -2,10 +2,6 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
-from marshy.factory.optional_marshaller_factory import get_optional_type
-
-from persisty.util import UNDEFINED
-
 
 class AttrType(Enum):
     BINARY = "binary"

@@ -7,12 +7,11 @@ from persisty.impl.mem.mem_store import MemStore
 from persisty.store.restrict_access_store import restrict_access_store
 from persisty.store.schema_validating_store import SchemaValidatingStore
 from persisty.store.store_abc import StoreABC
-from persisty.store.store_factory_abc import StoreFactoryABC
 from persisty.store_meta import StoreMeta
 
 
 @dataclass
-class MemStoreFactory(StoreFactoryABC):
+class MemStoreFactory:
     store_meta: StoreMeta
     items: ExternalItemType = field(default_factory=dict)
 

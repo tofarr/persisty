@@ -22,7 +22,7 @@ class SearchFilterFactoryABC:
         query = getattr(self, "query", None)
         if query:
             search_filter = QueryFilter(query)
-        for attr in self.__persisty_storage_meta__.attrs:
+        for attr in self.__persisty_store_meta__.attrs:
             for op in attr.permitted_filter_ops:
                 filter_name = f"{attr.name}__{op.name}"
                 value = getattr(self, filter_name, None)
@@ -47,7 +47,7 @@ def search_filter_dataclass_for(
     if not annotations:
         return
     params = {k: None for k in annotations}
-    params["__persisty_storage_meta__"] = storage_meta
+    params["__persisty_store_meta__"] = storage_meta
     params["__annotations__"] = annotations
     name = f"{to_camel_case(storage_meta.name)}SearchFilter"
     type_ = dataclass(type(name, (SearchFilterFactoryABC,), params))

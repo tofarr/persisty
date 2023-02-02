@@ -1,16 +1,15 @@
 from dataclasses import dataclass
 from typing import Optional, ForwardRef, List
 
-import typing_inspect
 from marshy.types import ExternalItemType
 from schemey.schema import str_schema
 from servey.security.authorization import Authorization
 
 from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
 from persisty.attr.attr_type import AttrType
+from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.link.on_delete import OnDelete
-from persisty.secured.secured_store_factory_abc import SecuredStoreFactoryABC
 
 from typing import Generic, TypeVar
 
@@ -19,7 +18,7 @@ T = TypeVar('T')
 
 class BelongsToCallable(Generic[T]):
 
-    def __init__(self, key: str, store_factory: SecuredStoreFactoryABC):
+    def __init__(self, key: str, store_factory: StoreFactoryABC):
         self.key = key
         self.store_factory = store_factory
 

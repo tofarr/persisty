@@ -1,14 +1,13 @@
+import dataclasses
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Optional, Dict, Callable, Type, List, ForwardRef
-from uuid import UUID
+from typing import Optional, Dict, Callable, Type, List
 
-import typing_inspect
 from servey.action.action import action, get_action
 from servey.action.batch_invoker import BatchInvoker
 from servey.security.authorization import Authorization
 from servey.trigger.web_trigger import WebTrigger, WebTriggerMethod
 
+from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.link_abc import LinkABC
 from persisty.result_set import result_set_dataclass_for
 from persisty.search_filter.include_all import INCLUDE_ALL
@@ -20,7 +19,6 @@ from persisty.search_order.search_order_factory import (
     search_order_dataclass_for,
     SearchOrderFactoryABC,
 )
-from persisty.secured.secured_store_factory_abc import SecuredStoreFactoryABC
 from persisty.batch_edit import batch_edit_dataclass_for
 from persisty.batch_edit_result import batch_edit_result_dataclass_for
 from persisty.servey import generated
@@ -28,13 +26,13 @@ from persisty.store_meta import StoreMeta, get_meta
 
 
 def add_actions_for_all_store_factories(target: Dict):
-    from persisty.finder.store_factory_finder_abc import find_secured_store_factories
+    from persisty.finder.store_finder_abc import find_store_factories
 
-    for store_factory in find_secured_store_factories():
+    for store_factory in find_store_factories():
         add_actions_for_store_factory(store_factory, target)
 
 
-def add_actions_for_store_factory(store_factory: SecuredStoreFactoryABC, target: Dict):
+def add_actions_for_store_factory(store_factory: StoreFactoryABC, target: Dict):
     store_meta = store_factory.get_meta()
     store_access = store_meta.store_access
     item_type = wrap_links_in_actions(store_meta.get_read_dataclass())
@@ -91,7 +89,7 @@ def add_actions_for_store_factory(store_factory: SecuredStoreFactoryABC, target:
 
 
 def action_for_create(
-    store_factory: SecuredStoreFactoryABC,
+    store_factory: StoreFactoryABC,
     item_type: Type,
     create_input_type: Type,
 ) -> Callable:
@@ -100,7 +98,7 @@ def action_for_create(
     @action(
         name=f"{store_meta.name}_create",
         description=f"Create and return an item in {store_meta.name}",
-        triggers=(WebTrigger(WebTriggerMethod.POST, "/actions/" + store_meta.name),),
+        triggers=WebTrigger(WebTriggerMethod.POST, "/actions/" + store_meta.name.replace('_', '-')),
     )
     def create(
         item: create_input_type, authorization: Optional[Authorization] = None
@@ -112,14 +110,14 @@ def action_for_create(
     return create
 
 
-def action_for_read(store_factory: SecuredStoreFactoryABC, item_type: Type) -> Callable:
+def action_for_read(store_factory: StoreFactoryABC, item_type: Type) -> Callable:
     store_meta = store_factory.get_meta()
 
     @action(
         name=f"{store_meta.name}_read",
         description=f"Read an item from {store_meta.name} given a key",
         triggers=(
-            WebTrigger(WebTriggerMethod.GET, "/actions/" + store_meta.name + "/{key}"),
+            WebTrigger(WebTriggerMethod.GET, "/actions/" + store_meta.name.replace('_', '-') + "/{key}"),
         ),
         cache_control=store_meta.cache_control,
     )
@@ -134,7 +132,7 @@ def action_for_read(store_factory: SecuredStoreFactoryABC, item_type: Type) -> C
 
 
 def action_for_update(
-    store_factory: SecuredStoreFactoryABC,
+    store_factory: StoreFactoryABC,
     item_type: Type,
     update_input_type: Type,
     search_filter_type: Type[SearchFilterFactoryABC],
@@ -146,7 +144,7 @@ def action_for_update(
         description=f"Update and return an item in {store_meta.name}",
         triggers=(
             WebTrigger(
-                WebTriggerMethod.PATCH, "/actions/" + store_meta.name + "/{key}"
+                WebTriggerMethod.PATCH, "/actions/" + store_meta.name.replace('_', '-') + "/{key}"
             ),
         ),
     )
@@ -165,7 +163,7 @@ def action_for_update(
     return update
 
 
-def action_for_delete(store_factory: SecuredStoreFactoryABC) -> Callable:
+def action_for_delete(store_factory: StoreFactoryABC) -> Callable:
     store_meta = store_factory.get_meta()
 
     @action(
@@ -173,7 +171,7 @@ def action_for_delete(store_factory: SecuredStoreFactoryABC) -> Callable:
         description=f"Delete an item in {store_meta.name}",
         triggers=(
             WebTrigger(
-                WebTriggerMethod.DELETE, "/actions/" + store_meta.name + "/{key}"
+                WebTriggerMethod.DELETE, "/actions/" + store_meta.name.replace('_', '-') + "/{key}"
             ),
         ),
     )
@@ -187,7 +185,7 @@ def action_for_delete(store_factory: SecuredStoreFactoryABC) -> Callable:
 
 
 def action_for_search(
-    store_factory: SecuredStoreFactoryABC,
+    store_factory: StoreFactoryABC,
     item_type: Type,
     search_filter_type: Type[SearchFilterFactoryABC],
     search_order_type: Type[SearchOrderFactoryABC],
@@ -201,7 +199,7 @@ def action_for_search(
         name=f"{store_meta.name}_search",
         description=f"Run a search in {store_meta.name}",
         triggers=(
-            WebTrigger(WebTriggerMethod.GET, f"/actions/{store_meta.name}-search"),
+            WebTrigger(WebTriggerMethod.GET, f"/actions/{store_meta.name.replace('_', '-')}-search"),
         ),
     )
     def search(
@@ -215,7 +213,13 @@ def action_for_search(
         search_filter = (
             search_filter.to_search_filter() if search_filter else INCLUDE_ALL
         )
-        search_order = search_order.to_search_order() if search_order else None
+        if search_order:
+            # noinspection PyArgumentList,PyDataclass
+            search_order = search_order_type(**{
+                f.name: getattr(search_order, f.name)
+                for f in dataclasses.fields(search_order_type)
+            })
+            search_order = search_order.to_search_order()
         result_set = store.search(search_filter, search_order, page_key, limit)
 
         # noinspection PyArgumentList
@@ -229,7 +233,7 @@ def action_for_search(
 
 
 def action_for_count(
-    store_factory: SecuredStoreFactoryABC,
+    store_factory: StoreFactoryABC,
     search_filter_type: Type[SearchFilterFactoryABC],
 ) -> Callable:
     store_meta = store_factory.get_meta()
@@ -238,7 +242,7 @@ def action_for_count(
         name=f"{store_meta.name}_count",
         description=f"Get a count from {store_meta.name}",
         triggers=(
-            WebTrigger(WebTriggerMethod.GET, f"/actions/{store_meta.name}-count"),
+            WebTrigger(WebTriggerMethod.GET, f"/actions/{store_meta.name.replace('_', '-')}-count"),
         ),
     )
     def count(
@@ -256,16 +260,14 @@ def action_for_count(
 
 
 def action_for_read_batch(
-    store_factory: SecuredStoreFactoryABC, item_type: Type
+    store_factory: StoreFactoryABC, item_type: Type
 ) -> Callable:
     store_meta = store_factory.get_meta()
 
     @action(
         name=f"{store_meta.name}_read_batch",
         description=f"Read a batch of items from {store_meta.name} given keys",
-        triggers=(
-            WebTrigger(WebTriggerMethod.GET, "/actions/" + store_meta.name + "-batch"),
-        ),
+        triggers=WebTrigger(WebTriggerMethod.GET, "/actions/" + store_meta.name.replace('_', '-') + "-batch"),
         cache_control=store_meta.cache_control,
     )
     def read_batch(
@@ -279,7 +281,7 @@ def action_for_read_batch(
 
 
 def action_for_edit_batch(
-    store_factory: SecuredStoreFactoryABC,
+    store_factory: StoreFactoryABC,
     create_input_type: Type,
     update_input_type: Type,
 ) -> Callable:
@@ -292,10 +294,8 @@ def action_for_edit_batch(
     @action(
         name=f"{store_meta.name}_edit_batch",
         description=f"Perform a batch of edits against {store_meta.name}",
-        triggers=(
-            WebTrigger(
-                WebTriggerMethod.PATCH, "/actions/" + store_meta.name + "-batch"
-            ),
+        triggers=WebTrigger(
+            WebTriggerMethod.PATCH, "/actions/" + store_meta.name.replace('_', '-') + "-batch"
         ),
     )
     def edit_batch(

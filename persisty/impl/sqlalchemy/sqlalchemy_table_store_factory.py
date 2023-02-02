@@ -9,12 +9,11 @@ from persisty.impl.sqlalchemy.sqlalchemy_table_store import SqlalchemyTableStore
 from persisty.store.restrict_access_store import restrict_access_store
 from persisty.store.schema_validating_store import SchemaValidatingStore
 from persisty.store.store_abc import StoreABC
-from persisty.store.store_factory_abc import StoreFactoryABC
 from persisty.store_meta import StoreMeta
 
 
 @dataclass
-class SqlalchemyTableStoreFactory(StoreFactoryABC):
+class SqlalchemyTableStoreFactory:
     store_meta: StoreMeta
     context: SqlalchemyContext = field(default_factory=create_default_context)
 

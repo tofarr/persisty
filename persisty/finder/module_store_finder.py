@@ -7,9 +7,9 @@ from typing import Iterator
 
 from servey.util import get_servey_main
 
-from persisty.finder.store_factory_finder_abc import StoreFactoryFinderABC
-from persisty.secured.secured_store_factory_abc import SecuredStoreFactoryABC
-from persisty.store.store_factory_abc import StoreFactoryABC
+from persisty.factory.store_factory_abc import StoreFactoryABC
+from persisty.finder.store_finder_abc import StoreFactoryFinderABC
+from persisty.store.store_abc import StoreABC
 
 LOGGER = logging.getLogger(__name__)
 
@@ -17,12 +17,20 @@ LOGGER = logging.getLogger(__name__)
 @dataclass
 class ModuleStoreFactoryFinder(StoreFactoryFinderABC):
     """
-    Default implementation of action_ finder which searches for actions in a particular module
+    Default implementation of store factory finder which searches for actions in a particular module
     """
 
     root_module_name: str = field(
         default_factory=lambda: f"{os.environ.get('PERSISTY_MAIN') or get_servey_main()}.store"
     )
+
+    def find_stores(self) -> Iterator[StoreABC]:
+        try:
+            module = importlib.import_module(self.root_module_name)
+            # noinspection PyTypeChecker
+            yield from find_instances_in_module(module, StoreABC)
+        except ModuleNotFoundError:
+            LOGGER.exception("error_finding_store")
 
     def find_store_factories(self) -> Iterator[StoreFactoryABC]:
         try:
@@ -32,16 +40,8 @@ class ModuleStoreFactoryFinder(StoreFactoryFinderABC):
         except ModuleNotFoundError:
             LOGGER.exception("error_finding_store")
 
-    def find_secured_store_factories(self) -> Iterator[SecuredStoreFactoryABC]:
-        try:
-            module = importlib.import_module(self.root_module_name)
-            # noinspection PyTypeChecker
-            yield from find_instances_in_module(module, SecuredStoreFactoryABC)
-        except ModuleNotFoundError:
-            LOGGER.exception("error_finding_store")
 
-
-def find_instances_in_module(module, type_) -> Iterator[StoreFactoryABC]:
+def find_instances_in_module(module, type_) -> Iterator:
     for name, value in module.__dict__.items():
         if isinstance(value, type_):
             yield value

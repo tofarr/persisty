@@ -117,6 +117,10 @@
             font-weight: bold;
             color: #CCC;
         }
+        .messageCreatedAt{
+            color: #CCC;
+            padding: 0.5em 0;
+        }
         
     </style>
     <script type="text/javascript">
@@ -125,10 +129,12 @@
             const element = document.createElement('div')
             element.innerHTML = `
                 <div class="messageAuthor"></div>
+                <div class="messageCreatedAt"></div>
                 <div class="messageBody"></div>
             `;
             element.className = 'message'
             element.getElementsByClassName("messageAuthor")[0].appendChild(document.createTextNode(message.author.username))
+            element.getElementsByClassName("messageCreatedAt")[0].appendChild(document.createTextNode(new Date(message.createdAt).toLocaleString()))
             element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.text))
             const messageContent= document.createElement('div')
             messageContent.className = 'messageContent'
@@ -145,7 +151,7 @@
                 body: JSON.stringify({
                     query: `
                       query($pageKey: String) {
-                        messageSearch(pageKey: $pageKey, limit: 10) {
+                        messageSearch(pageKey: $pageKey, limit: 10, searchOrder: { attr:updated_at, desc: true}) {
                           nextPageKey
                         results{
                             id
@@ -167,7 +173,13 @@
                 const resultSet = body.data.messageSearch
                 const messages = document.getElementById("messages")
                 resultSet.results.map(renderMessage).forEach(m => messages.appendChild(m))
-                document.getElementById("loadMore").className = resultSet.nextPageKey ? "visible" : "hidden"
+                const loadMore = document.getElementById("loadMore");
+                if (resultSet.nextPageKey) {
+                    loadMore.className = "visible"
+                    loadMore.onclick = () => loadAndRenderMoreMessages(resultSet.nextPageKey)
+                } else {
+                    loadMore.className = "hidden"
+                }
             });
         }
 
@@ -175,7 +187,7 @@
             setVisible("content")
             const messages = document.getElementById("messages")
             messages.innerHTML = ""
-            loadAndRenderMoreMessages()
+            loadAndRenderMoreMessages(null)
         }
 
         function handleLogin(){
@@ -210,6 +222,7 @@
         }
 
         let currentDisplayElement = null
+        let pageKey = null
 
         function setVisible(elementId){
             if (currentDisplayElement) {
@@ -246,7 +259,7 @@
         </div>
         <div id="messages"></div>
         <div class="formControls">
-            <input id="loadMore" type="button" value="Load More Message" />
+            <input id="loadMore" type="button" value="Load More Messages" />
         </div>
     </div>
 
