@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Type, Union, ForwardRef
+from typing import Dict, Type, Union, ForwardRef
 
 from marshy.types import ExternalItemType
 
@@ -22,7 +22,7 @@ class LinkABC(ABC):
     def get_linked_type(self, forward_ref_ns: str) -> Union[ForwardRef, Type]:
         """ Get the type for the linked object (May be an int, Optional[T], ResultSet[T], or something else """
 
-    def update_attrs(self, attrs: List[Attr]):
+    def update_attrs(self, attrs_by_name: Dict[str, Attr]):
         """
         Update parameters to include anything required by this link that may be missing. (e.g. linked_id)
         """

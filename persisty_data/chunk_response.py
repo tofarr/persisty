@@ -4,7 +4,7 @@ from typing import Iterator, Mapping
 
 import marshy
 from servey.security.authorization import Authorization
-from starlette.datastructures import MutableHeaders
+from starlette.datastructures import Headers, MutableHeaders
 from starlette.responses import Response
 from starlette.types import Scope, Receive, Send
 
@@ -21,7 +21,7 @@ class ChunkResponse(Response):
 
     def __init__(self, status_code, headers, chunks: Iterator[Chunk]):
         self.status_code = status_code
-        self._headers = MutableHeaders(raw=headers)
+        self._headers = MutableHeaders(headers=headers)
         self.chunks = chunks
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
@@ -29,7 +29,7 @@ class ChunkResponse(Response):
             {
                 "type": "http.response.start",
                 "status": self.status_code,
-                "headers": self.raw_headers,
+                "headers": self._headers.raw,
             }
         )
         prev_chunk = None
@@ -67,14 +67,14 @@ def chunk_response(
         cache_header = dataclasses.replace(cache_header, etag=content_meta.etag)
 
     http_headers = cache_header.get_http_headers()
-    http_headers['content-length'] = content_meta.size_in_bytes
+    http_headers['content-length'] = str(content_meta.size_in_bytes)
     if content_meta.content_type:
         http_headers['content-type'] = content_meta.content_type
 
-    if_match = request_headers.get("If-Match")
+    if_none_match = request_headers.get("If-None-Match")
     if_modified_since = request_headers.get("If-Modified-Since")
-    if if_match and cache_header.etag:
-        if cache_header.etag == if_match:
+    if if_none_match and cache_header.etag:
+        if cache_header.etag == if_none_match:
             return Response(status_code=304, headers=http_headers)
     elif if_modified_since and cache_header.updated_at:
         if_modified_since_date = parsedate_to_datetime(if_modified_since)

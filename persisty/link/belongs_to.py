@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Optional, ForwardRef, List
+from typing import Optional, ForwardRef, List, Dict
 
 from marshy.types import ExternalItemType
+from schemey import schema_from_type
 from schemey.schema import str_schema
 from servey.security.authorization import Authorization
 
@@ -41,11 +42,14 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
     def get_linked_type(self, forward_ref_ns: str) -> ForwardRef:
         return ForwardRef(forward_ref_ns + '.' + self.get_linked_store_name().title().replace('_', ''))
 
-    # def batch_call(self, items: List, authorization: Optional[Authorization] = None) -> List[Optional[T]]:
-    #    if not items:
-    #        return []
-    #    keys = [getattr(i, self.key_attr_name) for i in items]
-    #    self.get_linked_store().read_batch(keys)
+    async def batch_call(self, keys: List, authorization: Optional[Authorization] = None) -> List[Optional[T]]:
+        if not keys:
+            return []
+        result = self.get_linked_store(authorization).read_batch(keys)
+        return result
+
+    def arg_extractor(self, obj):
+        return [getattr(obj, self.key_attr_name)]
 
     def __set_name__(self, owner, name):
         self.name = name
@@ -58,18 +62,17 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
             store_factory=self.get_linked_store_factory()
         )
 
-    def update_attrs(self, attrs: List[Attr]):
-        for attr in attrs:
-            if attr.name == self.key_attr_name:
-                return
-        attrs.append(
-            Attr(
-                self.key_attr_name,
-                AttrType.STR,
-                str_schema(),
-                sortable=False,
-                permitted_filter_ops=DEFAULT_PERMITTED_FILTER_OPS,
-            )
+    def update_attrs(self, attrs_by_name: Dict[str, Attr]):
+        if self.key_attr_name in attrs_by_name:
+            return
+        type_ = Optional[str] if self.optional else str
+        schema = schema_from_type(type_)
+        attrs_by_name[self.key_attr_name] = Attr(
+            self.key_attr_name,
+            AttrType.STR,
+            schema,
+            sortable=False,
+            permitted_filter_ops=DEFAULT_PERMITTED_FILTER_OPS,
         )
 
     def update_json_schema(self, json_schema: ExternalItemType):

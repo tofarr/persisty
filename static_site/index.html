@@ -121,6 +121,11 @@
             color: #CCC;
             padding: 0.5em 0;
         }
+        #imageContainer, .messageImage{
+            display: flex;
+            justify-content: center;
+            padding: 1em;
+        }
         
     </style>
     <script type="text/javascript">
@@ -138,6 +143,14 @@
             element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.text))
             const messageContent= document.createElement('div')
             messageContent.className = 'messageContent'
+            if (message.userImageUrl) {
+                const messageImageContainer = document.createElement('div')
+                messageImageContainer.className = "messageImage"
+                const img = new Image()
+                img.src = message.userImageUrl
+                messageImageContainer.appendChild(img)
+                element.appendChild(messageImageContainer)
+            }
             return element
         }
 
@@ -156,6 +169,7 @@
                         results{
                             id
                             text
+                            userImageUrl
                             createdAt
                             author{
                               id
@@ -207,6 +221,63 @@
             })
         }
 
+        function handleSignup(){
+            const password = document.getElementById('signupPassword').value
+            if (document.getElementById('signupPassword').value !== password) {
+                alert('Passwords do not match')
+                return
+            }
+            fetch('actions/sign-up', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: document.getElementById('signupUsername').value,
+                    password: password,
+                    full_name: document.getElementById('fullName').value,
+                    email_address: document.getElementById('emailAddress').value
+                })
+            }).then(response => response.json()).then(body => {
+                if (body) {
+                    sessionStorage.setItem('authorization', body)
+                    loadAndRenderMessages()
+                } else {
+                    alert('Uncorrect Username or Password')
+                }
+            })
+        }
+
+        function handleUploadImage() {
+            const fileElement = document.getElementById('uploadFile')
+            let fileName = fileElement.value.split('/').pop().split('\\').pop()
+            fetch(`actions/user-image-config-for-upload?key=${encodeURIComponent(fileName)}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`
+                }
+            }).then(response => response.json()).then((uploadConfig) => {
+                const formData = new FormData()
+                if (uploadConfig.pre_populated_fields) {
+                    uploadConfig.pre_populated_fields.forEach(f => formData.append(f.name, f.value))
+                }
+                formData.append(uploadConfig.file_param, fileElement.files[0], fileName);
+                fetch(uploadConfig.url, {
+                    method: uploadConfig.method,
+                    body: formData
+                }).then((result) => {
+                    if (result.status === 200) {
+                        currentImageKey = fileName
+                        const img = new Image()
+                        img.src = `/data/user-image/${fileName}`
+                        const container = document.getElementById("imageContainer")
+                        container.innerHTML = ""
+                        container.appendChild(img)
+                        setVisible('postMessageForm')
+                    } else {
+                        alert('Error in upload')
+                    }
+                });
+            })
+        }
+
         function handlePostMessage() {
             fetch('actions/message', {
                 method: 'POST',
@@ -215,14 +286,15 @@
                 },
                 body: JSON.stringify({
                     item: {
-                        text: document.getElementById('messageText').value
+                        text: document.getElementById('messageText').value,
+                        user_image_key: currentImageKey
                     }
                 })
             }).then(response => response.json()).then(loadAndRenderMessages)
         }
 
         let currentDisplayElement = null
-        let pageKey = null
+        let currentImageKey = null
 
         function setVisible(elementId){
             if (currentDisplayElement) {
@@ -231,7 +303,6 @@
             currentDisplayElement = document.getElementById(elementId)
             currentDisplayElement.className = "visible";
         }
-
 
         function handleLoad(){
             const authorization =  sessionStorage.getItem('authorization')
@@ -318,8 +389,27 @@
                 id="messageText"
                 oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
         </div>
+        <div class="row">
+            <div id="imageContainer"></div>
+            <label for="imageButton">Image</label>
+            <input id="imageButton" type="button" value="Upload Image" onclick="setVisible('uploadImageForm')" />
+        </div>
         <div class="formControls">
             <input type="submit" value="Post Message" />
+            <input type="button" value="Cancel" onclick="setVisible('content')" />
+        </div>
+    </form>
+
+    <form id="uploadImageForm" onsubmit="handleUploadImage(); return false" class="initialHidden">
+        <div class="formHeader">
+            <h1>Upload Image</h1>
+        </div>
+        <div class="row">
+            <label for="messageText">File</label>
+            <input id="uploadFile" type="file" />
+        </div>
+        <div class="formControls">
+            <input type="submit" value="Upload Image" />
             <input type="button" value="Cancel" onclick="setVisible('content')" />
         </div>
     </form>

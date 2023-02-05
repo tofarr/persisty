@@ -16,10 +16,9 @@ class UserAuthenticator(PasswordAuthenticatorABC):
     priority: int = 200
 
     def authenticate(self, username: str, password: str) -> Optional[Authorization]:
-        from servey_main.store import user_store_factory
+        from servey_main.store import user_store
 
-        store = user_store_factory.create()
-        for item in store.search_all(AttrFilter("username", AttrFilterOp.eq, username)):
+        for item in user_store.search_all(AttrFilter("username", AttrFilterOp.eq, username)):
             password_digest_base64_str = item.password_digest
             password_digest_base64 = password_digest_base64_str.encode("UTF-8")
             password_digest = base64.b64decode(password_digest_base64)

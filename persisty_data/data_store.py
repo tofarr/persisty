@@ -1,11 +1,12 @@
+import itertools
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Iterator
 
 from dateutil.relativedelta import relativedelta
 from servey.action.action import action, get_action
-from servey.security.authorization import Authorization
+from servey.security.authorization import Authorization, AuthorizationError
 from servey.security.authorizer.authorizer_abc import AuthorizerABC
 from servey.security.authorizer.authorizer_factory_abc import get_default_authorizer
 from servey.trigger.fixed_rate_trigger import FixedRateTrigger
@@ -23,6 +24,7 @@ from persisty_data.content_meta import ContentMeta
 from persisty_data.content_meta_store import ContentMetaStore
 
 from persisty_data.data_store_abc import DataStoreABC, _ROUTE
+from persisty_data.form_field import FormField
 from persisty_data.upload import Upload, UploadStatus
 from persisty_data.upload_config import UploadConfig
 from persisty_data.upload_store import UploadStore
@@ -55,6 +57,15 @@ class DataStore(DataStoreABC):
 
     def get_name(self):
         return self.name
+
+    def get_content_meta_store_factory(self) -> StoreFactoryABC[ContentMeta]:
+        return self.content_meta_store_factory
+
+    def get_upload_store_factory(self) -> StoreFactoryABC[Upload]:
+        return self.upload_store_factory
+
+    def get_chunk_store_factory(self) -> StoreFactoryABC[Chunk]:
+        return self.chunk_store_factory
 
     def create_routes(self):
         routes = [
@@ -94,53 +105,76 @@ class DataStore(DataStoreABC):
     def url_for_download(self, authorization: Optional[Authorization], key: str) -> Optional[str]:
         content_meta_store = self.content_meta_store_factory.create(authorization)
         chunk_store = self.chunk_store_factory.create(authorization)
-        if (
-            not content_meta_store.get_meta().store_access.readable
-            or not chunk_store.get_meta().store_access.readable
-        ):
+        if not chunk_store.get_meta().store_access.readable:
             raise PersistyError('unavailable_operation')
         content_meta = content_meta_store.read(key)
+        return self._get_url_for_content_meta(authorization, key, content_meta)
+
+    def _get_url_for_content_meta(self, authorization: Optional[Authorization], key: str, content_meta: ContentMeta):
         if content_meta is None:
             return
         if self.public_download_path:
-            result = self.public_download_path.format(key=key)
+            result = self.public_download_path.format(**{"key": key})
             return result
         if not self.secured_download_path:
             raise PersistyError('unavailable_operation')
         expire_at = datetime.now() + relativedelta(seconds=self.download_expire_in)
-        upload_authorization = Authorization(
+        download_authorization = Authorization(
             authorization.subject_id, [f'download:{key}'], datetime.now(), expire_at
         )
-        token = self.authorizer.encode(upload_authorization)
+        token = self.authorizer.encode(download_authorization)
         result = self.secured_download_path.format(token=token)
         return result
 
-    def config_for_upload(
+    def all_urls_for_download(
         self,
         authorization: Optional[Authorization],
-        key: Optional[str]
-    ) -> UploadConfig:
-        if not self.secured_download_path and not self.secured_download_path:
-            raise PersistyError('unavailable_operation')
+        keys: Iterator[str]
+    ) -> Iterator[Optional[str]]:
         content_meta_store = self.content_meta_store_factory.create(authorization)
         chunk_store = self.chunk_store_factory.create(authorization)
-        content_access = content_meta_store.get_meta().store_access
+        if not chunk_store.get_meta().store_access.readable:
+            raise PersistyError('unavailable_operation')
+        while True:
+            key_batch = list(itertools.islice(keys, content_meta_store.get_meta().batch_size))
+            if not key_batch:
+                return
+            content_meta_batch = content_meta_store.read_batch(key_batch)
+            for key, content_meta in zip(key_batch, content_meta_batch):
+                yield self._get_url_for_content_meta(authorization, key, content_meta)
+
+    def config_for_upload(
+        self,
+        authorization: Authorization,
+        key: Optional[str]
+    ) -> UploadConfig:
+        if not self.secured_upload_path:
+            raise PersistyError('unavailable_operation')
+        if not authorization:
+            raise AuthorizationError()
+        content_meta_store = self.content_meta_store_factory.create(authorization)
+        chunk_store = self.chunk_store_factory.create(authorization)
+        content_meta_access = content_meta_store.get_meta().store_access
         chunk_access = chunk_store.get_meta().store_access
         content_meta = content_meta_store.read(key) if key else None
         if content_meta:
-            if not content_access.updatable or not chunk_access.updatable:
-                raise PersistyError('not_permitted')
+            if not content_meta_access.updatable or not chunk_access.updatable:
+                raise AuthorizationError()
         else:
-            if not content_access.creatable or not chunk_access.creatable:
-                raise PersistyError('not_permitted')
+            if not content_meta_access.creatable or not chunk_access.creatable:
+                raise AuthorizationError()
 
         expire_at = datetime.now() + relativedelta(seconds=self.download_expire_in)
         upload_authorization = Authorization(
             authorization.subject_id, [f'upload:{key}'], datetime.now(), expire_at
         )
         token = self.authorizer.encode(upload_authorization)
-        url = self.secured_upload_path.format(token=token)
-        return UploadConfig(url=url)
+        return UploadConfig(
+            url=self.secured_upload_path,
+            pre_populated_fields=[
+                FormField('token', token)
+            ]
+        )
 
     def create_route_for_public_download(self) -> Optional[_ROUTE]:
         if not self.public_download_path:
@@ -175,7 +209,7 @@ class DataStore(DataStoreABC):
         def download(request: Request) -> Response:
             token = request.path_params.get('token')
             authorization = self.authorizer.authorize(token)
-            key = next(s.split('upload:') for s in authorization.scopes if s.startswith('upload:'))
+            key = next(s.split('upload:')[-1] for s in authorization.scopes if s.startswith('upload:'))
             return chunk_response(
                 key,
                 authorization,
@@ -195,20 +229,17 @@ class DataStore(DataStoreABC):
         from starlette.datastructures import UploadFile
 
         async def upload(request: Request) -> Response:
-            token = request.path_params.get('token')
-            authorization = self.authorizer.authorize(token)
-            key = next(s.split('download:') for s in authorization.scopes if s.startswith('download:'))
-
+            assert int(request.headers['content-length']) <= self.max_file_size
             form = await request.form()
+            token = form.get('token')
+            authorization = self.authorizer.authorize(token)
+            key = next(s.split('upload:')[-1] for s in authorization.scopes if s.startswith('upload:'))
             form_file: UploadFile = form['file']
-            assert len(form_file) <= self.max_file_size
-
             upload_store = self.upload_store_factory.create(None)
             upload_ = upload_store.create(Upload(
                 content_key=key,
                 content_type=form_file.content_type
             ))
-
             chunk_store = self.chunk_store_factory.create(None)
             part_number = 1
             while True:
@@ -216,7 +247,7 @@ class DataStore(DataStoreABC):
                 if not data:
                     upload_.status = UploadStatus.COMPLETED
                     upload_store.update(upload_)
-                    return Response(200, b'')
+                    return Response(status_code=200)
                 chunk_store.create(Chunk(
                     content_key=key,
                     part_number=part_number,

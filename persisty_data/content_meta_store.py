@@ -1,21 +1,21 @@
+from dataclasses import dataclass
+
 from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.attr_filter_op import AttrFilterOp
 from persisty.batch_edit import BatchEdit
-from persisty.store.restrict_access_store import RestrictAccessStore
 from persisty.store.store_abc import StoreABC
-from persisty.store_access import StoreAccess
+from persisty.store.wrapper_store_abc import WrapperStoreABC
 from persisty_data.chunk import Chunk
 from persisty_data.content_meta import ContentMeta
 
 
-class ContentMetaStore(RestrictAccessStore[ContentMeta]):
+@dataclass
+class ContentMetaStore(WrapperStoreABC[ContentMeta]):
+    content_meta_store: StoreABC[ContentMeta]
+    chunk_store: StoreABC[Chunk]
 
-    def __init__(self, content_meta_store: StoreABC[ContentMeta], chunk_store: StoreABC[Chunk]):
-        super().__init__(content_meta_store, StoreAccess(creatable=False, updatable=False))
-        self.chunk_store = chunk_store
-
-    def get_store(self) -> StoreABC:
-        return self.store
+    def get_store(self) -> StoreABC[ContentMeta]:
+        return self.content_meta_store
 
     def _delete(self, key: str, item: ContentMeta) -> bool:
         result = self.get_store()._delete(key, item)

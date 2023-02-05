@@ -28,7 +28,7 @@ def stored(
     cls=None,
     *,
     key_config: Optional[KeyConfigABC] = None,
-    cache_control: CacheControlABC = SecureHashCacheControl(),
+    cache_control: Optional[CacheControlABC] = None,
     batch_size: int = 100,
     schema_context: Optional[SchemaContext] = None,
     indexes: Tuple[Index, ...] = tuple(),
@@ -39,32 +39,32 @@ def stored(
 
     def wrapper(cls_):
         nonlocal key_config, cache_control, batch_size, indexes
-        links = []
-        mro = list(cls_.__mro__[:-1])
-        for c in mro[1:]:
+        links_by_name = {}
+        attrs_by_name = {}
+        mro = list(cls_.__mro__)[1:-1]
+        mro.reverse()
+        for c in mro:
             store_meta = c.__dict__.get('__persisty_store_meta__')
             if store_meta:
                 if key_config is None:
                     key_config = store_meta.key_config
-                if isinstance(cache_control, SecureHashCacheControl):
+                if cache_control is None:
                     cache_control = store_meta.cache_control
                 if batch_size == 100:
                     batch_size = store_meta.batch_size
-                if store_meta.links:
-                    links.extend(store_meta.links)
                 if indexes is None:
                     indexes = store_meta.indexes
+                links_by_name.update({
+                    link.get_name(): link for link in store_meta.links
+                })
+                attrs_by_name.update({
+                    attr.name: attr for attr in store_meta.attrs
+                })
+        if cache_control is None:
+            cache_control = SecureHashCacheControl()
 
-
-        mro.reverse()
-        cls_dict = {}
-        annotations = {}
-        for c in mro:
-            cls_dict.update(**c.__dict__)
-            a = c.__dict__.get("__annotations__")
-            if a:
-                annotations.update(**a)
-        attrs = []
+        cls_dict = cls_.__dict__
+        annotations = cls_dict.get('__annotations__') or {}
         for name, type_ in annotations.items():
             if name.startswith("__"):
                 continue
@@ -72,7 +72,7 @@ def stored(
             if isinstance(value, LinkABC):
                 continue
             if isinstance(value, Attr):
-                attrs.append(value)
+                attrs_by_name[value.name] = value
                 continue
 
             creatable = True
@@ -80,7 +80,7 @@ def stored(
             update_generator = None
             if isinstance(value, Field):
                 if value.metadata.get("persisty"):
-                    attrs.append(value.metadata.get("persisty"))
+                    attrs_by_name[name] = value.metadata.get("persisty")
                     continue
                 if value.default is not MISSING:
                     create_generator = DefaultValueGenerator(value.default)
@@ -120,33 +120,33 @@ def stored(
                 update_generator=update_generator,
                 permitted_filter_ops=permitted_filter_ops,
             )
-            attrs.append(attr)
+            attrs_by_name[name] = attr
 
         # Check that all attributes required by the key actually exist...
         key_config_ = key_config
         if key_config_:
             for attr_name in key_config_.get_key_attrs():
-                if not next((True for a in attrs if a.name == attr_name), False):
+                if attr_name not in attrs_by_name:
                     raise PersistyError(f"invalid_key_attr:{attr_name}")
         else:
-            key_attr = next((a for a in attrs if a.name in ("id", "key")), None)
+            key_attr = attrs_by_name.get("id") or attrs_by_name.get("key")
             if not key_attr:
                 raise PersistyError(f'could_not_derive_key:{cls}')
             key_config_ = AttrKeyConfig(key_attr.name, key_attr.attr_type)
 
         for name, value in cls_dict.items():
             if isinstance(value, LinkABC):
-                links.append(value)
-                value.update_attrs(attrs)
+                links_by_name[name] = value
+                value.update_attrs(attrs_by_name)
 
         store_meta = StoreMeta(
             name=to_snake_case(cls_.__name__),
-            attrs=tuple(attrs),
+            attrs=tuple(attrs_by_name.values()),
             key_config=key_config_,
             cache_control=cache_control,
             batch_size=batch_size,
             description=cls_.__doc__,
-            links=tuple(links),
+            links=tuple(links_by_name.values()),
             indexes=indexes,
         )
         result = store_meta.get_stored_dataclass()

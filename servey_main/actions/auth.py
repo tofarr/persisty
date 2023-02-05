@@ -32,14 +32,14 @@ def sign_up(
     if existing_user:
         raise AuthorizationError()
     result = user_store.create(
-        dict(
+        User(
             username=username,
             password_digest=password_digest_base64_str,
             full_name=full_name,
             email_address=email_address,
         )
     )
-    authorization = Authorization(result["id"], frozenset(), datetime.now(), None)
+    authorization = Authorization(str(result.id), frozenset(), datetime.now(), None)
     authorizer = get_default_authorizer()
     token = authorizer.encode(authorization)
     return token

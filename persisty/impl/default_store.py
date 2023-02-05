@@ -21,7 +21,6 @@ class DefaultStore(WrapperStoreABC[T]):
     def get_meta(self) -> StoreMeta:
         return self.meta
 
-
     def get_store(self) -> StoreABC:
         store = getattr(self, '_store', None)
         if store:

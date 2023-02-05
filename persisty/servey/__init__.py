@@ -342,7 +342,15 @@ def _to_action_fn(meta: StoreMeta, link: LinkABC):
 
     batch_invoker = None
     if hasattr(link, 'batch_call'):
-        batch_invoker = BatchInvoker(fn=getattr(link, 'batch_call'), max_batch_size=meta.batch_size)
+        if hasattr(link, 'arg_extractor'):
+            arg_extractor = link.arg_extractor
+        else:
+            arg_extractor = lambda c: [meta.key_config.to_key_str(c)]
+        batch_invoker = BatchInvoker(
+            fn=getattr(link, 'batch_call'),
+            arg_extractor=arg_extractor,
+            max_batch_size=meta.batch_size
+        )
 
     wrapped = action(
         wrapper,

@@ -7,12 +7,12 @@ from persisty.stored import stored
 
 
 @stored(
-    key_config=CompositeKeyConfig((AttrKeyConfig('content_key'), AttrKeyConfig('part_number')))
+    key_config=CompositeKeyConfig((AttrKeyConfig('upload_id'), AttrKeyConfig('part_number')))
 )
 class Chunk:
+    upload_id: str
     content_key: str
     part_number: int
-    upload_id: Optional[str]
     data: bytes
     created_at: datetime
     updated_at: datetime

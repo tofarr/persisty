@@ -1,5 +1,7 @@
-from persisty.factory.secured_store_factory import SecuredStoreFactory
+from persisty.factory.default_store_factory import DefaultStoreFactory
 from persisty.impl.default_store import DefaultStore
+from persisty.store.restrict_access_store import RestrictAccessStore
+from persisty.store_access import StoreAccess, READ_ONLY
 from persisty.store_meta import get_meta
 from persisty.stored import stored
 from persisty_data.chunk import Chunk
@@ -35,4 +37,10 @@ user_image_content_meta_store, user_image_chunk_store, user_image_upload_store =
     DefaultStore(get_meta(UserImageUpload))
 )
 
-user_image_content_meta_store_factory = SecuredStoreFactory(user_image_content_meta_store)
+user_image_content_meta_store_factory = DefaultStoreFactory(
+    RestrictAccessStore(user_image_content_meta_store, StoreAccess(creatable=False, updatable=False))
+)
+
+user_image_chunk_store_factory = DefaultStoreFactory(
+    RestrictAccessStore(user_image_chunk_store, READ_ONLY)
+)

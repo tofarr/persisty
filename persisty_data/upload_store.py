@@ -11,6 +11,7 @@ from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_attr import SearchOrderAttr
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC
+from persisty.util import UNDEFINED
 from persisty_data.chunk import Chunk
 from persisty_data.content_meta import ContentMeta
 from persisty_data.upload import Upload, UploadStatus
@@ -29,10 +30,10 @@ class UploadStore(WrapperStoreABC[Upload]):
     upload_expire_in: int = 3600
 
     def get_store(self) -> StoreABC[Chunk]:
-        return self.chunk_store
+        return self.upload_store
 
     def create(self, upload: Upload) -> Upload:
-        assert upload.status == UploadStatus.IN_PROGRESS
+        assert upload.status is UNDEFINED or upload.status == UploadStatus.IN_PROGRESS
         upload.expire_in = datetime.fromtimestamp(datetime.now().timestamp() + self.upload_expire_in, tz=timezone.utc)
         return self.upload_store.create(upload)
 
@@ -44,7 +45,7 @@ class UploadStore(WrapperStoreABC[Upload]):
         if item.status == updates.status:
             return result
         if updates.status == UploadStatus.COMPLETED:
-            content_meta = self.content_meta_store.read(key)
+            content_meta = self.content_meta_store.read(result.content_key)
             etag, size_in_bytes = self._process_chunks(result.id)
             if content_meta:
                 content_meta.upload_id = result.id
@@ -54,7 +55,7 @@ class UploadStore(WrapperStoreABC[Upload]):
                 self.content_meta_store.update(content_meta)
             else:
                 self.content_meta_store.create(ContentMeta(
-                    key=key,
+                    key=result.content_key,
                     upload_id=result.id,
                     content_type=result.content_type,
                     etag=etag,

@@ -2,6 +2,8 @@ from datetime import datetime
 from enum import Enum
 from uuid import UUID
 
+from marshy.factory.optional_marshaller_factory import get_optional_type
+
 
 class AttrType(Enum):
     BINARY = "binary"
@@ -16,6 +18,7 @@ class AttrType(Enum):
 
 TYPE_MAP = {
     bool: AttrType.BOOL,
+    bytes: AttrType.BINARY,
     datetime: AttrType.DATETIME,
     float: AttrType.FLOAT,
     int: AttrType.INT,
@@ -26,4 +29,10 @@ ATTR_TYPE_MAP = {v: k for k, v in TYPE_MAP.items()}
 
 
 def attr_type(type_) -> AttrType:
-    return TYPE_MAP.get(type_) or AttrType.JSON
+    type_ = get_optional_type(type_) or type_
+    result = TYPE_MAP.get(type_)
+    if result:
+        return result
+    if issubclass(type_, Enum):
+        return AttrType.STR
+    return AttrType.JSON
