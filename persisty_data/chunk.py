@@ -14,5 +14,4 @@ class Chunk:
     content_key: str
     part_number: int
     data: bytes
-    created_at: datetime
     updated_at: datetime

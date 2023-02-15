@@ -3,9 +3,10 @@ import dataclasses
 from servey.security.authorizer.authorizer_factory_abc import get_default_authorizer
 
 from persisty.factory.default_store_factory import DefaultStoreFactory
-from persisty_data.data_store import DataStore
+from persisty_data.data_store import DataStore, secured_upload_public_download_data_store
 from servey_main.store import user_image_upload_store, user_image_chunk_store, user_image_content_meta_store
 
+"""
 user_image_data_store_factory = DataStore(
     name="user_image",
     content_meta_store_factory=DefaultStoreFactory(user_image_content_meta_store),
@@ -15,4 +16,11 @@ user_image_data_store_factory = DataStore(
     authorizer=dataclasses.replace(get_default_authorizer(), aud='data_url'),
     secured_upload_path="/data/user-image",
     public_download_path="/data/user-image/{key}",
+)
+"""
+
+user_image_data_store = secured_upload_public_download_data_store(
+    user_image_content_meta_store,
+    user_image_chunk_store,
+    user_image_upload_store
 )

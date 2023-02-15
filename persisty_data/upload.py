@@ -20,6 +20,5 @@ class Upload:
     status: UploadStatus = UploadStatus.IN_PROGRESS
     content_key: str
     content_type: Optional[str] = None
-    created_at: datetime
     updated_at: datetime
     expire_at: datetime

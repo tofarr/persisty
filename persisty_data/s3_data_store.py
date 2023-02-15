@@ -9,7 +9,7 @@ from persisty.secured.secured_store_factory_abc import SecuredStoreFactoryABC
 from persisty_data.content_meta import ContentMeta
 from persisty_data.data_store_abc import DataStoreABC, _ROUTE
 from persisty_data.form_field import FormField
-from persisty_data.upload_config import UploadConfig
+from persisty_data.upload_form import UploadForm
 
 _S3_CLIENT = boto3.client('s3')
 
@@ -41,7 +41,7 @@ class S3DataStore(DataStoreABC):
         )
         return response
 
-    def config_for_upload(self, authorization: Optional[Authorization], key: Optional[str]) -> UploadConfig:
+    def form_for_upload(self, authorization: Optional[Authorization], key: Optional[str]) -> UploadForm:
         response = _S3_CLIENT.generate_presigned_post(
             Bucket=self.bucket_name,
             Key=key,
@@ -52,7 +52,7 @@ class S3DataStore(DataStoreABC):
         pre_populated_fields = [
             FormField(k, v) for k, v in fields.items()
         ]
-        return UploadConfig(
+        return UploadForm(
             url=response['url'],
             pre_populated_fields=pre_populated_fields
         )

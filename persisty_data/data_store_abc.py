@@ -6,7 +6,7 @@ from servey.security.authorization import Authorization
 from servey.trigger.web_trigger import WEB_GET
 
 from persisty.factory.store_factory_abc import StoreFactoryABC
-from persisty_data.upload_config import UploadConfig
+from persisty_data.upload_form import UploadForm
 
 _ROUTE = "starlette.routing.Route"
 _CONTENT_META = "persisty_data.upload.ContentMeta"
@@ -62,11 +62,11 @@ class DataStoreABC(ABC):
         """
 
     @abstractmethod
-    def config_for_upload(
+    def form_for_upload(
         self,
         authorization: Authorization,
         key: Optional[str]
-    ) -> UploadConfig:
+    ) -> UploadForm:
         """
         Create a url which may be used to upload this resource using the authorization given. Assumes that any
         required actions have been linked to the url by `add_actions`. Depending on the implementation, url may have
@@ -75,12 +75,12 @@ class DataStoreABC(ABC):
 
     def create_get_upload_config_action(self) -> Action:
         @action(
-            name=f"{self.get_name()}_config_for_upload",
+            name=f"{self.get_name()}_form_for_upload",
             triggers=WEB_GET,
             description="Create a url which may be used to upload files"
         )
-        def url_for_upload(authorization: Optional[Authorization], key: str) -> Optional[UploadConfig]:
-            result = self.config_for_upload(authorization, key)
+        def url_for_upload(authorization: Optional[Authorization], key: str) -> Optional[UploadForm]:
+            result = self.form_for_upload(authorization, key)
             return result
 
         return get_action(url_for_upload)

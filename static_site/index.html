@@ -248,29 +248,31 @@
         function handleUploadImage() {
             const fileElement = document.getElementById('uploadFile')
             let fileName = fileElement.value.split('/').pop().split('\\').pop()
-            fetch(`actions/user-image-config-for-upload?key=${encodeURIComponent(fileName)}`, {
+            fetch(`actions/user-image-form-for-upload?key=${encodeURIComponent(fileName)}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`
                 }
-            }).then(response => response.json()).then((uploadConfig) => {
+            }).then(response => response.json()).then((uploadForm) => {
                 const formData = new FormData()
-                if (uploadConfig.pre_populated_fields) {
-                    uploadConfig.pre_populated_fields.forEach(f => formData.append(f.name, f.value))
+                if (uploadForm.pre_populated_fields) {
+                    uploadForm.pre_populated_fields.forEach(f => formData.append(f.name, f.value))
                 }
-                formData.append(uploadConfig.file_param, fileElement.files[0], fileName);
-                fetch(uploadConfig.url, {
-                    method: uploadConfig.method,
+                formData.append(uploadForm.file_param, fileElement.files[0], fileName);
+                fetch(uploadForm.url, {
+                    method: uploadForm.method,
                     body: formData
-                }).then((result) => {
-                    if (result.status === 200) {
-                        currentImageKey = fileName
-                        const img = new Image()
-                        img.src = `/data/user-image/${fileName}`
-                        const container = document.getElementById("imageContainer")
-                        container.innerHTML = ""
-                        container.appendChild(img)
-                        setVisible('postMessageForm')
+                }).then((response) => {
+                    if (response.status === 200) {
+                        response.json().then(result => {
+                            currentImageKey = result.content_key
+                            const img = new Image()
+                            img.src = `/data/user-image/${result.content_key}`
+                            const container = document.getElementById("imageContainer")
+                            container.innerHTML = ""
+                            container.appendChild(img)
+                            setVisible('postMessageForm')
+                        })
                     } else {
                         alert('Error in upload')
                     }

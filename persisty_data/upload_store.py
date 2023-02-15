@@ -54,13 +54,14 @@ class UploadStore(WrapperStoreABC[Upload]):
                 content_meta.size_in_bytes = size_in_bytes
                 self.content_meta_store.update(content_meta)
             else:
-                self.content_meta_store.create(ContentMeta(
+                content_meta = self.content_meta_store.get_meta().get_create_dataclass()(
                     key=result.content_key,
                     upload_id=result.id,
                     content_type=result.content_type,
                     etag=etag,
                     size_in_bytes=size_in_bytes
-                ))
+                )
+                self.content_meta_store.create(content_meta)
         elif updates.status in (UploadStatus.ABORTED, UploadStatus.TIMED_OUT):
             self._delete_all_chunks(item.id)
         return result

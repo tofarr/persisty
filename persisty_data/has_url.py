@@ -7,6 +7,7 @@ from servey.security.authorization import Authorization
 
 from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
 from persisty.attr.attr_type import AttrType
+from persisty.errors import PersistyError
 from persisty.link.link_abc import LinkABC
 
 from typing import Generic, TypeVar
@@ -67,8 +68,11 @@ class HasUrl(LinkABC):
         data_store = getattr(self, '_data_store', None)
         if not data_store:
             data_store = next(
-                s for s in find_data_stores() if s.get_name() == self.data_store_name
+                (s for s in find_data_stores() if s.get_name() == self.data_store_name),
+                None
             )
+            if data_store is None:
+                raise PersistyError(f'unknown_data_store:{self.data_store_name}')
             setattr(self, '_data_store', data_store)
         return data_store
 

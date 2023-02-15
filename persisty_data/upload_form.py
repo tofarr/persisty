@@ -8,7 +8,7 @@ from persisty_data.form_field import FormField
 
 
 @dataclass
-class UploadConfig:
+class UploadForm:
     """ Configuration for a presigned upload """
     url: str
     method: WebTriggerMethod = WebTriggerMethod.POST

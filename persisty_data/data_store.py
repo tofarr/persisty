@@ -1,23 +1,30 @@
+import dataclasses
 import itertools
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional, Tuple, Iterator
 
+import marshy
 from dateutil.relativedelta import relativedelta
 from servey.action.action import action, get_action
 from servey.security.authorization import Authorization, AuthorizationError
 from servey.security.authorizer.authorizer_abc import AuthorizerABC
 from servey.security.authorizer.authorizer_factory_abc import get_default_authorizer
 from servey.trigger.fixed_rate_trigger import FixedRateTrigger
+from starlette.responses import JSONResponse
 
 from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.attr_filter_op import AttrFilterOp
 from persisty.batch_edit import BatchEdit
 from persisty.errors import PersistyError
+from persisty.factory.default_store_factory import DefaultStoreFactory
 from persisty.factory.store_factory_abc import StoreFactoryABC
+from persisty.impl.default_store import DefaultStore
 
 from persisty.store.store_abc import StoreABC
+from persisty.store_meta import get_meta
+from persisty.stored import stored
 from persisty_data.chunk import Chunk
 from persisty_data.chunk_store import ChunkStore
 from persisty_data.content_meta import ContentMeta
@@ -25,8 +32,9 @@ from persisty_data.content_meta_store import ContentMetaStore
 
 from persisty_data.data_store_abc import DataStoreABC, _ROUTE
 from persisty_data.form_field import FormField
+from persisty_data.owned_upload_store_factory import OwnedUploadStoreFactory
 from persisty_data.upload import Upload, UploadStatus
-from persisty_data.upload_config import UploadConfig
+from persisty_data.upload_form import UploadForm
 from persisty_data.upload_store import UploadStore
 
 LOGGER = logging.getLogger(__name__)
@@ -143,11 +151,11 @@ class DataStore(DataStoreABC):
             for key, content_meta in zip(key_batch, content_meta_batch):
                 yield self._get_url_for_content_meta(authorization, key, content_meta)
 
-    def config_for_upload(
+    def form_for_upload(
         self,
         authorization: Authorization,
         key: Optional[str]
-    ) -> UploadConfig:
+    ) -> UploadForm:
         if not self.secured_upload_path:
             raise PersistyError('unavailable_operation')
         if not authorization:
@@ -169,7 +177,7 @@ class DataStore(DataStoreABC):
             authorization.subject_id, [f'upload:{key}'], datetime.now(), expire_at
         )
         token = self.authorizer.encode(upload_authorization)
-        return UploadConfig(
+        return UploadForm(
             url=self.secured_upload_path,
             pre_populated_fields=[
                 FormField('token', token)
@@ -194,8 +202,9 @@ class DataStore(DataStoreABC):
                 self.chunk_store_factory
             )
 
+        path = self.public_download_path.replace('{key}', '{key:path}')
         return Route(
-            self.public_download_path, name=self.name+'_public_download', endpoint=download, methods=('GET',)
+            path, name=self.name+'_public_download', endpoint=download, methods=('GET',)
         )
 
     def create_route_for_secured_download(self) -> Optional[_ROUTE]:
@@ -235,21 +244,21 @@ class DataStore(DataStoreABC):
             authorization = self.authorizer.authorize(token)
             key = next(s.split('upload:')[-1] for s in authorization.scopes if s.startswith('upload:'))
             form_file: UploadFile = form['file']
-            upload_store = self.upload_store_factory.create(None)
+            upload_store = self.upload_store_factory.create(authorization)
             upload_ = upload_store.create(Upload(
                 content_key=key,
                 content_type=form_file.content_type
             ))
-            chunk_store = self.chunk_store_factory.create(None)
+            chunk_store = self.chunk_store_factory.create(authorization)
             part_number = 1
             while True:
                 data = await form_file.read(self.max_chunk_size)
                 if not data:
                     upload_.status = UploadStatus.COMPLETED
                     upload_store.update(upload_)
-                    return Response(status_code=200)
+                    return JSONResponse(status_code=200, content=marshy.dump(upload_))
                 chunk_store.create(Chunk(
-                    content_key=key,
+                    content_key=upload_.content_key,
                     part_number=part_number,
                     upload_id=upload_.id,
                     data=data
@@ -260,7 +269,7 @@ class DataStore(DataStoreABC):
         )
 
 
-def wrap_stores(
+def bind_stores(
     content_meta_store: StoreABC[ContentMeta],
     chunk_store: StoreABC[Chunk],
     upload_store: StoreABC[Upload]
@@ -274,3 +283,50 @@ def wrap_stores(
         ChunkStore(chunk_store, upload_store),
         UploadStore(upload_store, chunk_store, content_meta_store)
     ]
+
+
+def create_default_stores_for_data(name: str) -> Tuple[
+    StoreABC[ContentMeta],
+    StoreABC[Chunk],
+    StoreABC[Upload]
+]:
+    """
+    Given a name to be used for a data store, create default stores
+    """
+    class_name = name.title().replace('_', '')
+    content_meta_params = {'__annotations__': {}}
+    content_meta = stored(type(f"{class_name}ContentMeta", (ContentMeta,), content_meta_params))
+    chunk = stored(type(f"{class_name}Chunk", (Chunk,), {'__annotations__': {}}))
+    upload = stored(type(f"{class_name}Upload", (Upload,), {'__annotations__': {}}))
+    return bind_stores(
+        DefaultStore(get_meta(content_meta)),
+        DefaultStore(get_meta(chunk)),
+        DefaultStore(get_meta(upload))
+    )
+
+
+def secured_upload_public_download_data_store(
+    content_meta_store: StoreABC[ContentMeta],
+    chunk_store: StoreABC[ContentMeta],
+    upload_store: StoreABC[ContentMeta],
+    owned: bool = True,
+    name: Optional[str] = None
+):
+    if name is None:
+        content_meta_name = content_meta_store.get_meta().name
+        if content_meta_name.endswith('_content_meta'):
+            name = content_meta_name[:-len('_content_meta')]
+    upload_store_factory = DefaultStoreFactory(upload_store)
+    if owned:
+        upload_store_factory = OwnedUploadStoreFactory(upload_store_factory)
+    data_store = DataStore(
+        name=name,
+        content_meta_store_factory=DefaultStoreFactory(content_meta_store),
+        upload_store_factory=upload_store_factory,
+        chunk_store_factory=DefaultStoreFactory(chunk_store),
+        upload_store=upload_store,
+        authorizer=dataclasses.replace(get_default_authorizer(), aud=f'data_url_{name}'),
+        secured_upload_path=f"/data/{name.replace('_', '-')}",
+        public_download_path="/data/" + name.replace('_', '-') + "/{key}",
+    )
+    return data_store
