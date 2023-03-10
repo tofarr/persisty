@@ -1,9 +1,10 @@
-import hashlib
 import io
 from abc import abstractmethod, ABC
 from datetime import datetime
 from typing import Optional
 
+from marshy.marshaller.obj_marshaller import ObjMarshaller, attr_config
+from marshy.marshaller_context import MarshallerContext
 from schemey.schema import str_schema, int_schema
 
 from persisty.attr.attr import Attr
@@ -50,43 +51,24 @@ class DataItemABC(ABC):
         Get the size in bytes of this item
         """
 
-    @property
-    @abstractmethod
-    def max_size(self) -> int:
-        """
-        Get the max size for this data item
-        """
-
     @abstractmethod
     def get_data_reader(self) -> io.IOBase:
         """
         Get a reader for this item
         """
 
-    @abstractmethod
-    def copy_data_to(self, destination):
-        """
-        Copy this resource to a bytearray, file like object, a string or path representing a file, or a DataItemABC.
-        Content Types are unaffected by this operation
-        """
-
-    @abstractmethod
-    def copy_data_from(self, source):
-        """
-        Upload this resource from a bytes, bytearray, file like object, a string or path representing a file or
-        DataItemABC. Content Types are unaffected by this operation
-        """
-
-
-def calculate_etag(file, buffer_size: int) -> str:
-    md5 = hashlib.md5()
-    while True:
-        bytes_ = file.read(buffer_size)
-        if not bytes_:
-            break
-        md5.update(bytes_)
-    result = md5.hexdigest()
-    return result
+    # noinspection PyUnusedLocal
+    @classmethod
+    def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
+        from persisty_data.mem_data_item import MemDataItem
+        marshaller = ObjMarshaller(MemDataItem, (
+            attr_config(marshaller_context.get_marshaller(str), 'key'),
+            attr_config(marshaller_context.get_marshaller(Optional[datetime]), 'updated_at'),
+            attr_config(marshaller_context.get_marshaller(Optional[str]), 'etag'),
+            attr_config(marshaller_context.get_marshaller(Optional[str]), 'content_type'),
+            attr_config(marshaller_context.get_marshaller(Optional[int]), 'size'),
+        ))
+        return marshaller
 
 
 DATA_ITEM_META = StoreMeta(

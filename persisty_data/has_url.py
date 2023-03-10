@@ -12,20 +12,19 @@ from persisty.link.link_abc import LinkABC
 
 from typing import Generic, TypeVar
 
-from persisty_data.data_store_abc import DataStoreABC
-from persisty_data.data_store_finder_abc import find_data_stores
+from persisty_data.data_store_factory_abc import DataStoreFactoryABC, find_data_store_factories
 
 T = TypeVar('T')
 
 
 class HasUrlCallable(Generic[T]):
 
-    def __init__(self, key: str, data_store: DataStoreABC):
+    def __init__(self, key: str, data_store_factory: DataStoreFactoryABC):
         self.key = key
-        self.data_store = data_store
+        self.data_store_factory = data_store_factory
 
     def __call__(self, authorization: Optional[Authorization] = None) -> Optional[T]:
-        url = self.data_store.url_for_download(authorization, self.key)
+        url = self.data_store_factory.get_download_url(self.key, authorization)
         return url
 
 
@@ -46,13 +45,13 @@ class HasUrl(LinkABC):
     def __get__(self, obj, obj_type) -> HasUrlCallable[T]:
         return HasUrlCallable(
             key=getattr(obj, self.key_attr_name),
-            data_store=self.get_linked_data_store()
+            data_store_factory=self.get_linked_data_store_factory()
         )
 
     async def batch_call(self, keys: List, authorization: Optional[Authorization] = None) -> List[Optional[T]]:
         if not keys:
             return []
-        result = list(self.get_linked_data_store().all_urls_for_download(authorization, iter(keys)))
+        result = list(self.get_linked_data_store_factory().get_all_download_urls(iter(keys), authorization))
         return result
 
     def arg_extractor(self, obj):
@@ -64,17 +63,17 @@ class HasUrl(LinkABC):
     def get_linked_type(self, forward_ref_ns: str) -> Type[Optional[str]]:
         return Optional[str]
 
-    def get_linked_data_store(self):
-        data_store = getattr(self, '_data_store', None)
-        if not data_store:
-            data_store = next(
-                (s for s in find_data_stores() if s.get_name() == self.data_store_name),
+    def get_linked_data_store_factory(self):
+        data_store_factory = getattr(self, '_data_store_factory', None)
+        if not data_store_factory:
+            data_store_factory = next(
+                (f for f in find_data_store_factories() if f.get_meta().name == self.data_store_name),
                 None
             )
-            if data_store is None:
+            if data_store_factory is None:
                 raise PersistyError(f'unknown_data_store:{self.data_store_name}')
-            setattr(self, '_data_store', data_store)
-        return data_store
+            setattr(self, '_data_store_factory', data_store_factory)
+        return data_store_factory
 
     def update_attrs(self, attrs_by_name: Dict[str, Attr]):
         if self.key_attr_name in attrs_by_name:

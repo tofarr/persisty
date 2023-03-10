@@ -248,7 +248,7 @@
         function handleUploadImage() {
             const fileElement = document.getElementById('uploadFile')
             let fileName = fileElement.value.split('/').pop().split('\\').pop()
-            fetch(`actions/user-image-form-for-upload?key=${encodeURIComponent(fileName)}`, {
+            fetch(`actions/user-image-get-upload-form?key=${encodeURIComponent(fileName)}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`
@@ -265,9 +265,9 @@
                 }).then((response) => {
                     if (response.status === 200) {
                         response.json().then(result => {
-                            currentImageKey = result.content_key
+                            currentImageKey = result.key
                             const img = new Image()
-                            img.src = `/data/user-image/${result.content_key}`
+                            img.src = `/data/user-image/public/${result.key}`
                             const container = document.getElementById("imageContainer")
                             container.innerHTML = ""
                             container.appendChild(img)

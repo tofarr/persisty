@@ -3,7 +3,7 @@ from typing import Iterator
 from servey.servey_starlette.route_factory.route_factory_abc import RouteFactoryABC
 from starlette.routing import Route
 
-from persisty_data.data_store_finder_abc import find_data_stores
+from persisty_data.data_store_factory_abc import find_data_store_factories
 
 
 class DataStoreRouteFactory(RouteFactoryABC):
@@ -13,5 +13,5 @@ class DataStoreRouteFactory(RouteFactoryABC):
     """
 
     def create_routes(self) -> Iterator[Route]:
-        for data_store_factory in find_data_stores():
+        for data_store_factory in find_data_store_factories():
             yield from data_store_factory.create_routes()

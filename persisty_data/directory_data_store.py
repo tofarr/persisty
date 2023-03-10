@@ -1,26 +1,26 @@
 import dataclasses
 import os.path
+import shutil
 from pathlib import Path
 from typing import Optional, Iterator
 
+from persisty.errors import PersistyError
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
-from persisty.store.store_abc import StoreABC
 from persisty.store_meta import T, StoreMeta
-from persisty_data_2.data_item_abc import DataItemABC, DATA_ITEM_META
-from persisty_data_2.file_data_item import FileDataItem
-from persisty_data_2.web_data_interface_abc import WebDataInterfaceABC
+from persisty_data.data_item_abc import DataItemABC, DATA_ITEM_META
+from persisty_data.data_store_abc import DataStoreABC
+from persisty_data.file_data_item import FileDataItem
 
 
-class DirectoryDataStore(StoreABC[DataItemABC]):
+@dataclasses.dataclass
+class DirectoryDataStore(DataStoreABC):
     """
     Data store backed by a directory
     """
     name: str
     directory: Path
-    buffer_size: int = 1024 * 1024
-    web_data_interface: Optional[WebDataInterfaceABC] = None
     max_item_size: int = 1024 * 1024 * 100  # Default 100mb - seems fair
     _meta: StoreMeta = None
 
@@ -33,24 +33,16 @@ class DirectoryDataStore(StoreABC[DataItemABC]):
     def create(self, item: DataItemABC) -> Optional[DataItemABC]:
         path = self._key_to_path(item.key)
         assert not os.path.exists(path)
-        stored = FileDataItem(
-            path=path,
-            key=item.key
-        )
-        stored.copy_data_from(item)
-        return stored
+        self.copy_data_from(item)
+        return FileDataItem(path=path, key=item.key)
 
     def read(self, key: str) -> Optional[DataItemABC]:
         path = self._key_to_path(key)
         if os.path.isfile(path):
-            return FileDataItem(
-                path=path,
-                key=key,
-                buffer_size=self.buffer_size
-            )
+            return FileDataItem(path=path, key=key)
 
     def _update(self, key: str, item: FileDataItem, updates: DataItemABC) -> Optional[DataItemABC]:
-        item.copy_data_from(updates)
+        self.copy_data_from(updates)
         return item
 
     def _delete(self, key: str, item: FileDataItem) -> bool:
@@ -77,7 +69,7 @@ class DirectoryDataStore(StoreABC[DataItemABC]):
             for file in files:
                 path = Path(self.directory, root, file)
                 key = str(Path(root, file))
-                item = FileDataItem(path=path, key=key, max_size=self.max_item_size)
+                item = FileDataItem(path=path, key=key)
                 if search_filter.match(item, meta.attrs):
                     yield item
 
@@ -85,3 +77,20 @@ class DirectoryDataStore(StoreABC[DataItemABC]):
         path = Path(self.directory, key)
         assert os.path.normpath(path) == str(path)  # Prevent ../ shenanigans
         return path
+
+    def get_data_writer(self, key: str, content_type: Optional[str] = None):
+        return open(self._key_to_path(key), 'wb')
+
+    def copy_data_from(self, source: DataItemABC):
+        if not isinstance(source, FileDataItem):
+            super().copy_data_from(source)
+        if os.stat(source).st_size > self.max_item_size:
+            raise PersistyError('max_item_size_exceeded')
+        shutil.copyfile(source, self._key_to_path(source.key))
+
+
+def directory_data_store(name: str):
+    return DirectoryDataStore(
+        name=name,
+        directory=Path(name)
+    )

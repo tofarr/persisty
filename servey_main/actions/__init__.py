@@ -1,5 +1,3 @@
 from persisty.servey import add_actions_for_all_store_factories
-from persisty_data.data_store_finder_abc import add_actions_for_all_data_stores
 
 add_actions_for_all_store_factories(globals())
-add_actions_for_all_data_stores(globals())

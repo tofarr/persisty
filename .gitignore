@@ -139,3 +139,4 @@ cython_debug/
 
 /.idea
 *.DS_Storage
+.DS_Store

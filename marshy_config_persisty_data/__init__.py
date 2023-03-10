@@ -4,16 +4,13 @@ from marshy_config_servey import raise_non_ignored
 from servey.servey_starlette.route_factory.route_factory_abc import RouteFactoryABC
 
 from marshy_config_persisty_data.bytes_marshaller import BytesMarshaller
-from persisty_data.data_store_finder_abc import DataStoreFinderABC
 from persisty_data.data_store_route_factory import DataStoreRouteFactory
-from persisty_data.module_data_store_finder import ModuleDataStoreFinder
 
 priority = 100
 
 
 def configure(context: MarshallerContext):
     context.register_marshaller(BytesMarshaller(), bytes)
-    register_impl(DataStoreFinderABC, ModuleDataStoreFinder, context)
     try:
         register_impl(RouteFactoryABC, DataStoreRouteFactory, context)
     except ModuleNotFoundError as e:

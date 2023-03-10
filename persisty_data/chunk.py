@@ -1,17 +1,18 @@
 from datetime import datetime
-from typing import Optional
+from uuid import UUID
 
-from persisty.key_config.attr_key_config import AttrKeyConfig
-from persisty.key_config.composite_key_config import CompositeKeyConfig
+from persisty.index import Index
 from persisty.stored import stored
 
 
 @stored(
-    key_config=CompositeKeyConfig((AttrKeyConfig('upload_id'), AttrKeyConfig('part_number')))
+    indexes=(Index(('stream_id',)),)
 )
 class Chunk:
-    upload_id: str
-    content_key: str
+    id: UUID
+    item_key: str
+    stream_id: UUID
     part_number: int
     data: bytes
+    created_at: datetime
     updated_at: datetime

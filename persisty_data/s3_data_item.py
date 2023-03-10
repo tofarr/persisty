@@ -7,10 +7,10 @@ from typing import Optional, Dict
 from botocore.exceptions import ClientError
 
 from persisty.util import UNDEFINED
-from persisty_data_2.data_item_abc import DataItemABC
-from persisty_data_2.file_data_item import FileDataItem
-from persisty_data_2.mem_data_item import MemDataItem
-from persisty_data_2.s3_client import get_s3_client
+from persisty_data.data_item_abc import DataItemABC
+from persisty_data.file_data_item import FileDataItem
+from persisty_data.mem_data_item import MemDataItem
+from persisty_data.s3_client import get_s3_client
 
 
 @dataclass

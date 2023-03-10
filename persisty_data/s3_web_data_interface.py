@@ -3,10 +3,10 @@ from typing import Optional
 
 from servey.security.authorization import Authorization
 
-from persisty_data_2.form_field import FormField
-from persisty_data_2.s3_client import get_s3_client
-from persisty_data_2.upload_form import UploadForm
-from persisty_data_2.web_data_interface_abc import WebDataInterfaceABC
+from persisty_data.form_field import FormField
+from persisty_data.s3_client import get_s3_client
+from persisty_data.upload_form import UploadForm
+from persisty_data.web_data_interface_abc import WebDataInterfaceABC
 
 
 @dataclass

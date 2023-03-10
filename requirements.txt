@@ -5,6 +5,7 @@ schemey
 # Optional dependencies
 sqlalchemy
 boto3~=1.26
+starlette==0.19.1
 # Dev dependencies
 black~=22.6
 moto~=3.1
