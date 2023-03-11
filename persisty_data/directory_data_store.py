@@ -67,7 +67,7 @@ class DirectoryDataStore(DataStoreABC):
         meta = self.get_meta()
         for (root, _, files) in os.walk(self.directory):
             for file in files:
-                path = Path(self.directory, root, file)
+                path = Path(root, file)
                 key = str(Path(root, file))
                 item = FileDataItem(path=path, key=key)
                 if search_filter.match(item, meta.attrs):
@@ -79,7 +79,9 @@ class DirectoryDataStore(DataStoreABC):
         return path
 
     def get_data_writer(self, key: str, content_type: Optional[str] = None):
-        return open(self._key_to_path(key), 'wb')
+        path = self._key_to_path(key)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return open(path, 'wb')
 
     def copy_data_from(self, source: DataItemABC):
         if not isinstance(source, FileDataItem):

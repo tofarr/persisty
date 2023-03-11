@@ -15,6 +15,7 @@ from persisty_data.data_store_abc import calculate_etag
 class FileDataItem(DataItemABC):
     path: Path
     key: str = UNDEFINED
+    data_url: Optional[str] = None
     _updated_at: Optional[datetime] = UNDEFINED
     _etag: Optional[str] = UNDEFINED
     _content_type: Optional[str] = UNDEFINED

@@ -13,6 +13,7 @@ from persisty_data.data_store_abc import calculate_etag
 class MemDataItem(DataItemABC):
     value: Union[bytes, bytearray, type(None)]
     key: str
+    data_url: Optional[str] = None
     updated_at: Optional[datetime] = None
     buffer_size: int = 1024 * 1024
     max_size: int = 1024 * 1024 * 10

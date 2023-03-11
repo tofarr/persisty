@@ -59,7 +59,15 @@ class DataStoreFactoryABC(StoreFactoryABC[DataItemABC]):
         return get_action(get_download_url)
 
     def create_actions(self) -> Iterator[Action]:
-        yield from super().create_actions()
+        actions = list(super().create_actions())
+        for action_ in actions:
+            name = action_.name
+            if name.endswith('_create') or name.endswith('_update') or name.endswith('_edit_batch'):
+                # Create, Update and batch actions require the presence of files, and will not work.
+                # We therefore do not create actions for these...
+                continue
+            else:
+                yield action_
         meta = self.get_meta().store_access
         if meta.creatable or meta.updatable:
             yield self.get_upload_form_action()

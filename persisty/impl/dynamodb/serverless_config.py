@@ -5,7 +5,6 @@ from marshy.types import ExternalItemType
 from servey.servey_aws.serverless.yml_config.yml_config_abc import YmlConfigABC, ensure_ref_in_file, create_yml_file
 
 from persisty.attr.attr_type import AttrType
-from persisty.finder.store_finder_abc import find_store_factories
 from persisty.impl.default_store import DefaultStore
 from persisty.impl.dynamodb.dynamodb_store_factory import DynamodbStoreFactory
 from persisty.impl.dynamodb.dynamodb_table_store import DynamodbTableStore

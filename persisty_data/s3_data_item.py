@@ -1,15 +1,12 @@
 import io
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import Optional, Dict
 
 from botocore.exceptions import ClientError
 
 from persisty.util import UNDEFINED
 from persisty_data.data_item_abc import DataItemABC
-from persisty_data.file_data_item import FileDataItem
-from persisty_data.mem_data_item import MemDataItem
 from persisty_data.s3_client import get_s3_client
 
 
@@ -73,38 +70,6 @@ class S3DataItem(DataItemABC):
         response = get_s3_client().get_object(Bucket=self.bucket_name, Key=self.key)
         self._init_meta_from_response(response)
         return response['Body']
-
-    def copy_data_to(self, destination):
-        if isinstance(destination, str) or isinstance(destination, Path):
-            Path(destination).parent.mkdir(parents=True, exist_ok=True)
-            with open(destination, 'wb') as writer:
-                get_s3_client().download_fileobj(Bucket=self.bucket_name, Key=self.key, Fileobj=writer)
-        elif isinstance(destination, bytearray):
-            writer = io.BytesIO()
-            get_s3_client().download_fileobj(Bucket=self.bucket_name, Key=self.key, Fileobj=writer)
-            destination.extend(writer.getvalue())
-        elif isinstance(destination, DataItemABC):
-            response = get_s3_client().get_object(Bucket=self.bucket_name, Key=self.key)
-            destination.copy_data_from(response['Body'])
-        else:
-            get_s3_client().download_fileobj(Bucket=self.bucket_name, Key=self.key, Fileobj=destination)
-
-    def copy_data_from(self, source):
-        if isinstance(source, str) or isinstance(source, Path):
-            with open(source, 'rb') as reader:
-                get_s3_client().upload_fileobj(Bucket=self.bucket_name, Key=self.key, Fileobj=reader)
-        elif isinstance(source, bytes) or isinstance(source, bytearray):
-            get_s3_client().upload_fileobj(Bucket=self.bucket_name, Key=self.key, Fileobj=io.BytesIO(source))
-        elif isinstance(source, MemDataItem):
-            get_s3_client().upload_fileobj(Bucket=self.bucket_name, Key=self.key, Fileobj=io.BytesIO(source.value))
-        elif isinstance(source, FileDataItem):
-            with open(source.path, 'rb') as writer:
-                get_s3_client().upload_fileobj(Bucket=self.bucket_name, Key=self.key, Fileobj=writer)
-        elif isinstance(source, DataItemABC):
-            with source.get_data_reader() as reader:
-                get_s3_client().upload_fileobj(Bucket=self.bucket_name, Key=self.key, Fileobj=reader)
-        else:
-            get_s3_client().upload_fileobj(Bucket=self.bucket_name, Key=self.key, Fileobj=source)
 
 
 @dataclass

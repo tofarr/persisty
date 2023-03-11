@@ -52,7 +52,6 @@ def data_item_response(
         cache_header = dataclasses.replace(cache_header, etag=data_item.etag)
 
     http_headers = cache_header.get_http_headers()
-    http_headers['content-length'] = str(data_item.size)
     if data_item.content_type:
         http_headers['content-type'] = data_item.content_type
 
@@ -65,7 +64,7 @@ def data_item_response(
         if_modified_since_date = parsedate_to_datetime(if_modified_since)
         if if_modified_since_date >= cache_header.updated_at:
             return Response(status_code=304, headers=http_headers)
-
+    http_headers['content-length'] = str(data_item.size)
     response = DataItemResponse(
         status_code=200,
         headers=http_headers,

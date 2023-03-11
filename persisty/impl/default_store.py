@@ -1,10 +1,8 @@
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 from servey.servey_aws import is_lambda_env
 
-from persisty.impl.dynamodb.dynamodb_store_factory import DynamodbStoreFactory
 from persisty.impl.mem.mem_store_factory import MemStoreFactory
 from persisty.impl.sqlalchemy.sqlalchemy_table_store_factory import (
     SqlalchemyTableStoreFactory,
@@ -28,6 +26,7 @@ class DefaultStore(WrapperStoreABC[T]):
         if os.environ.get("PERSISTY_SQL_URN"):
             factory = SqlalchemyTableStoreFactory(self.meta)
         elif is_lambda_env():
+            from persisty.impl.dynamodb.dynamodb_store_factory import DynamodbStoreFactory
             factory = DynamodbStoreFactory(self.meta)
         else:
             from persisty.io.seed import get_seed_data

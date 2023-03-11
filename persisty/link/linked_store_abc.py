@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Optional, ForwardRef, Union, Type
 
 import typing_inspect
-from werkzeug.datastructures import Authorization
+from servey.security.authorization import Authorization
 
 from persisty.finder.store_finder_abc import find_store_factories
 from persisty.link.link_abc import LinkABC

@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from typing import Tuple, Optional, Any
 
 import marshy
-from boto3.dynamodb.conditions import Attr as DynAttr
 
 from persisty.attr.attr import Attr
 from persisty.attr.attr_filter_op import AttrFilterOp
@@ -39,6 +38,7 @@ class AttrFilter(SearchFilterABC[T]):
         value = self.value
         if not isinstance(value, str):
             value = marshy.dump(value)
+        from boto3.dynamodb.conditions import Attr as DynAttr
         attr = DynAttr(self.name)
         if self.op.name in {"contains", "eq", "gt", "gte", "lt", "lte", "ne"}:
             condition = getattr(attr, self.op.name)(value)

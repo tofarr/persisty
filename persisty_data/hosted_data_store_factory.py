@@ -1,23 +1,28 @@
-from dataclasses import dataclass
+import dataclasses
 from datetime import datetime
 from typing import Optional, Iterator
 
 import marshy
 from dateutil.relativedelta import relativedelta
+from schemey import schema_from_type
 from servey.security.authorization import Authorization
 from servey.security.authorizer.authorizer_abc import AuthorizerABC
 from servey.security.authorizer.authorizer_factory_abc import get_default_authorizer
 
+from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
+from persisty.attr.attr_type import AttrType
 from persisty.errors import PersistyError
 from persisty.factory.store_factory_abc import ROUTE
 from persisty.store_meta import StoreMeta
+from persisty.util import UNDEFINED
 from persisty_data.data_store_abc import DataStoreABC
 from persisty_data.data_store_factory_abc import DataStoreFactoryABC
 from persisty_data.form_field import FormField
+from persisty_data.hosted_data_store import HostedDataStore
 from persisty_data.upload_form import UploadForm
 
 
-@dataclass
+@dataclasses.dataclass
 class HostedDataStoreFactory(DataStoreFactoryABC):
     """
     Services like s3 allow uploading and downloading files through pre-signed urls. This emulates that functionality
@@ -31,12 +36,18 @@ class HostedDataStoreFactory(DataStoreFactoryABC):
     secured_download_path: Optional[str] = None
     download_expire_in: int = 3600
     public_download_path: Optional[str] = None
+    _meta: StoreMeta = UNDEFINED
 
     def get_meta(self) -> StoreMeta:
         return self.data_store_factory.get_meta()
 
     def create(self, authorization: Optional[Authorization]) -> Optional[DataStoreABC]:
-        return self.data_store_factory.create(authorization)
+        result = HostedDataStore(
+            data_store=self.data_store_factory.create(authorization),
+            get_download_url=self.get_download_url,
+            authorization=authorization
+        )
+        return result
 
     def get_upload_form(self, key: str, authorization: Optional[Authorization]) -> UploadForm:
         if not self.secured_upload_path:
@@ -187,8 +198,8 @@ def hosted_data_store_factory(
         authorizer=authorizer,
         secured_upload_path=f"/data/{name}/upload",
         upload_expire_in=upload_expire_in,
-        secured_download_path="/data/{" + name + "}/secure/{token}",
+        secured_download_path="/data/" + name + "/secure/{token}",
         download_expire_in=download_expire_in,
-        public_download_path="/data/{" + name + "}/public/{key}",
+        public_download_path="/data/" + name + "/public/{key}",
     )
     return factory

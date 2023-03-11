@@ -19,7 +19,6 @@ from persisty.attr.generator.timestamp_generator import TimestampGenerator
 from persisty.attr.generator.uuid_generator import UuidGenerator
 from persisty.finder.module_store_finder import ModuleStoreFactoryFinder
 from persisty.finder.store_finder_abc import StoreFactoryFinderABC
-from persisty.impl.dynamodb.serverless_config import ServerlessConfig
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
@@ -121,6 +120,7 @@ def configure_celery(context: MarshallerContext):
 
 def configure_serverless(context: MarshallerContext):
     try:
+        from persisty.impl.dynamodb.serverless_config import ServerlessConfig
         register_impl(YmlConfigABC, ServerlessConfig, context)
     except ModuleNotFoundError as e:
         raise_non_ignored(e)

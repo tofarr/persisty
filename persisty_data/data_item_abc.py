@@ -5,7 +5,7 @@ from typing import Optional
 
 from marshy.marshaller.obj_marshaller import ObjMarshaller, attr_config
 from marshy.marshaller_context import MarshallerContext
-from schemey.schema import str_schema, int_schema
+from schemey.schema import str_schema, int_schema, datetime_schema, optional_schema
 
 from persisty.attr.attr import Attr
 from persisty.attr.attr_filter_op import STRING_FILTER_OPS, SORTABLE_FILTER_OPS, FILTER_OPS
@@ -51,6 +51,13 @@ class DataItemABC(ABC):
         Get the size in bytes of this item
         """
 
+    @property
+    @abstractmethod
+    def data_url(self) -> Optional[str]:
+        """
+        Get the size in bytes of this item
+        """
+
     @abstractmethod
     def get_data_reader(self) -> io.IOBase:
         """
@@ -63,10 +70,12 @@ class DataItemABC(ABC):
         from persisty_data.mem_data_item import MemDataItem
         marshaller = ObjMarshaller(MemDataItem, (
             attr_config(marshaller_context.get_marshaller(str), 'key'),
+            attr_config(marshaller_context.get_marshaller(Optional[int]), 'size'),
+            attr_config(marshaller_context.get_marshaller(Optional[str]), 'content_type'),
             attr_config(marshaller_context.get_marshaller(Optional[datetime]), 'updated_at'),
             attr_config(marshaller_context.get_marshaller(Optional[str]), 'etag'),
-            attr_config(marshaller_context.get_marshaller(Optional[str]), 'content_type'),
-            attr_config(marshaller_context.get_marshaller(Optional[int]), 'size'),
+
+
         ))
         return marshaller
 
@@ -76,9 +85,11 @@ DATA_ITEM_META = StoreMeta(
     attrs=(
         Attr('key', AttrType.STR, str_schema(max_length=255), sortable=True, permitted_filter_ops=STRING_FILTER_OPS),
         Attr('size', AttrType.INT, int_schema(), sortable=True, permitted_filter_ops=SORTABLE_FILTER_OPS),
-        Attr('content_type', AttrType.STR, str_schema(max_length=255), sortable=True,
+        Attr('content_type', AttrType.STR, optional_schema(str_schema(max_length=255)), sortable=True,
              permitted_filter_ops=STRING_FILTER_OPS),
+        Attr('updated_at', AttrType.DATETIME, datetime_schema(), sortable=True, permitted_filter_ops=SORTABLE_FILTER_OPS),
         Attr('etag', AttrType.STR, str_schema(max_length=255), sortable=False, permitted_filter_ops=FILTER_OPS),
+        Attr('data_url', AttrType.STR, optional_schema(str_schema()), sortable=False, permitted_filter_ops=tuple()),
     ),
     key_config=AttrKeyConfig('key')
 )
