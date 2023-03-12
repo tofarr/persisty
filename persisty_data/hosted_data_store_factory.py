@@ -4,13 +4,10 @@ from typing import Optional, Iterator
 
 import marshy
 from dateutil.relativedelta import relativedelta
-from schemey import schema_from_type
 from servey.security.authorization import Authorization
 from servey.security.authorizer.authorizer_abc import AuthorizerABC
 from servey.security.authorizer.authorizer_factory_abc import get_default_authorizer
 
-from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
-from persisty.attr.attr_type import AttrType
 from persisty.errors import PersistyError
 from persisty.factory.store_factory_abc import ROUTE
 from persisty.store_meta import StoreMeta

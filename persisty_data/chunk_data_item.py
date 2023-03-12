@@ -19,6 +19,7 @@ class ChunkDataItem(DataItemABC):
     content_meta: ContentMeta
     content_meta_store: StoreABC[ContentMeta]
     chunk_store: StoreABC[Chunk]
+    data_url: Optional[str] = None
 
     @property
     def key(self) -> str:
@@ -61,7 +62,7 @@ class _ChunkReader(io.RawIOBase):
     offset_: int = 0
 
     def __enter__(self):
-        pass
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()

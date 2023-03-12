@@ -49,9 +49,11 @@ class Attr:
         """
         Sanitize the type of an attribute value - try and make sure the type is correct.
         """
-        if value in (None, UNDEFINED) or value.__class__ == self.schema.python_type:
+        if value in (None, UNDEFINED):
             return value
         type_ = ATTR_TYPE_MAP[self.attr_type]
+        if isinstance(value, type_):
+            return value
         value = type_(value)
         return value
 

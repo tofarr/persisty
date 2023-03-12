@@ -31,8 +31,10 @@ class HostedDataStore(DataStoreABC):
 
     def read(self, key: str) -> Optional[DataItemABC]:
         item = self.data_store.read(key)
-        item.data_url = self.get_download_url(item.key, self.authorization)
-        return item
+        if item:
+            # noinspection PyPropertyAccess
+            item.data_url = self.get_download_url(item.key, self.authorization)
+            return item
 
     def _update(self, key: str, item: DataItemABC, updates: DataItemABC) -> Optional[DataItemABC]:
         item = self.data_store._update(key, item, updates)

@@ -22,11 +22,11 @@ class DirectoryDataStore(DataStoreABC):
     name: str
     directory: Path
     max_item_size: int = 1024 * 1024 * 100  # Default 100mb - seems fair
-    _meta: StoreMeta = None
 
     def get_meta(self) -> StoreMeta:
-        meta = self._meta
+        meta = getattr(self, '_meta', None)
         if meta is None:
+            # noinspection PyAttributeOutsideInit
             meta = self._meta = dataclasses.replace(DATA_ITEM_META, name=self.name)
         return meta
 

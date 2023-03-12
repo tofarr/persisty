@@ -1,3 +1,4 @@
+import dataclasses
 import hashlib
 import io
 from dataclasses import dataclass, field
@@ -18,18 +19,24 @@ from persisty.util import UNDEFINED
 from persisty_data.chunk import Chunk
 from persisty_data.chunk_data_item import ChunkDataItem
 from persisty_data.content_meta import ContentMeta
-from persisty_data.data_item_abc import DataItemABC
+from persisty_data.data_item_abc import DataItemABC, DATA_ITEM_META
 from persisty_data.data_store_abc import DataStoreABC, copy_data
 
 
+@dataclass
 class ChunkDataStore(DataStoreABC):
+    name: str
     content_meta_store: StoreABC[ContentMeta]
     chunk_store: StoreABC[Chunk]
     chunk_size: int = 1024 * 256
     max_item_size: int = 1024 * 1024 * 50
 
     def get_meta(self) -> StoreMeta:
-        return self.content_meta_store.get_meta()
+        meta = getattr(self, '_meta', None)
+        if meta is None:
+            # noinspection PyAttributeOutsideInit
+            meta = self._meta = dataclasses.replace(DATA_ITEM_META, name=self.name)
+        return meta
 
     def create(self, item: DataItemABC) -> Optional[DataItemABC]:
         with item.get_data_reader() as reader:
@@ -77,9 +84,10 @@ class ChunkDataStore(DataStoreABC):
         result_set.results = [self._chunk_data_item(c) for c in result_set.results]
 
     def get_data_writer(self, key: str, content_type: Optional[str] = None):
-        create = bool(self.content_meta_store.read(key))
+        create = not self.content_meta_store.read(key)
         return _ChunkWriter(
             content_meta_store=self.content_meta_store,
+            chunk_store=self.chunk_store,
             key=key,
             create=create,
             chunk_size=self.chunk_size,
@@ -101,6 +109,7 @@ def _delete_chunks(chunk_store: StoreABC[Chunk], stream_id: UUID):
 @dataclass
 class _ChunkWriter(io.RawIOBase):
     content_meta_store: StoreABC[ContentMeta]
+    chunk_store: StoreABC[Chunk]
     key: str
     create: bool
     chunk_size: int
@@ -114,7 +123,7 @@ class _ChunkWriter(io.RawIOBase):
     content_meta: Optional[ContentMeta] = None
 
     def _new_chunk(self):
-        _current_chunk = Chunk(
+        self.current_chunk = Chunk(
             item_key=self.key,
             stream_id=self.stream_id,
             part_number=self.part_number,
@@ -123,6 +132,7 @@ class _ChunkWriter(io.RawIOBase):
 
     def __enter__(self):
         self._new_chunk()
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type:
@@ -130,6 +140,7 @@ class _ChunkWriter(io.RawIOBase):
         if self.current_chunk.data:
             self.md5.update(self.current_chunk.data)
             self.size += len(self.current_chunk.data)
+            self.current_chunk.data = bytes(self.current_chunk.data)
             self.chunk_store.create(self.current_chunk)
             self.chunk_store = None  # Prevent accidental shenanigans!
         content_meta = ContentMeta(
@@ -159,6 +170,7 @@ class _ChunkWriter(io.RawIOBase):
                 self.size += chunk_size
                 if self.size >= self.max_item_size:
                     raise PersistyError('max_item_size_exceeded')
+                self.current_chunk.data = bytes(self.current_chunk.data)
                 self.chunk_store.create(self.current_chunk)
                 self._new_chunk()
             offset += length
