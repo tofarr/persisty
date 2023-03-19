@@ -17,7 +17,7 @@ from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorA
 from persisty.attr.generator.default_value_generator import DefaultValueGenerator
 from persisty.attr.generator.timestamp_generator import TimestampGenerator
 from persisty.attr.generator.uuid_generator import UuidGenerator
-from persisty.finder.module_store_finder import ModuleStoreFactoryFinder
+from persisty.finder.module_store_finder import ModuleStoreFinder
 from persisty.finder.store_finder_abc import StoreFactoryFinderABC
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.composite_key_config import CompositeKeyConfig
@@ -103,7 +103,7 @@ def configure_sqlalchemy(context: MarshallerContext):
 
 
 def configure_finders(context: MarshallerContext):
-    register_impl(StoreFactoryFinderABC, ModuleStoreFactoryFinder, context)
+    register_impl(StoreFactoryFinderABC, ModuleStoreFinder, context)
 
 
 def configure_celery(context: MarshallerContext):
@@ -121,6 +121,7 @@ def configure_celery(context: MarshallerContext):
 def configure_serverless(context: MarshallerContext):
     try:
         from persisty.impl.dynamodb.serverless_config import ServerlessConfig
+
         register_impl(YmlConfigABC, ServerlessConfig, context)
     except ModuleNotFoundError as e:
         raise_non_ignored(e)

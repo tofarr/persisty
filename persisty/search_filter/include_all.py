@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import Tuple, Optional, Any
 
+from servey.util.singleton_abc import SingletonABC
+
 from persisty.attr.attr import Attr
 from persisty.search_filter.search_filter_abc import SearchFilterABC, T
-from persisty.util.singleton_abc import SingletonABC
 
 
 class IncludeAll(SearchFilterABC[T], SingletonABC):

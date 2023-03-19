@@ -20,16 +20,21 @@ class DefaultStore(WrapperStoreABC[T]):
         return self.meta
 
     def get_store(self) -> StoreABC:
-        store = getattr(self, '_store', None)
+        store = getattr(self, "_store", None)
         if store:
             return store
         if os.environ.get("PERSISTY_SQL_URN"):
             factory = SqlalchemyTableStoreFactory(self.meta)
         elif is_lambda_env():
-            from persisty.impl.dynamodb.dynamodb_store_factory import DynamodbStoreFactory
+            from persisty.impl.dynamodb.dynamodb_store_factory import (
+                DynamodbStoreFactory,
+            )
+
             factory = DynamodbStoreFactory(self.meta)
+            factory.derive_from_meta()
         else:
             from persisty.io.seed import get_seed_data
+
             seed_items = get_seed_data(self.meta)
             key_config = self.meta.key_config
             seed_data = {key_config.to_key_str(i): i for i in seed_items}

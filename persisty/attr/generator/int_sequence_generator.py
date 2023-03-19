@@ -19,5 +19,4 @@ class IntSequenceGenerator(AttrValueGeneratorABC):
         if self.always or not value:
             value = self.value
             self.value += self.step
-            return value
         return value

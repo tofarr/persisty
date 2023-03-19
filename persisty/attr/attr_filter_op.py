@@ -94,13 +94,15 @@ TYPE_FILTER_OPS = {
 }
 NONE_TYPE = type(None)
 
-SORTABLE_TYPES = frozenset((
-    AttrType.BOOL,
-    AttrType.DATETIME,
-    AttrType.FLOAT,
-    AttrType.INT,
-    AttrType.STR,
-))
+SORTABLE_TYPES = frozenset(
+    (
+        AttrType.BOOL,
+        AttrType.DATETIME,
+        AttrType.FLOAT,
+        AttrType.INT,
+        AttrType.STR,
+    )
+)
 
 
 class _AttrFilterOpMarshaller(MarshallerABC[AttrFilterOp]):

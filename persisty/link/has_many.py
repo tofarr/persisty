@@ -12,7 +12,7 @@ from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.util import to_snake_case
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 @dataclass
@@ -27,7 +27,7 @@ class HasManyCallable(Generic[T]):
         result_set = store.search(
             search_filter=self.search_filter,
             search_order=self.search_order,
-            limit=self.limit
+            limit=self.limit,
         )
         return result_set
 
@@ -36,7 +36,7 @@ class HasManyCallable(Generic[T]):
 class HasMany(LinkedStoreABC, Generic[T]):
     name: Optional[str] = None  # Allows None so __set_name__ can exist
     key_attr_name: Optional[str] = None
-    local_key_attr_name: str = 'id'
+    local_key_attr_name: str = "id"
     remote_key_attr_name: Optional[str] = None
     limit: int = 10
     search_order: Optional[SearchOrder] = None
@@ -50,12 +50,17 @@ class HasMany(LinkedStoreABC, Generic[T]):
         return self.name
 
     def get_linked_type(self, forward_ref_ns: str) -> ForwardRef:
-        return ForwardRef(forward_ref_ns + '.' + self.get_linked_store_name().title().replace('_', '') + 'ResultSet')
+        return ForwardRef(
+            forward_ref_ns
+            + "."
+            + self.get_linked_store_name().title().replace("_", "")
+            + "ResultSet"
+        )
 
     def __get__(self, obj, obj_type) -> HasManyCallable[T]:
         key = getattr(obj, self.local_key_attr_name)
         return HasManyCallable(
             store_factory=self.get_linked_store_factory(),
             search_filter=AttrFilter(self.remote_key_attr_name, AttrFilterOp.eq, key),
-            search_order=self.search_order
+            search_order=self.search_order,
         )

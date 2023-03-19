@@ -40,7 +40,10 @@ class StoreMeta:
 
     def get_stored_dataclass(self) -> Type:
         return self._get_dataclass(
-             "_stored_dataclass", self.name.title().replace("_", ""), iter(self.attrs), self.links
+            "_stored_dataclass",
+            self.name.title().replace("_", ""),
+            iter(self.attrs),
+            self.links,
         )
 
     def get_read_dataclass(self) -> Type:
@@ -118,10 +121,7 @@ class StoreMeta:
         result = getattr(self, attr_name, None)
         if result is None:
             annotations = {}
-            params = {
-                "__annotations__": annotations,
-                "__stored_type__": attr_name
-            }
+            params = {"__annotations__": annotations, "__stored_type__": attr_name}
             for attr in attrs:
                 params[attr.name] = attr.to_field()
                 annotations[attr.name] = attr.schema.python_type

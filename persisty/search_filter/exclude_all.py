@@ -3,8 +3,9 @@ from __future__ import annotations
 from typing import Tuple, Optional, Any, TYPE_CHECKING
 from uuid import uuid4
 
+from servey.util.singleton_abc import SingletonABC
+
 from persisty.search_filter.search_filter_abc import SearchFilterABC, T
-from persisty.util.singleton_abc import SingletonABC
 
 if TYPE_CHECKING:
     from persisty.attr.attr import Attr

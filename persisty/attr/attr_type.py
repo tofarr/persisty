@@ -33,6 +33,9 @@ def attr_type(type_) -> AttrType:
     result = TYPE_MAP.get(type_)
     if result:
         return result
-    if issubclass(type_, Enum):
-        return AttrType.STR
+    try:
+        if issubclass(type_, Enum):
+            return AttrType.STR
+    except TypeError:
+        pass
     return AttrType.JSON

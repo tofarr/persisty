@@ -71,9 +71,7 @@ class StoreTriggers:
             if isinstance(result, Awaitable):
                 await result
 
-    async def async_after_update(
-        self, old_item, new_item
-    ):
+    async def async_after_update(self, old_item, new_item):
         for action in self.get_after_create_actions():
             result = action.fn(old_item, new_item)
             if isinstance(result, Awaitable):

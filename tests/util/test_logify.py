@@ -3,8 +3,9 @@ from unittest import TestCase
 
 from dataclasses import dataclass, field
 
+from servey.util.singleton_abc import SingletonABC
+
 from persisty.util.logify import logify
-from persisty.util.singleton_abc import SingletonABC
 
 
 # noinspection PyMethodMayBeStatic

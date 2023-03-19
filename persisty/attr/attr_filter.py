@@ -36,18 +36,21 @@ class AttrFilter(SearchFilterABC[T]):
         self, attrs: Tuple[Attr, ...]
     ) -> Tuple[Optional[Any], bool]:
         value = self.value
-        if not isinstance(value, str):
-            value = marshy.dump(value)
         from boto3.dynamodb.conditions import Attr as DynAttr
+
         attr = DynAttr(self.name)
         if self.op.name in {"contains", "eq", "gt", "gte", "lt", "lte", "ne"}:
+            if not isinstance(value, str):
+                value = marshy.dump(value)
             condition = getattr(attr, self.op.name)(value)
             return condition, True
         elif self.op == AttrFilterOp.startswith:
+            if not isinstance(value, str):
+                value = marshy.dump(value)
             return attr.begins_with(value), True
         elif self.op == AttrFilterOp.exists:
-            return attr.exists()
+            return attr.exists(), True
         elif self.op == AttrFilterOp.not_exists:
-            return attr.not_exists()
+            return attr.not_exists(), True
         else:
             return None, False

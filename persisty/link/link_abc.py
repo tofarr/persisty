@@ -20,7 +20,7 @@ class LinkABC(ABC):
         """Get the name of this link"""
 
     def get_linked_type(self, forward_ref_ns: str) -> Union[ForwardRef, Type]:
-        """ Get the type for the linked object (May be an int, Optional[T], ResultSet[T], or something else """
+        """Get the type for the linked object (May be an int, Optional[T], ResultSet[T], or something else"""
 
     def update_attrs(self, attrs_by_name: Dict[str, Attr]):
         """

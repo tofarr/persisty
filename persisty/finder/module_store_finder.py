@@ -15,7 +15,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
-class ModuleStoreFactoryFinder(StoreFactoryFinderABC):
+class ModuleStoreFinder(StoreFactoryFinderABC):
     """
     Default implementation of store factory finder which searches for actions in a particular module
     """
@@ -25,20 +25,14 @@ class ModuleStoreFactoryFinder(StoreFactoryFinderABC):
     )
 
     def find_stores(self) -> Iterator[StoreABC]:
-        try:
-            module = importlib.import_module(self.root_module_name)
-            # noinspection PyTypeChecker
-            yield from find_instances_in_module(module, StoreABC)
-        except ModuleNotFoundError:
-            LOGGER.exception("error_finding_store")
+        module = importlib.import_module(self.root_module_name)
+        # noinspection PyTypeChecker
+        yield from find_instances_in_module(module, StoreABC)
 
     def find_store_factories(self) -> Iterator[StoreFactoryABC]:
-        try:
-            module = importlib.import_module(self.root_module_name)
-            # noinspection PyTypeChecker
-            yield from find_instances_in_module(module, StoreFactoryABC)
-        except ModuleNotFoundError:
-            LOGGER.exception("error_finding_store")
+        module = importlib.import_module(self.root_module_name)
+        # noinspection PyTypeChecker
+        yield from find_instances_in_module(module, StoreFactoryABC)
 
 
 def find_instances_in_module(module, type_) -> Iterator:

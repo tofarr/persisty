@@ -14,11 +14,10 @@ from persisty.link.on_delete import OnDelete
 
 from typing import Generic, TypeVar
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class BelongsToCallable(Generic[T]):
-
     def __init__(self, key: str, store_factory: StoreFactoryABC):
         self.key = key
         self.store_factory = store_factory
@@ -40,9 +39,13 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
         return self.name
 
     def get_linked_type(self, forward_ref_ns: str) -> ForwardRef:
-        return ForwardRef(forward_ref_ns + '.' + self.get_linked_store_name().title().replace('_', ''))
+        return ForwardRef(
+            forward_ref_ns + "." + self.get_linked_store_name().title().replace("_", "")
+        )
 
-    async def batch_call(self, keys: List, authorization: Optional[Authorization] = None) -> List[Optional[T]]:
+    async def batch_call(
+        self, keys: List, authorization: Optional[Authorization] = None
+    ) -> List[Optional[T]]:
         if not keys:
             return []
         result = self.get_linked_store(authorization).read_batch(keys)
@@ -59,7 +62,7 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
     def __get__(self, obj, obj_type) -> BelongsToCallable[T]:
         return BelongsToCallable(
             key=getattr(obj, self.key_attr_name),
-            store_factory=self.get_linked_store_factory()
+            store_factory=self.get_linked_store_factory(),
         )
 
     def update_attrs(self, attrs_by_name: Dict[str, Attr]):

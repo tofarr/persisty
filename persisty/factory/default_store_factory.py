@@ -13,6 +13,7 @@ class DefaultStoreFactory(StoreFactoryABC[T]):
     """
     No op store factory which doesn't actually use authorization
     """
+
     store: StoreABC
 
     def get_meta(self) -> StoreMeta:

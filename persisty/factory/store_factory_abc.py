@@ -28,8 +28,9 @@ class StoreFactoryABC(Generic[T], ABC):
         """Create a new store instance"""
 
     def create_actions(self) -> Iterator[Action]:
-        """ Create actions for this factory """
+        """Create actions for this factory"""
         from persisty.servey.actions import wrap_links_in_actions
+
         store_meta = self.get_meta()
         store_access = store_meta.store_access
         item_type = wrap_links_in_actions(store_meta.get_read_dataclass())
@@ -40,6 +41,7 @@ class StoreFactoryABC(Generic[T], ABC):
 
         if store_access.creatable:
             from persisty.servey.actions import action_for_create
+
             yield action_for_create(
                 self,
                 item_type,
@@ -47,9 +49,11 @@ class StoreFactoryABC(Generic[T], ABC):
             )
         if store_access.readable:
             from persisty.servey.actions import action_for_read
+
             yield action_for_read(self, item_type)
         if store_access.updatable:
             from persisty.servey.actions import action_for_update
+
             yield action_for_update(
                 self,
                 item_type,
@@ -58,9 +62,11 @@ class StoreFactoryABC(Generic[T], ABC):
             )
         if store_access.deletable:
             from persisty.servey.actions import action_for_delete
+
             yield action_for_delete(self)
         if store_access.searchable:
             from persisty.servey.actions import action_for_search
+
             yield action_for_search(
                 self,
                 item_type,
@@ -68,18 +74,22 @@ class StoreFactoryABC(Generic[T], ABC):
                 search_order_type,
             )
             from persisty.servey.actions import action_for_count
+
             yield action_for_count(self, search_filter_type)
         if store_access.readable:
             from persisty.servey.actions import action_for_read_batch
+
             yield action_for_read_batch(self, item_type)
         if store_access.editable:
             from persisty.servey.actions import action_for_edit_batch
+
             yield action_for_edit_batch(
                 self,
                 create_input_type,
                 update_input_type,
             )
 
+    # noinspection PyMethodMayBeStatic
     def create_routes(self) -> Iterator[ROUTE]:
-        """ Create routes for this factory """
-        pass
+        """Create routes for this factory"""
+        return iter(tuple())

@@ -44,7 +44,7 @@ def stored(
         mro = list(cls_.__mro__)[1:-1]
         mro.reverse()
         for c in mro:
-            store_meta = c.__dict__.get('__persisty_store_meta__')
+            store_meta = c.__dict__.get("__persisty_store_meta__")
             if store_meta:
                 if key_config is None:
                     key_config = store_meta.key_config
@@ -54,17 +54,15 @@ def stored(
                     batch_size = store_meta.batch_size
                 if indexes is None:
                     indexes = store_meta.indexes
-                links_by_name.update({
-                    link.get_name(): link for link in store_meta.links
-                })
-                attrs_by_name.update({
-                    attr.name: attr for attr in store_meta.attrs
-                })
+                links_by_name.update(
+                    {link.get_name(): link for link in store_meta.links}
+                )
+                attrs_by_name.update({attr.name: attr for attr in store_meta.attrs})
         if cache_control is None:
             cache_control = SecureHashCacheControl()
 
         cls_dict = cls_.__dict__
-        annotations = cls_dict.get('__annotations__') or {}
+        annotations = cls_dict.get("__annotations__") or {}
         for name, type_ in annotations.items():
             if name.startswith("__"):
                 continue
@@ -131,7 +129,7 @@ def stored(
         else:
             key_attr = attrs_by_name.get("id") or attrs_by_name.get("key")
             if not key_attr:
-                raise PersistyError(f'could_not_derive_key:{cls}')
+                raise PersistyError(f"could_not_derive_key:{cls}")
             key_config_ = AttrKeyConfig(key_attr.name, key_attr.attr_type)
 
         for name, value in cls_dict.items():

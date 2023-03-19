@@ -12,12 +12,22 @@ from persisty.store_meta import T, StoreMeta
 @dataclass
 class OwnedStoreFactory(StoreFactoryABC[T]):
     store_factory: StoreFactoryABC[T]
-    attr_name: str
+    subject_id_attr_name: str = "subject_id"
+    require_ownership_for_read: bool = False
+    require_ownership_for_update: bool = True
+    require_ownership_for_delete: bool = True
 
     def get_meta(self) -> StoreMeta:
         return self.store_factory.get_meta()
 
     def create(self, authorization: Optional[Authorization]) -> Optional[StoreABC[T]]:
         store = self.store_factory.create(authorization)
-        store = OwnedStore(store, authorization, self.attr_name)
+        store = OwnedStore(
+            store=store,
+            authorization=authorization,
+            subject_id_attr_name=self.subject_id_attr_name,
+            require_ownership_for_read=self.require_ownership_for_read,
+            require_ownership_for_delete=self.require_ownership_for_delete,
+            require_ownership_for_update=self.require_ownership_for_update,
+        )
         return store

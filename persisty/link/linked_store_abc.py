@@ -28,13 +28,14 @@ class LinkedStoreABC(LinkABC, ABC):
         return linked_store_name
 
     def get_linked_store_factory(self):
-        linked_store_factory = getattr(self, '_linked_store_factory', None)
+        linked_store_factory = getattr(self, "_linked_store_factory", None)
         if not linked_store_factory:
             linked_store_factory = next(
-                f for f in find_store_factories()
+                f
+                for f in find_store_factories()
                 if f.get_meta().name == self.get_linked_store_name()
             )
-            setattr(self, '_linked_store_factory', linked_store_factory)
+            setattr(self, "_linked_store_factory", linked_store_factory)
         return linked_store_factory
 
     def get_linked_store(self, authorization: Optional[Authorization] = None):

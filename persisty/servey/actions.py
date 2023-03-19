@@ -28,7 +28,9 @@ def action_for_create(
     @action(
         name=f"{store_meta.name}_create",
         description=f"Create and return an item in {store_meta.name}",
-        triggers=WebTrigger(WebTriggerMethod.POST, "/actions/" + store_meta.name.replace('_', '-')),
+        triggers=WebTrigger(
+            WebTriggerMethod.POST, "/actions/" + store_meta.name.replace("_", "-")
+        ),
     )
     def create(
         item: create_input_type, authorization: Optional[Authorization] = None
@@ -47,7 +49,10 @@ def action_for_read(store_factory: StoreFactoryABC, item_type: Type) -> Action:
         name=f"{store_meta.name}_read",
         description=f"Read an item from {store_meta.name} given a key",
         triggers=(
-            WebTrigger(WebTriggerMethod.GET, "/actions/" + store_meta.name.replace('_', '-') + "/{key}"),
+            WebTrigger(
+                WebTriggerMethod.GET,
+                "/actions/" + store_meta.name.replace("_", "-") + "/{key}",
+            ),
         ),
         cache_control=store_meta.cache_control,
     )
@@ -74,7 +79,8 @@ def action_for_update(
         description=f"Update and return an item in {store_meta.name}",
         triggers=(
             WebTrigger(
-                WebTriggerMethod.PATCH, "/actions/" + store_meta.name.replace('_', '-') + "/{key}"
+                WebTriggerMethod.PATCH,
+                "/actions/" + store_meta.name.replace("_", "-") + "/{key}",
             ),
         ),
     )
@@ -101,7 +107,8 @@ def action_for_delete(store_factory: StoreFactoryABC) -> Action:
         description=f"Delete an item in {store_meta.name}",
         triggers=(
             WebTrigger(
-                WebTriggerMethod.DELETE, "/actions/" + store_meta.name.replace('_', '-') + "/{key}"
+                WebTriggerMethod.DELETE,
+                "/actions/" + store_meta.name.replace("_", "-") + "/{key}",
             ),
         ),
     )
@@ -129,7 +136,10 @@ def action_for_search(
         name=f"{store_meta.name}_search",
         description=f"Run a search in {store_meta.name}",
         triggers=(
-            WebTrigger(WebTriggerMethod.GET, f"/actions/{store_meta.name.replace('_', '-')}-search"),
+            WebTrigger(
+                WebTriggerMethod.GET,
+                f"/actions/{store_meta.name.replace('_', '-')}-search",
+            ),
         ),
     )
     def search(
@@ -145,10 +155,12 @@ def action_for_search(
         )
         if search_order:
             # noinspection PyArgumentList,PyDataclass
-            search_order = search_order_type(**{
-                f.name: getattr(search_order, f.name)
-                for f in dataclasses.fields(search_order_type)
-            })
+            search_order = search_order_type(
+                **{
+                    f.name: getattr(search_order, f.name)
+                    for f in dataclasses.fields(search_order_type)
+                }
+            )
             search_order = search_order.to_search_order()
         result_set = store.search(search_filter, search_order, page_key, limit)
 
@@ -172,7 +184,10 @@ def action_for_count(
         name=f"{store_meta.name}_count",
         description=f"Get a count from {store_meta.name}",
         triggers=(
-            WebTrigger(WebTriggerMethod.GET, f"/actions/{store_meta.name.replace('_', '-')}-count"),
+            WebTrigger(
+                WebTriggerMethod.GET,
+                f"/actions/{store_meta.name.replace('_', '-')}-count",
+            ),
         ),
     )
     def count(
@@ -189,15 +204,16 @@ def action_for_count(
     return get_action(count)
 
 
-def action_for_read_batch(
-    store_factory: StoreFactoryABC, item_type: Type
-) -> Action:
+def action_for_read_batch(store_factory: StoreFactoryABC, item_type: Type) -> Action:
     store_meta = store_factory.get_meta()
 
     @action(
         name=f"{store_meta.name}_read_batch",
         description=f"Read a batch of items from {store_meta.name} given keys",
-        triggers=WebTrigger(WebTriggerMethod.GET, "/actions/" + store_meta.name.replace('_', '-') + "-batch"),
+        triggers=WebTrigger(
+            WebTriggerMethod.GET,
+            "/actions/" + store_meta.name.replace("_", "-") + "-batch",
+        ),
         cache_control=store_meta.cache_control,
     )
     def read_batch(
@@ -225,7 +241,8 @@ def action_for_edit_batch(
         name=f"{store_meta.name}_edit_batch",
         description=f"Perform a batch of edits against {store_meta.name}",
         triggers=WebTrigger(
-            WebTriggerMethod.PATCH, "/actions/" + store_meta.name.replace('_', '-') + "-batch"
+            WebTriggerMethod.PATCH,
+            "/actions/" + store_meta.name.replace("_", "-") + "-batch",
         ),
     )
     def edit_batch(
@@ -254,39 +271,41 @@ def wrap_links_in_actions(read_type: Type):
         if isinstance(v, LinkABC):
             overrides[k] = _to_action_fn(meta, v)
     if overrides:
-        read_type = dataclasses.dataclass(type(read_type.__name__, (read_type,), overrides))
+        read_type = dataclasses.dataclass(
+            type(read_type.__name__, (read_type,), overrides)
+        )
     setattr(generated, read_type.__name__, read_type)
     return read_type
 
 
 def _to_action_fn(meta: StoreMeta, link: LinkABC):
-    return_type = link.get_linked_type('persisty.servey.generated')
+    return_type = link.get_linked_type("persisty.servey.generated")
 
     def wrapper(self, authorization: Optional[Authorization] = None) -> return_type:
         fn = link
-        if hasattr(link, '__get__'):
+        if hasattr(link, "__get__"):
             fn = link.__get__(self, self.__class__)
         # noinspection PyCallingNonCallable
         result = fn(authorization)
         return result
 
     batch_invoker = None
-    if hasattr(link, 'batch_call'):
-        if hasattr(link, 'arg_extractor'):
+    if hasattr(link, "batch_call"):
+        if hasattr(link, "arg_extractor"):
             arg_extractor = link.arg_extractor
         else:
+
             def arg_extractor(c):
                 return [meta.key_config.to_key_str(c)]
+
         batch_invoker = BatchInvoker(
-            fn=getattr(link, 'batch_call'),
+            fn=getattr(link, "batch_call"),
             arg_extractor=arg_extractor,
-            max_batch_size=meta.batch_size
+            max_batch_size=meta.batch_size,
         )
 
     wrapped = action(
-        wrapper,
-        name=meta.name+'_'+link.get_name(),
-        batch_invoker=batch_invoker
+        wrapper, name=meta.name + "_" + link.get_name(), batch_invoker=batch_invoker
     )
 
     return wrapped

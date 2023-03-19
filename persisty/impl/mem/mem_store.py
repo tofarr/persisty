@@ -95,7 +95,7 @@ class MemStore(StoreABC[T]):
         items = [self._load(item) for item in items]
         if search_order and search_order.orders:
             items = search_order.sort(items)
-        return items
+        return iter(items)
 
     def count(self, search_filter: SearchFilterABC[T] = INCLUDE_ALL) -> int:
         search_filter = search_filter.lock_attrs(self.meta.attrs)

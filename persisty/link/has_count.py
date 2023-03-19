@@ -24,7 +24,7 @@ class HasCountCallable:
 
 @dataclass
 class HasCount(LinkedStoreABC):
-    local_key_attr_name: str = 'id'
+    local_key_attr_name: str = "id"
     remote_key_attr_name: Optional[str] = None
 
     def __get__(self, obj, obj_type) -> HasCountCallable:

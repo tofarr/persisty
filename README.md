@@ -1,8 +1,6 @@
 
 TODO:
 
-Build Clientey
-Build resource in servey
 Migrations - need a way of building out serverless resources.
 Build an AutoUI project in NPM
 
