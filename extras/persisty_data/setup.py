@@ -1,14 +1,12 @@
 import setuptools
 
-from persisty.__version__ import __version__
+from persisty_data.__version__ import __version__
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-extras_require = {"sql": ["SQLAlchemy~=1.4"]}
-
 setuptools.setup(
-    name="persisty_data",
+    name="persisty-data",
     version=__version__,
     author="Tim O'Farrell",
     author_email="tofarr@gmail.com",

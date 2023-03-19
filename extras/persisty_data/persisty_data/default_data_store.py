@@ -10,7 +10,6 @@ from persisty_data.chunk_data_store import ChunkDataStore
 from persisty_data.content_meta import ContentMeta
 from persisty_data.data_store_abc import DataStoreABC
 from persisty_data.directory_data_store import DirectoryDataStore
-from persisty_data.s3_data_store import S3DataStore
 
 
 def default_data_store(
@@ -23,6 +22,7 @@ def default_data_store(
     """
     persisty_data_s3_bucket = os.environ.get("PERSISTY_DATA_S3_BUCKET")
     if persisty_data_s3_bucket:
+        from persisty_data.s3_data_store import S3DataStore
         return S3DataStore()
     persisty_data_directory = os.environ.get("PERSISTY_DATA_DIRECTORY")
     if persisty_data_directory:
