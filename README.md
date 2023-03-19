@@ -60,3 +60,12 @@ Demo a distributed lock.
 
 
 Demo a custom index.
+
+## Deploying new versions of this Servey to Pypi
+
+```
+pip install setuptools wheel
+python setup.py sdist bdist_wheel
+pip install twine
+python -m twine upload dist/*
+```
