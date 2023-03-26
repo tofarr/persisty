@@ -99,6 +99,11 @@ def configure_sqlalchemy(context: MarshallerContext):
         sqlalchemy_config.configure_converters(context)
         sqlalchemy_config.configure_sqlalchemy_context(context)
     except ModuleNotFoundError as e:
+        msg = str(e)
+        if msg.startswith("No module named '"):
+            module_name = msg[len("No module named '"):-1]
+            if module_name == 'sqlalchemy':
+                return
         raise_non_ignored(e)
 
 

@@ -4,9 +4,6 @@ from dataclasses import dataclass
 from servey.servey_aws import is_lambda_env
 
 from persisty.impl.mem.mem_store_factory import MemStoreFactory
-from persisty.impl.sqlalchemy.sqlalchemy_table_store_factory import (
-    SqlalchemyTableStoreFactory,
-)
 from persisty.store.store_abc import StoreABC, T
 from persisty.store.wrapper_store_abc import WrapperStoreABC
 from persisty.store_meta import StoreMeta
@@ -24,6 +21,9 @@ class DefaultStore(WrapperStoreABC[T]):
         if store:
             return store
         if os.environ.get("PERSISTY_SQL_URN"):
+            from persisty.impl.sqlalchemy.sqlalchemy_table_store_factory import (
+                SqlalchemyTableStoreFactory,
+            )
             factory = SqlalchemyTableStoreFactory(self.meta)
         elif is_lambda_env():
             from persisty.impl.dynamodb.dynamodb_store_factory import (

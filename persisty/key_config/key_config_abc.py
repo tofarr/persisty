@@ -7,7 +7,7 @@ T = TypeVar("T")
 
 
 class KeyConfigABC(ABC, Generic[T]):
-    """General object for sorting items"""
+    """ Object for extracting / inserting string keys into stored items. """
 
     @abstractmethod
     def to_key_str(self, item: T) -> str:
