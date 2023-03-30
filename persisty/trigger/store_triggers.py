@@ -4,7 +4,6 @@ from typing import List, Iterator, Awaitable
 
 from marshy import get_default_context
 from marshy.marshaller_context import MarshallerContext
-from marshy.types import ExternalItemType
 from servey.action.action import Action
 from servey.finder.action_finder_abc import find_actions_with_trigger_type
 

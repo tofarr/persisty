@@ -1,3 +1,10 @@
+"""
+This module wraps stores for users to add security constraints.
+* The password_digest attribute should not be readable or updatable by the standard mechanisms
+* A user should be able to self edit, but not edit other users unless they have the admin flag
+* A special sign up process is required to create users
+"""
+
 import dataclasses
 from typing import Optional, List
 
@@ -11,15 +18,14 @@ from persisty.store.wrapper_store_abc import WrapperStoreABC
 from persisty.store_access import StoreAccess
 from persisty.store_meta import StoreMeta, get_meta
 from persisty.trigger.wrapper import triggered_store
-from servey_main.models.user import User
-from servey_main.store import user_store
+from messager.models.user import User
+from messager.store import user_store
 
-STORAGE_META = get_meta(User)
-STORAGE_META = dataclasses.replace(
-    STORAGE_META,
-    # The secured store meta does not include the password digest, as we don't want this available to external users
-    # through the web interface
-    attrs=tuple(f for f in STORAGE_META.attrs if f.name != "password_digest"),
+_STORE_META = get_meta(User)
+_STORE_META = dataclasses.replace(
+    _STORE_META,
+    # We dont want the password digest to be included / updated in the User items included in the web interface.
+    attrs=tuple(f for f in _STORE_META.attrs if f.name != "password_digest"),
     # All create operations are handled from a sign up action where a password is supplied
     store_access=StoreAccess(creatable=False),
 )
@@ -29,6 +35,9 @@ STORAGE_META = dataclasses.replace(
 class SecuredUserStore(WrapperStoreABC[User]):
     store: StoreABC
     authorization: Authorization
+
+    def get_meta(self) -> StoreMeta:
+        return _STORE_META
 
     def get_store(self) -> StoreABC:
         return self.store
@@ -40,7 +49,7 @@ class SecuredUserStore(WrapperStoreABC[User]):
         updates: User,
     ) -> Optional[User]:
         """
-        Users are allowed to edit themselves. Root users can edit anybody, but cannot remove the root flag
+        Users are allowed to edit themselves. Admin users can edit anybody, but cannot remove the admin flag
         from themselves.
         """
         if self.authorization.has_scope("admin"):
@@ -88,7 +97,7 @@ class SecuredUserStore(WrapperStoreABC[User]):
 
 class SecuredUserStoreFactory(StoreFactoryABC[User]):
     def get_meta(self) -> StoreMeta:
-        return STORAGE_META
+        return _STORE_META
 
     def create(
         self, authorization: Optional[Authorization]
@@ -98,4 +107,4 @@ class SecuredUserStoreFactory(StoreFactoryABC[User]):
         return store
 
 
-secured_user_store_factory = SecuredUserStoreFactory()
+user_store_factory = SecuredUserStoreFactory()

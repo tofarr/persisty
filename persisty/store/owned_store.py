@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+import dataclasses
 from typing import Optional, Iterator, List, Dict
 
 from servey.security.authorization import Authorization
@@ -15,7 +15,7 @@ from persisty.store.store_abc import StoreABC, T
 from persisty.store_meta import StoreMeta
 
 
-@dataclass
+@dataclasses.dataclass
 class OwnedStore(StoreABC[T]):
     """
     Store which enforces ownership of items within it. Each item has an attribute
@@ -31,7 +31,11 @@ class OwnedStore(StoreABC[T]):
     require_ownership_for_delete: bool = True
 
     def get_meta(self) -> StoreMeta:
-        return self.store.get_meta()
+        meta = getattr(self, '_meta', None)
+        if meta is None:
+            meta = meta_with_non_editable_subject_id(self.store.get_meta(), self.subject_id_attr_name)
+            setattr(self, '_meta', meta)
+        return meta
 
     def create(self, item: T) -> Optional[T]:
         setattr(item, self.subject_id_attr_name, self.authorization.subject_id)
@@ -152,3 +156,12 @@ class OwnedStore(StoreABC[T]):
             else:
                 results.append(BatchEditResult(edit, False, "exception", "missing_key"))
         return results
+
+
+def meta_with_non_editable_subject_id(meta: StoreMeta, subject_id_attr_name: str) -> StoreMeta:
+    attrs = []
+    for attr in meta.attrs:
+        if attr.name == subject_id_attr_name:
+            attr = dataclasses.replace(attr, creatable=False, updatable=False)
+        attrs.append(attr)
+    return dataclasses.replace(meta, attrs=attrs)

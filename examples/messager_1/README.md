@@ -1,7 +1,7 @@
 # Persisty Example App : Messager : Part 1
 
 This example application allows CRUD / Search / Batch Edit operations on
-user objects. It sets up the basic entities and project structure, but not
+user and message objects. It sets up the basic entities and project structure, but not
 the security constraints (Which are handled in Part 2) or the Html / 
 Javascript client side code (Which is handled in Part 3)
 
@@ -17,7 +17,7 @@ Javascript client side code (Which is handled in Part 3)
 * Install requirements with `pip install -r requirments.txt`
 * Run the project `python -m servey`
 
-## Understanding what is Going On
+## What is Going On Here...
 
 * Created a [main.py](main.py) to run the project locally (Which also includes
   dotenv and loads environment variables from [.env](.env))
@@ -28,7 +28,8 @@ Javascript client side code (Which is handled in Part 3)
   * [User](messager/models/user.py)
   * [Message](messager/models/message.py)
 * We define 2 stores for these entities `user_store` and `message_store` in
-  [the stores module](messager/store/__init__.py).
+  [the stores module](messager/store/__init__.py). Persisty will find these automatically
+  in this location.
 * We define 2 store factories - these are used to provide external access to the stores:
   * [user_store_factory](messager/store/user_store_factory.py)
   * [message_store_factory](messager/store/message_store_factory.py)
@@ -41,8 +42,14 @@ Javascript client side code (Which is handled in Part 3)
   
 ## Viewing the result
 
-* View the REST API on [http://localhost:8000/docs](http://localhost:8000/docs)
+Run the project locally in a hosted mode using `python -m main`. This will start a 
+[starlette server](https://www.starlette.io/), and load the seed data into memory backed stores, which are not
+actually persistant, and will reset after a server restart.
+
+* View the OpenAPI REST API on [http://localhost:8000/docs](http://localhost:8000/docs)
+  ![img.png](openapi.png)
 * View the GraphQL API on [http://localhost:8000/graphiql/](http://localhost:8000/graphiql/)
+  ![Demo Query Execution in Graphiql](readme/graphiql.png)
   ```
   query {
 	messageSearch{
@@ -64,6 +71,5 @@ Javascript client side code (Which is handled in Part 3)
 ## Summary
 
 We have created 2 related entities with external access via REST and GraphQL, but there are no restrictions
-on access to them. Let's add that in the next step
-
+on access to them. In [the next step](../messager_2), we will add security constraints.
 
