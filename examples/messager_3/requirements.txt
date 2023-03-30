@@ -1,4 +1,3 @@
 persisty
-persisty-data
 bcrypt
 python-dotenv
