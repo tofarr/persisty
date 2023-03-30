@@ -15,7 +15,7 @@ Javascript client side code (Which is handled in Part 3)
   * `mkvirtualenv messager_1`
   * `workon messager_1`
 * Install requirements with `pip install -r requirments.txt`
-* Run the project `python -m servey`
+* Run the project `python -m main`
 
 ## What is Going On Here...
 

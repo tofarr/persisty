@@ -17,41 +17,51 @@ There are some more steps this time due to the addition of alembic:
   * `mkvirtualenv messager_4`
   * `workon messager_4`
 * Install requirements with `pip install -r requirments-dev.txt`
-* Run the alembic migrations using `alembic upgrade head`
-* Run the project `python -m servey`
+* Run the alembic migrations using `alembic upgrade head`. Because we are using sqlite, this will create a
+  `messages.db` file in the project root directory
+* Run the project `python -m main`
 
 ## What is Going On Here...
 
-We now have a requirements-dev.txt for alembic
+* We now have a requirements-dev.txt for alembic
 
-We defined a database connection string in .env `PERSISTY_SQL_URN="sqlite:///messager.db"`
+* We defined a database connection string in .env `PERSISTY_SQL_URN="sqlite:///messager.db"`
 
-We generated an alembic environment using `alembic init alembic`
+* We generated an alembic environment using `alembic init alembic`
 
-We defined the database connection in the generated alembic.ini `sqlalchemy.url = sqlite:///messager.db`
+* We defined the database connection in the generated alembic.ini `sqlalchemy.url = sqlite:///messager.db`
 
-We updated our alembic [env.py](alembic/env.py) with the following:
-```
-from dotenv import load_dotenv
-...
-from persisty.migration.alembic import get_target_metadata
-...
-# Load environment
-load_dotenv()
-...
-target_metadata = get_target_metadata()
-...
-```
+* We updated our alembic [env.py](alembic/env.py) with the following:
+  ```
+  from dotenv import load_dotenv
+  ...
+  from persisty.migration.alembic import get_target_metadata
+  ...
+  load_dotenv()
+  ...
+  target_metadata = get_target_metadata()
+  ...
+  ```
 
-We generated a migration with `alembic revision --autogenerate -m "Initial Configuration"`
+* We generated a migration with `alembic revision --autogenerate -m "Initial Configuration"`
 
-We added the seed data into the [migration](alembic/versions/d7c34c35b662_initial_configuration.py):
-```
+* We added the seed data into the [migration](alembic/versions/d7c34c35b662_initial_configuration.py):
+  ```
     ...
     def upgrade() -> None:
     ...
     from persisty.migration.alembic import add_seed_data
     add_seed_data(op)
-```
+  ```
 
-We run the resultant migration with `alembic upgrade head`
+* We run the resultant migration with `alembic upgrade head`
+
+## Summary
+
+We now have a version of the application backed by a SQL server,
+so data is persisted between server restarts. This is everything
+required to run the application in a hosted environment (Aside
+from SSL and DNS).
+
+In the next step, we will go back and [deploy to AWS Cloud rather 
+than a hosted environment](../messager_5).

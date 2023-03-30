@@ -1,3 +1,3 @@
-persisty[sql]
+persisty[server,sql]
 bcrypt
 python-dotenv

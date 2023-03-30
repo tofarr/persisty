@@ -1,23 +1,27 @@
 # Persisty Example App : Messager : Part 3
 
-In [the previous step](../messager_2), we secured our application and added an event when messages are
-created. We still don't have a real UI for it though. Even though UI is outside the scope of this project,
-it would be negligent to ignore this completely, so this step adds a very basic UI for the API created
-in the previous step.
+In [the previous step](../messager_5), user SQL as our persistence mechanism.
+In this example we will deploy to AWS: Lambdas are used for actions, SQS for 
+subscriptions, KMS for Keys, and Dynamodb will be used for persistence.
+
+Effectively this means the same application code can be used in test environments,
+hosted environments, and AWS environments.
 
 ## Running the Code
 
 * Clone the git repo `git clone https://github.com/tofarr/persisty.git`
-* Go to the directory `cd persisty/examples/messager_3`
+* Go to the directory `cd persisty/examples/messager_5`
 * Create a virtual environment. (I used [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
   for this)
   * `pip install virtualenvwrapper`
-  * `mkvirtualenv messager_3`
-  * `workon messager_3`
+  * `mkvirtualenv messager_5`
+  * `workon messager_5`
 * Install requirements with `pip install -r requirments.txt`
-* Run the project `python -m main`
+* Generate serverless yml definitions with `python -m servey sls`
 
 ## What is Going On Here...
+
+* 
 
 We added a `static_site` directory to serve html / css / js / images on 
 [https://localhost:8000](https://localhost:8000). This doesn't use any framework, but the

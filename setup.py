@@ -5,7 +5,11 @@ from persisty.__version__ import __version__
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-extras_require = {"sql": ["SQLAlchemy~=1.4"]}
+extras_require = {
+    "sql": ["SQLAlchemy~=1.4"],
+    "server": ["servey[server]~=2.5"],
+    "serverless": ["servey[serverless]~=2.5"]
+}
 
 setuptools.setup(
     name="persisty",
@@ -21,7 +25,7 @@ setuptools.setup(
         "marshy~=3.0",
         "pyaes~=1.6",
         "schemey~=5.7",
-        "servey[dev,server,serverless]~=2.5",
+        "servey~=2.5",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

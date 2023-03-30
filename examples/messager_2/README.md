@@ -14,7 +14,7 @@ the resource definitions, as we consider it to be a separate process conceptuall
   * `mkvirtualenv messager_2`
   * `workon messager_2`
 * Install requirements with `pip install -r requirments.txt`
-* Run the project `python -m servey`
+* Run the project `python -m main`
 
 ## What is Going On Here...
 
