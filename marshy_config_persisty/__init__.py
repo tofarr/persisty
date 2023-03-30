@@ -125,8 +125,8 @@ def configure_celery(context: MarshallerContext):
 
 def configure_serverless(context: MarshallerContext):
     try:
-        from persisty.impl.dynamodb.serverless_config import ServerlessConfig
+        from persisty.migration.serverless.dynamodb_yml_config import DynamodbYmlConfig
 
-        register_impl(YmlConfigABC, ServerlessConfig, context)
+        register_impl(YmlConfigABC, DynamodbYmlConfig, context)
     except ModuleNotFoundError as e:
         raise_non_ignored(e)

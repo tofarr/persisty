@@ -3,7 +3,7 @@ from typing import Optional
 
 from persisty.impl.sqlalchemy.sqlalchemy_context import SqlalchemyContext
 from persisty.impl.sqlalchemy.sqlalchemy_context_factory_abc import (
-    create_default_context,
+    get_default_context,
 )
 from persisty.impl.sqlalchemy.sqlalchemy_table_store import SqlalchemyTableStore
 from persisty.store.restrict_access_store import restrict_access_store
@@ -15,7 +15,7 @@ from persisty.store_meta import StoreMeta
 @dataclass
 class SqlalchemyTableStoreFactory:
     store_meta: StoreMeta
-    context: SqlalchemyContext = field(default_factory=create_default_context)
+    context: SqlalchemyContext = field(default_factory=get_default_context)
 
     def get_meta(self) -> StoreMeta:
         return self.store_meta

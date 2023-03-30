@@ -1,0 +1,69 @@
+# Persisty Example App : Messager : Part 1
+
+This example application allows CRUD / Search / Batch Edit operations on
+user objects. It sets up the basic entities and project structure, but not
+the security constraints (Which are handled in Part 2) or the Html / 
+Javascript client side code (Which is handled in Part 3)
+
+## Running the Code
+
+* Clone the git repo `git clone https://github.com/tofarr/persisty.git`
+* Go to the directory `cd persisty/examples/messager_1`
+* Create a virtual environment. (I used [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
+  for this)
+  * `pip install virtualenvwrapper`
+  * `mkvirtualenv messager_1`
+  * `workon messager_1`
+* Install requirements with `pip install -r requirments.txt`
+* Run the project `python -m servey`
+
+## Understanding what is Going On
+
+* Created a [main.py](main.py) to run the project locally (Which also includes
+  dotenv and loads environment variables from [.env](.env))
+* `SERVEY_MAIN` is set to [messager/](messager). This is the primary module for
+  the project.
+* We define 2 stored entity types. They auto generate ids and timestamps, with
+  constraints on attributes and relations:
+  * [User](messager/models/user.py)
+  * [Message](messager/models/message.py)
+* We define 2 stores for these entities `user_store` and `message_store` in
+  [the stores module](messager/store/__init__.py).
+* We define 2 store factories - these are used to provide external access to the stores:
+  * [user_store_factory](messager/store/user_store_factory.py)
+  * [message_store_factory](messager/store/message_store_factory.py)
+* `add_actions_for_all_store_factories` is called from [the actions module](messager/actions/__init__.py)
+  These will be used to provide CRUD, search, and batch edit operations externally via
+  REST / GraphQL.
+* We add some seed data for testing in seeds:
+  * [user_seeds](seeds/user.json)
+  * [message_seeds](seeds/message.json)
+  
+## Viewing the result
+
+* View the REST API on [http://localhost:8000/docs](http://localhost:8000/docs)
+* View the GraphQL API on [http://localhost:8000/graphiql/](http://localhost:8000/graphiql/)
+  ```
+  query {
+	messageSearch{
+      results{
+        id
+        text
+        createdAt
+        updatedAt
+		author{
+          id
+          emailAddress
+        }
+      }
+      nextPageKey
+    }
+  }
+  ```
+
+## Summary
+
+We have created 2 related entities with external access via REST and GraphQL, but there are no restrictions
+on access to them. Let's add that in the next step
+
+

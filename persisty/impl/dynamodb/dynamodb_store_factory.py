@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Dict, Set, Iterator
+from typing import Optional, Dict, Set, Iterator, List
 
 import boto3
 from schemey import schema_from_type
@@ -90,32 +90,34 @@ class DynamodbStoreFactory:
 
     def create_table_in_aws(self):
         dynamodb = self.get_session().client("dynamodb")
+        kwargs = dict(
+            AttributeDefinitions=self.get_attribute_definitions(),
+            TableName=self.table_name,
+            KeySchema=self.index.to_schema(),
+            BillingMode="PAY_PER_REQUEST",  # Ops teams will want to look at these values
+        )
+        if self.global_secondary_indexes:
+            kwargs["GlobalSecondaryIndexes"] = self.get_global_secondary_indexes()
+        response = dynamodb.create_table(**kwargs)
+        return response
 
+    def get_attribute_definitions(self) -> List[Dict]:
         attrs = {}
         self._attrs(self.index, attrs)
         if self.global_secondary_indexes:
             for index in self.global_secondary_indexes.values():
                 self._attrs(index, attrs)
+        return list(attrs.values())
 
-        kwargs = dict(
-            AttributeDefinitions=list(attrs.values()),
-            TableName=self.table_name,
-            KeySchema=self.index.to_schema(),
-            BillingMode="PAY_PER_REQUEST",  # Ops teams will want to look at these values
-        )
-
-        if self.global_secondary_indexes:
-            kwargs["GlobalSecondaryIndexes"] = [
-                {
-                    "IndexName": k,
-                    "KeySchema": i.to_schema(),
-                    "Projection": {"ProjectionType": "ALL"},
-                }
-                for k, i in (self.global_secondary_indexes or {}).items()
-            ]
-
-        response = dynamodb.create_table(**kwargs)
-        return response
+    def get_global_secondary_indexes(self):
+        return [
+            {
+                "IndexName": k,
+                "KeySchema": i.to_schema(),
+                "Projection": {"ProjectionType": "ALL"},
+            }
+            for k, i in (self.global_secondary_indexes or {}).items()
+        ]
 
     def _attrs(self, index: DynamodbIndex, attrs: Dict):
         attrs[index.pk] = self._attr(index.pk)

@@ -12,6 +12,12 @@ SQL (via SQLAlchemy) and Dynamodb.
 
 ## Concepts
 
+### Stored Items
+
+Stored items are marked by the [stored](persisty/stored.py) decorator.
+This decorator is similar to dataclass, and allows specifying attributes,
+keys, schemas, and indexes.
+
 ### Stores
 
 A [Store](persisty/store/StoreABC.py) provides a unified interface for
