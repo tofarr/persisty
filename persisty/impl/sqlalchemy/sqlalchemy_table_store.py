@@ -76,7 +76,7 @@ class SqlalchemyTableStore(StoreABC):
             return self._read(connection, key_dict)
 
     def _read(self, connection, key_dict: ExternalItemType) -> Optional[Dict]:
-        stmt = self.table.select(whereclause=self._key_where_clause())
+        stmt = self.table.select().where(self._key_where_clause())
         row = connection.execute(stmt, key_dict).first()
         if row:
             item = self._load_row(row)

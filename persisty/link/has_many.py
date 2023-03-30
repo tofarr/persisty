@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from typing import Optional, Type, Generic, TypeVar, ForwardRef
+from typing import Optional, Generic, TypeVar, ForwardRef
 
-import typing_inspect
 from servey.security.authorization import Authorization
 
 from persisty.attr.attr_filter import AttrFilter, AttrFilterOp

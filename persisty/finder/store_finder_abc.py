@@ -18,10 +18,20 @@ class StoreFactoryFinderABC(ABC):
 
 
 def find_stores() -> Iterator[StoreABC]:
+    names = set()
     for finder in get_impls(StoreFactoryFinderABC):
-        yield from finder().find_stores()
+        for store in finder().find_stores():
+            name = store.get_meta().name
+            if name not in names:
+                names.add(name)
+                yield store
 
 
 def find_store_factories() -> Iterator[StoreFactoryABC]:
+    names = set()
     for finder in get_impls(StoreFactoryFinderABC):
-        yield from finder().find_store_factories()
+        for factory in finder().find_store_factories():
+            name = factory.get_meta().name
+            if name not in names:
+                names.add(name)
+                yield factory

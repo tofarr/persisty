@@ -16,6 +16,7 @@ from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.store.restrict_access_store import restrict_access_store
 from persisty.store.schema_validating_store import SchemaValidatingStore
 from persisty.store.store_abc import StoreABC
+from persisty.store.unique_index_store import unique_index_store
 from persisty.store_meta import StoreMeta
 from persisty.util import filter_none
 
@@ -43,6 +44,7 @@ class DynamodbStoreFactory:
         )
         store = SchemaValidatingStore(store)
         store = restrict_access_store(store, self.meta.store_access)
+        store = unique_index_store(store)
         return store
 
     def derive_from_meta(self):

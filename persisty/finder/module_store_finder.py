@@ -36,7 +36,7 @@ class ModuleStoreFinder(StoreFactoryFinderABC):
 
 
 def find_instances_in_module(module, type_) -> Iterator:
-    for name, value in module.__dict__.items():
+    for name, value in list(module.__dict__.items()):
         if isinstance(value, type_):
             yield value
     if not hasattr(module, "__path__"):

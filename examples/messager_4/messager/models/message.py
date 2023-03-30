@@ -1,12 +1,15 @@
 from datetime import datetime
-from typing import ForwardRef, Optional
+from typing import ForwardRef
 from uuid import UUID
 
+from persisty.index import Index
 from persisty.link.belongs_to import BelongsTo
 from persisty.stored import stored
 
 
-@stored
+@stored(indexes=(
+   Index(("author_id",)),
+))
 class Message:
     """Item representing a message object"""
 

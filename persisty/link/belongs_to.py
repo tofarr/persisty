@@ -52,7 +52,7 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
         return result
 
     def arg_extractor(self, obj):
-        return [getattr(obj, self.key_attr_name)]
+        return [str(getattr(obj, self.key_attr_name))]
 
     def __set_name__(self, owner, name):
         self.name = name

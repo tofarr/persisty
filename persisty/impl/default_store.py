@@ -33,9 +33,9 @@ class DefaultStore(WrapperStoreABC[T]):
             factory = DynamodbStoreFactory(self.meta)
             factory.derive_from_meta()
         else:
-            from persisty.io.seed import get_seed_data
+            from persisty.io.seed import get_seed_items
 
-            seed_items = get_seed_data(self.meta)
+            seed_items = get_seed_items(self.meta)
             key_config = self.meta.key_config
             seed_data = {key_config.to_key_str(i): i for i in seed_items}
             factory = MemStoreFactory(self.meta, seed_data)
