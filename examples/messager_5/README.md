@@ -17,7 +17,7 @@ hosted environments, and AWS environments.
   * `mkvirtualenv messager_5`
   * `workon messager_5`
 * Install requirements with `pip install -r requirments.txt`
-* Generate serverless yml definitions with `python -m servey sls`
+* Generate serverless yml definitions with `dotenv run -- python -m servey.servey_aws.serverless`. This creates serverless yml definitions.
 
 ## What is Going On Here...
 

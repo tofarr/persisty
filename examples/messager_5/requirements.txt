@@ -1,2 +1,3 @@
 persisty[serverless]
 bcrypt
+python-dotenv[cli]
