@@ -10,7 +10,6 @@ from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from servey.cache_control.timestamp_cache_control import TimestampCacheControl
 from servey.cache_control.ttl_cache_control import TtlCacheControl
-from servey.servey_aws.serverless.yml_config.yml_config_abc import YmlConfigABC
 
 from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorABC
@@ -125,6 +124,7 @@ def configure_celery(context: MarshallerContext):
 
 def configure_serverless(context: MarshallerContext):
     try:
+        from servey.servey_aws.serverless.yml_config.yml_config_abc import YmlConfigABC
         from persisty.migration.serverless.dynamodb_yml_config import DynamodbYmlConfig
 
         register_impl(YmlConfigABC, DynamodbYmlConfig, context)

@@ -19,17 +19,24 @@ hosted environments, and AWS environments.
 * Install requirements with `pip install -r requirments.txt`
 * Generate serverless yml definitions with `dotenv run -- python -m servey.servey_aws.serverless`. This creates serverless yml definitions.
 
-## What is Going On Here...
+## Deploying to AWS
 
-* 
+### Install serverless / serverless plugins:
 
-We added a `static_site` directory to serve html / css / js / images on 
-[https://localhost:8000](https://localhost:8000). This doesn't use any framework, but the
-accessibility of the UI (GraphQL or REST with OpenAPI) should make it compatible with
-many client side frameworks.
+```
+npm install serverless
+npm install serverless-python-requirements
+npm install serverless-prune-plugin
+npm install serverless-appsync-plugin
+```
 
-* Login with `admin` / `Password123!` ![Login](readme/login.png)
-* The Main UI should allow viewing and posting messages ![Main UI](readme/main_ui.png)
+### Deploy the serverless project:
+
+`sls deploy`
+
+
+This process typically takes a few minutes. Since this project does not define any Route53 or Cloudfront resources,
+your API will only have the standard amazon URLs for access.
 
 ## Summary
 

@@ -49,7 +49,6 @@ class DynamodbYmlConfig(YmlConfigABC):
                 "Type": "AWS::DynamoDB::Table",
                 "Properties": {
                     "TableName": factory.table_name,
-                    "Description": factory.meta.description,
                     "AttributeDefinitions": factory.get_attribute_definitions(),
                     "KeySchema": factory.index.to_schema(),
                     "GlobalSecondaryIndexes": factory.get_global_secondary_indexes(),
@@ -61,32 +60,32 @@ class DynamodbYmlConfig(YmlConfigABC):
         }
 
     def build_dynamodb_role_statement_yml(self) -> ExternalItemType:
-        resources = []
+        iam_role_statements = []
         for factory in self.get_dynamodb_store_factories():
             resource_name = factory.table_name.title().replace('_', '')
-            resources.append({
-                "Fn::GetAtt": [resource_name, "Arn"]
-            })
+            iam_role_statements.append(self._iam_role_statement({"Fn::GetAtt": [resource_name, "Arn"]}))
             for index_name, index in factory.global_secondary_indexes.items():
-                resources.append({
+                iam_role_statements.append(self._iam_role_statement({
                     "Fn::Join": ["/", [{"Fn::GetAtt": [resource_name, "Arn"]}, "index", index_name]]
-                })
-
+                }))
         return {
-            "iamRoleStatements": [
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "dynamodb:DescribeTable",
-                        "dynamodb:Query",
-                        "dynamodb:Scan",
-                        "dynamodb:BatchGetItem",
-                        "dynamodb:GetItem",
-                        "dynamodb:PutItem",
-                        "dynamodb:UpdateItem",
-                        "dynamodb:DeleteItem",
-                    ],
-                    "Resource": resources
-                }
-            ]
+            "iamRoleStatements": iam_role_statements
         }
+
+    @staticmethod
+    def _iam_role_statement(resource):
+        result = {
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:DescribeTable",
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:BatchGetItem",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+            ],
+            "Resource": resource
+        }
+        return result
