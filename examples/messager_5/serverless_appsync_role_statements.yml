@@ -1,0 +1,6 @@
+iamRoleStatements:
+- Effect: Allow
+  Action:
+  - appsync:ListGraphqlApis
+  - appsync:ListApiKeys
+  Resource: "*"

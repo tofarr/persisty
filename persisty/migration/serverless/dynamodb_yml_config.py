@@ -60,16 +60,30 @@ class DynamodbYmlConfig(YmlConfigABC):
         }
 
     def build_dynamodb_role_statement_yml(self) -> ExternalItemType:
-        iam_role_statements = []
+        resources = []
         for factory in self.get_dynamodb_store_factories():
             resource_name = factory.table_name.title().replace('_', '')
-            iam_role_statements.append(self._iam_role_statement({"Fn::GetAtt": [resource_name, "Arn"]}))
+            resources.append({"Fn::GetAtt": [resource_name, "Arn"]})
             for index_name, index in factory.global_secondary_indexes.items():
-                iam_role_statements.append(self._iam_role_statement({
+                resources.append({
                     "Fn::Join": ["/", [{"Fn::GetAtt": [resource_name, "Arn"]}, "index", index_name]]
-                }))
+                })
+        iam_role_statement = {
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:DescribeTable",
+                "dynamodb:Query",
+                "dynamodb:Scan",
+                "dynamodb:BatchGetItem",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+            ],
+            "Resource": resources
+        }
         return {
-            "iamRoleStatements": iam_role_statements
+            "iamRoleStatements": [iam_role_statement]
         }
 
     @staticmethod

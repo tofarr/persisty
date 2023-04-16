@@ -47,7 +47,7 @@ the resource definitions, as we consider it to be a separate process conceptuall
   * Create a second mesage ![Second message](readme/create_second_message.png)
     `{
       "item": {
-        "text": "This is a second test message!"
+        "message_text": "This is a second test message!"
       }
     }`
   * Note the message that was received over websocket ![received message](readme/received_message.png)

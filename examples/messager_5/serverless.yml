@@ -1,0 +1,64 @@
+service: Messager
+package:
+  exclude:
+  - aws/**
+  - node_modules/**
+  - venv/**
+  - .venv/**
+  - tests/**
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  stage: dev
+  environment:
+    LOG_LEVEL: INFO
+    KMS_KEY_ID: serveyKmsKey
+    CONNECTION_TABLE_NAME: servey_app_connection
+    SERVEY_MAIN: messager
+  iamRoleStatements:
+  - ${file(serverless_servey/subscriptions_role_statement.yml):iamRoleStatements.0,
+    ''}
+  - ${file(serverless_servey/kms_role_statement.yml):iamRoleStatements.0, ''}
+  - ${file(serverless_servey/dynamodb_role_statement.yml):iamRoleStatements.0, ''}
+  - ${file(serverless_appsync_role_statements.yml):iamRoleStatements.0, ''}
+custom:
+  pythonRequirements:
+    useDownloadCache: false
+    useStaticCache: false
+    dockerizePip: true
+  prune:
+    automatic: true
+    number: 3
+  staticBucket: bml61fjmm4w
+  appSync:
+  - ${file(serverless_servey/appsync.yml)}
+  s3Sync:
+  - bucketName: ${self:custom.staticBucket}
+    localDir: static_site
+  seed:
+    user:
+      table: user
+      sources:
+      - seeds/user.json
+    message:
+      table: message
+      sources:
+      - seeds/message.json
+plugins:
+- serverless-python-requirements
+- serverless-prune-plugin
+- serverless-appsync-plugin
+- serverless-s3-sync
+- serverless-dynamodb-seed
+# - serverless-api-gateway-caching
+functions:
+- ${file(serverless_servey/subscriptions_handlers.yml)}
+- ${file(serverless_servey/actions.yml)}
+resources:
+- ${file(serverless_servey/subscriptions_resources.yml)}
+- ${file(serverless_servey/static_site_bucket_resource.yml)}
+- ${file(serverless_servey/cloudfront_resource.yml)}
+- ${file(serverless_servey/kms_resource.yml)}
+- ${file(serverless_servey/dynamodb_resource.yml)}
+appSync: ${file(serverless_servey/appsync.yml)}

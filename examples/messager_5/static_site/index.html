@@ -135,7 +135,7 @@
             element.className = 'message'
             element.getElementsByClassName("messageAuthor")[0].appendChild(document.createTextNode(message.author.username))
             element.getElementsByClassName("messageCreatedAt")[0].appendChild(document.createTextNode(new Date(message.createdAt).toLocaleString()))
-            element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.text))
+            element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.messageText))
             const messageContent= document.createElement('div')
             messageContent.className = 'messageContent'
             return element
@@ -146,7 +146,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`
+                    'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`,
+                    'x-api-key': sessionStorage.getItem('x-api-key')
                 },
                 body: JSON.stringify({
                     query: `
@@ -155,7 +156,7 @@
                           nextPageKey
                         results{
                             id
-                            text
+                            messageText
                             createdAt
                             author{
                               id
@@ -190,6 +191,12 @@
             loadAndRenderMoreMessages(null)
         }
 
+        async function handleRetrieveApiKey(){
+            const response = await fetch('actions/get-appsync-api-key')
+            const api_key = await response.json()
+            sessionStorage.setItem('x-api-key', api_key)
+        }
+
         function handleLogin(){
             fetch('actions/login', {
                 method: 'POST',
@@ -200,7 +207,7 @@
             }).then(response => response.json()).then(body => {
                 if (body) {
                     sessionStorage.setItem('authorization', body)
-                    loadAndRenderMessages()
+                    handleRetrieveApiKey().then(loadAndRenderMessages)
                 } else {
                     alert('Uncorrect Username or Password')
                 }
@@ -239,7 +246,7 @@
                 },
                 body: JSON.stringify({
                     item: {
-                        text: document.getElementById('messageText').value
+                        message_text: document.getElementById('messageText').value
                     }
                 })
             }).then(response => response.json()).then(loadAndRenderMessages)

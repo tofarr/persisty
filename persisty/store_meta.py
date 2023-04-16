@@ -56,7 +56,7 @@ class StoreMeta:
         attrs = (a for a in self.attrs if a.creatable)
         return self._get_dataclass(
             "_create_dataclass",
-            self.name.title().replace("_", "") + "CreateInput",
+            self.name.title().replace("_", "") + "Create",
             attrs,
         )
 
@@ -64,7 +64,7 @@ class StoreMeta:
         attrs = (a for a in self.attrs if a.updatable)
         return self._get_dataclass(
             "_update_dataclass",
-            self.name.title().replace("_", "") + "UpdateInput",
+            self.name.title().replace("_", "") + "Update",
             attrs,
         )
 

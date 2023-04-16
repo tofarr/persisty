@@ -12,7 +12,7 @@ class Message:
     """Item representing a message object"""
 
     id: UUID
-    text: str
+    message_text: str
     created_at: datetime
     updated_at: datetime
     author_id: UUID

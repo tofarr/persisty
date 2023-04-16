@@ -7,8 +7,8 @@ with open("README.md", "r") as fh:
 
 extras_require = {
     "sql": ["SQLAlchemy~=1.4"],
-    "server": ["servey[server]~=2.6"],
-    "serverless": ["servey[serverless]~=2.6"]
+    "server": ["servey[server]~=2.7"],
+    "serverless": ["servey[serverless]~=2.7"]
 }
 
 setuptools.setup(
@@ -25,7 +25,7 @@ setuptools.setup(
         "marshy~=3.0",
         "pyaes~=1.6",
         "schemey~=5.7",
-        "servey~=2.6",
+        "servey~=2.7",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
