@@ -1,7 +1,9 @@
 import os
 from dataclasses import Field, MISSING
+from enum import Enum
 from typing import Optional, Tuple
 
+from marshy.factory.optional_marshaller_factory import get_optional_type
 from schemey import SchemaContext, get_default_schema_context
 
 from servey.cache_control.cache_control_abc import CacheControlABC
@@ -105,16 +107,25 @@ def stored(
                 else:
                     create_generator = DefaultValueGenerator(value)
             db_type = attr_type(type_)
-            permitted_filter_ops = (
-                TYPE_FILTER_OPS.get(db_type) or DEFAULT_PERMITTED_FILTER_OPS
-            )
+            try:
+                is_enum = issubclass(get_optional_type(type_), Enum)
+            except:
+                is_enum = False
+            if is_enum:
+                permitted_filter_ops = DEFAULT_PERMITTED_FILTER_OPS
+                sortable = False
+            else:
+                permitted_filter_ops = (
+                    TYPE_FILTER_OPS.get(db_type) or DEFAULT_PERMITTED_FILTER_OPS
+                )
+                sortable = os.environ.get('PERSISTY_ATTRS_SORTABLE') == '1' and db_type in SORTABLE_TYPES
             attr = Attr(
                 name=name,
                 attr_type=db_type,
                 schema=schema,
                 creatable=creatable,
                 updatable=updatable,
-                sortable=os.environ.get('PERSISTY_ATTRS_SORTABLE') == '1' and db_type in SORTABLE_TYPES,
+                sortable=sortable,
                 create_generator=create_generator,
                 update_generator=update_generator,
                 permitted_filter_ops=permitted_filter_ops,

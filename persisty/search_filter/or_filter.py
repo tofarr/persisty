@@ -18,7 +18,10 @@ class Or(SearchFilterABC[T]):
             return EXCLUDE_ALL
         elif len(search_filters) == 1:
             return search_filters[0]
-        flatten = next((True for f in search_filters if isinstance(f, Or)), False)
+        flatten = next((
+            True for f in search_filters
+            if isinstance(f, Or) or f is INCLUDE_ALL or f is EXCLUDE_ALL
+        ), False)
         if flatten:
             existing = set()
             flattened = []

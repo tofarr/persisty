@@ -94,7 +94,7 @@ def action_for_update(
     ) -> Optional[item_type]:
         store_meta.key_config.from_key_str(key, item)
         store = store_factory.create(authorization)
-        search_filter = precondition.to_search_filter() if precondition else INCLUDE_ALL
+        search_filter = _create_search_filter(search_filter_type, precondition)
         updated = store.update(item, search_filter)
         return updated
 
@@ -152,9 +152,7 @@ def action_for_search(
         authorization: Optional[Authorization] = None,
     ) -> result_set_type:
         store = store_factory.create(authorization)
-        search_filter = (
-            search_filter.to_search_filter() if search_filter else INCLUDE_ALL
-        )
+        search_filter = _create_search_filter(search_filter_type, search_filter)
         if search_order:
             # noinspection PyArgumentList,PyDataclass
             search_order = search_order_type(
@@ -214,9 +212,7 @@ def action_for_count(
         authorization: Optional[Authorization] = None,
     ) -> int:
         store = store_factory.create(authorization)
-        search_filter = (
-            search_filter.to_search_filter() if search_filter else INCLUDE_ALL
-        )
+        search_filter = _create_search_filter(search_filter_type, search_filter)
         result = store.count(search_filter)
         return result
 
@@ -328,3 +324,17 @@ def _to_action_fn(meta: StoreMeta, link: LinkABC):
     )
 
     return wrapped
+
+
+def _create_search_filter(search_filter_factory_type, search_filter_input):
+    # Since this may be from graphql, it may not actually be the class we expect, so we
+    # replace the instance
+    if not search_filter_input:
+        return INCLUDE_ALL
+    kwargs = {
+        f.name: getattr(search_filter_input, f.name)
+        for f in dataclasses.fields(search_filter_input)
+    }
+    search_filter_factory = search_filter_factory_type(**kwargs)
+    search_filter = search_filter_factory.to_search_filter()
+    return search_filter

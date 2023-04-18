@@ -1,4 +1,5 @@
 from dataclasses import dataclass, Field, field
+from enum import Enum
 from typing import Optional, Tuple
 
 from schemey import Schema, schema_from_type
@@ -53,6 +54,8 @@ class Attr:
             return value
         type_ = ATTR_TYPE_MAP[self.attr_type]
         if isinstance(value, type_):
+            return value
+        elif isinstance(value, Enum) and isinstance(value.value, type_):
             return value
         value = type_(value)
         return value
