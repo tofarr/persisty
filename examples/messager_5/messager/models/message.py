@@ -1,12 +1,15 @@
 from datetime import datetime
-from typing import ForwardRef, Optional
+from typing import ForwardRef
 from uuid import UUID
 
+from persisty.impl.dynamodb.partition_sort_index import PartitionSortIndex
 from persisty.link.belongs_to import BelongsTo
 from persisty.stored import stored
 
 
-@stored
+@stored(
+    indexes=(PartitionSortIndex(('author_id', 'created_at')),)
+)
 class Message:
     """Item representing a message object"""
 

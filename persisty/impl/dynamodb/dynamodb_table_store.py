@@ -12,7 +12,7 @@ from marshy.types import ExternalItemType
 from persisty.attr.attr import Attr
 from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorABC
 from persisty.errors import PersistyError
-from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex
+from persisty.impl.dynamodb.partition_sort_index import PartitionSortIndex
 from persisty.search_filter.and_filter import And
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
@@ -46,8 +46,8 @@ class DynamodbTableStore(StoreABC[T]):
 
     meta: StoreMeta
     table_name: str
-    index: DynamodbIndex
-    global_secondary_indexes: Dict[str, DynamodbIndex] = field(default_factory=dict)
+    index: PartitionSortIndex
+    global_secondary_indexes: Dict[str, PartitionSortIndex] = field(default_factory=dict)
     aws_profile_name: Optional[str] = None
     region_name: Optional[str] = None
     decimal_format: str = "%.9f"
@@ -163,7 +163,7 @@ class DynamodbTableStore(StoreABC[T]):
             search_order.validate_for_attrs(self.meta.attrs)
         if search_filter is EXCLUDE_ALL:
             return ResultSet([])
-        index_name, condition, filter_expression, handled = self.to_dynamodb_filter(
+        index_name, condition, filter_expression, handled, descending = self.to_dynamodb_filter(
             search_filter
         )
         query_args = filter_none(
@@ -178,6 +178,8 @@ class DynamodbTableStore(StoreABC[T]):
                 "Limit": limit,
             }
         )
+        if descending:
+            query_args["ScanIndexForward"] = False
         if page_key:
             query_args["ExclusiveStartKey"] = self.meta.key_config.to_key_dict(page_key)
         table = self._dynamodb_table()
@@ -208,7 +210,7 @@ class DynamodbTableStore(StoreABC[T]):
         search_filter = search_filter.lock_attrs(self.meta.attrs)
         if search_filter is EXCLUDE_ALL:
             return 0
-        index_name, condition, filter_expression, handled = self.to_dynamodb_filter(
+        index_name, condition, filter_expression, handled, _ = self.to_dynamodb_filter(
             search_filter
         )
         if not handled:
@@ -356,19 +358,20 @@ class DynamodbTableStore(StoreABC[T]):
             return item
 
     def to_dynamodb_filter(
-        self, search_filter: SearchFilterABC
-    ) -> Tuple[Optional[str], Optional[ConditionBase], Optional[ConditionBase], bool]:
+        self,
+        search_filter: SearchFilterABC,
+    ) -> Tuple[Optional[str], Optional[ConditionBase], Optional[ConditionBase], bool, bool]:
         eq_filters = _get_top_level_eq_filters(search_filter)
         if not eq_filters:
             filter_expression, handled = search_filter.build_filter_expression(
                 self.meta.attrs
             )
-            return None, None, filter_expression, handled
+            return None, None, filter_expression, handled, False
         index_name, index = self.get_index_for_eq_filters(eq_filters)
         filter_expression = None
         handled = False
         if index:
-            index_condition, search_filter, index_handled = _separate_index_filters(
+            index_condition, search_filter, index_handled, reverse = _separate_index_filters(
                 index, eq_filters
             )
             if search_filter:
@@ -382,16 +385,17 @@ class DynamodbTableStore(StoreABC[T]):
                 index_condition,
                 filter_expression,
                 handled and index_handled,
+                reverse
             )
         if search_filter:
             filter_expression, handled = search_filter.build_filter_expression(
                 self.meta.attrs
             )
-        return None, None, filter_expression, handled
+        return None, None, filter_expression, handled, False
 
     def get_index_for_eq_filters(
         self, eq_filters: List[AttrFilter]
-    ) -> Tuple[Optional[str], Optional[DynamodbIndex]]:
+    ) -> Tuple[Optional[str], Optional[PartitionSortIndex]]:
         attr_names = {f.name for f in eq_filters}
         if self.index.pk in attr_names:
             return None, self.index
@@ -447,8 +451,8 @@ def _is_eq_filter(search_filter: SearchFilterABC) -> bool:
 
 
 def _separate_index_filters(
-    index: DynamodbIndex, eq_filters: List[AttrFilter]
-) -> Tuple[ConditionBase, SearchFilterABC, bool]:
+    index: PartitionSortIndex, eq_filters: List[AttrFilter]
+) -> Tuple[ConditionBase, SearchFilterABC, bool, bool]:
     index_filters = [f for f in eq_filters if f.name == index.pk]
     value = index_filters[0].value
     if value.__class__ not in (str, int, float, bool):
@@ -459,4 +463,4 @@ def _separate_index_filters(
     if non_index_filters:
         non_index_filter = And(non_index_filters)
     handled = len(index_filters) == 1
-    return condition, non_index_filter, handled
+    return condition, non_index_filter, handled, index.descending

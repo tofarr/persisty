@@ -12,6 +12,8 @@ from persisty.impl.sqlalchemy.sqlalchemy_column_converter import (
 from persisty.impl.sqlalchemy.sqlalchemy_constraint_converter import (
     SqlalchemyConstraintConverter,
 )
+from persisty.index.attr_index import AttrIndex
+from persisty.index.unique_index import UniqueIndex
 from persisty.store_meta import StoreMeta
 
 
@@ -39,13 +41,21 @@ class SqlalchemyTableConverter:
             columns_by_name[attr_.name] = column
             args.append(column)
         for index in store_meta.indexes:
-            name = f"idx_{'__'.join(index.attr_names)}"
+            if isinstance(index, AttrIndex):
+                name = f"idx_{index.attr_name}"
+                index_cols = [columns_by_name[index.attr_name]]
+                unique = False
+            elif isinstance(index, UniqueIndex):
+                name = f"idx_{'__'.join(index.attr_names)}"
+                index_cols = [columns_by_name[a] for a in index.attr_names]
+                unique = True
+            else:
+                continue
             if len(name) > 62:
                 name = base64.b64decode(hashlib.md5(name.encode("UTF-8"))).decode(
                     "UTF-8"
                 )
-            index_cols = [columns_by_name[a] for a in index.attr_names]
-            index_obj = Index(name, *index_cols, unique=index.unique)
+            index_obj = Index(name, *index_cols, unique=unique)
             indexes.append(index_obj)
 
         constraint_factory = SqlalchemyConstraintConverter(self.schema)

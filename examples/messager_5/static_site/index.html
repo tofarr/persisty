@@ -152,7 +152,7 @@
                 body: JSON.stringify({
                     query: `
                       query($pageKey: String) {
-                        messageSearch(pageKey: $pageKey, limit: 10, searchOrder: { attr:updated_at, desc: true}) {
+                        messageSearch(pageKey: $pageKey, limit: 10) {
                           nextPageKey
                         results{
                             id

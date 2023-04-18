@@ -85,7 +85,6 @@ class SqlalchemyTableStore(StoreABC):
     def read_batch(self, keys: List[str]) -> List[Optional[T]]:
         with self.engine.begin() as connection:
             key_config = self.meta.key_config
-            stored_dataclass = self.meta.get_stored_dataclass()
             key_objs = [key_config.to_key_dict(key) for key in keys]
             items = self._read_batch(connection, key_objs)
             items_by_key = {key_config.to_key_str(item): item for item in items}

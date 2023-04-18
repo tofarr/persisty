@@ -14,8 +14,8 @@ class SearchOrderAttr(Generic[T]):
     desc: bool = False
 
     def validate_for_attrs(self, attrs: Tuple[Attr, ...]):
-        for f in attrs:
-            if f.name == self.attr:
+        for a in attrs:
+            if a.name == self.attr and a.sortable:
                 return
         raise ValueError(f"search_order_invalid:{self.attr}")
 

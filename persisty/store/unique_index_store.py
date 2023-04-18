@@ -6,7 +6,7 @@ from persisty.attr.attr_filter_op import AttrFilterOp
 from persisty.batch_edit import BatchEdit
 from persisty.batch_edit_result import BatchEditResult
 from persisty.errors import PersistyError
-from persisty.index import Index
+from persisty.index.unique_index import UniqueIndex
 from persisty.search_filter.and_filter import And
 from persisty.store.store_abc import StoreABC, T
 from persisty.store.wrapper_store_abc import WrapperStoreABC
@@ -16,7 +16,7 @@ from persisty.util import UNDEFINED
 @dataclass
 class UniqueIndexStore(WrapperStoreABC[T]):
     store: StoreABC[T]
-    unique_indexes: Tuple[Index, ...]
+    unique_indexes: Tuple[UniqueIndex, ...]
 
     def get_store(self) -> StoreABC[T]:
         return self.store
@@ -78,7 +78,7 @@ class UniqueIndexStore(WrapperStoreABC[T]):
 
 def unique_index_store(store: StoreABC):
     meta = store.get_meta()
-    unique_indexes = tuple(i for i in meta.indexes if i.unique)
+    unique_indexes = tuple(i for i in meta.indexes if isinstance(i, UniqueIndex))
     if unique_indexes:
         return UniqueIndexStore(store, unique_indexes)
     return store

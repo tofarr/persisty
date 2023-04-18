@@ -18,6 +18,9 @@ from persisty.attr.generator.timestamp_generator import TimestampGenerator
 from persisty.attr.generator.uuid_generator import UuidGenerator
 from persisty.finder.module_store_finder import ModuleStoreFinder
 from persisty.finder.store_finder_abc import StoreFactoryFinderABC
+from persisty.index.attr_index import AttrIndex
+from persisty.index.index_abc import IndexABC
+from persisty.index.unique_index import UniqueIndex
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
@@ -47,6 +50,7 @@ def configure(context: MarshallerContext):
     configure_key_configs(context)
     configure_attr_value_generator(context)
     configure_cache_control(context)
+    configure_indexes(context)
     configure_links(context)
     configure_finders(context)
 
@@ -84,6 +88,16 @@ def configure_cache_control(context: MarshallerContext):
     register_impl(CacheControlABC, TtlCacheControl, context)
 
 
+def configure_indexes(context: MarshallerContext):
+    register_impl(IndexABC, AttrIndex, context)
+    register_impl(IndexABC, UniqueIndex, context)
+    try:
+        from persisty.impl.dynamodb.partition_sort_index import PartitionSortIndex
+        register_impl(IndexABC, PartitionSortIndex, context)
+    except ImportError as e:
+        raise_non_ignored(e)
+
+
 def configure_links(context: MarshallerContext):
     register_impl(LinkABC, BelongsTo, context)
     register_impl(LinkABC, HasMany, context)
@@ -97,7 +111,7 @@ def configure_sqlalchemy(context: MarshallerContext):
 
         sqlalchemy_config.configure_converters(context)
         sqlalchemy_config.configure_sqlalchemy_context(context)
-    except ModuleNotFoundError as e:
+    except ImportError as e:
         msg = str(e)
         if msg.startswith("No module named '"):
             module_name = msg[len("No module named '"):-1]
@@ -118,7 +132,7 @@ def configure_celery(context: MarshallerContext):
         )
 
         register_impl(CeleryConfigABC, CeleryStoreTriggerConfig, context)
-    except ModuleNotFoundError as e:
+    except ImportError as e:
         raise_non_ignored(e)
 
 
@@ -128,5 +142,5 @@ def configure_serverless(context: MarshallerContext):
         from persisty.migration.serverless.dynamodb_yml_config import DynamodbYmlConfig
 
         register_impl(YmlConfigABC, DynamodbYmlConfig, context)
-    except ModuleNotFoundError as e:
+    except ImportError as e:
         raise_non_ignored(e)

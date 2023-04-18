@@ -10,7 +10,7 @@ from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 
 from persisty.attr.attr import Attr
-from persisty.index import Index
+from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import ATTR_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
@@ -36,7 +36,7 @@ class StoreMeta:
     batch_size: int = 100
     description: Optional[str] = None
     links: Tuple[LinkABC, ...] = tuple()
-    indexes: Tuple[Index, ...] = tuple()
+    indexes: Tuple[IndexABC, ...] = tuple()
 
     def get_stored_dataclass(self) -> Type:
         return self._get_dataclass(

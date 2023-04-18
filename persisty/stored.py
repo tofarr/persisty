@@ -1,3 +1,4 @@
+import os
 from dataclasses import Field, MISSING
 from typing import Optional, Tuple
 
@@ -15,7 +16,7 @@ from persisty.attr.generator.defaults import (
     get_default_generator_for_update,
 )
 from persisty.errors import PersistyError
-from persisty.index import Index
+from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
@@ -31,7 +32,7 @@ def stored(
     cache_control: Optional[CacheControlABC] = None,
     batch_size: int = 100,
     schema_context: Optional[SchemaContext] = None,
-    indexes: Tuple[Index, ...] = tuple(),
+    indexes: Tuple[IndexABC, ...] = tuple(),
 ):
     """Decorator inspired by dataclasses, containing stored meta."""
     if schema_context is None:
@@ -113,7 +114,7 @@ def stored(
                 schema=schema,
                 creatable=creatable,
                 updatable=updatable,
-                sortable=db_type in SORTABLE_TYPES,
+                sortable=os.environ.get('PERSISTY_ATTRS_SORTABLE') == '1' and db_type in SORTABLE_TYPES,
                 create_generator=create_generator,
                 update_generator=update_generator,
                 permitted_filter_ops=permitted_filter_ops,

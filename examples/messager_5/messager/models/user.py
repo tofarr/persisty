@@ -6,14 +6,14 @@ from uuid import UUID
 from schemey.schema import str_schema
 from schemey.string_format import StringFormat
 
-from persisty.index import Index
+from persisty.index.attr_index import AttrIndex
 from persisty.link.has_count import HasCount
 from persisty.link.has_many import HasMany
 from persisty.attr.attr import Attr
 from persisty.stored import stored
 
 
-@stored(indexes=(Index(("username",)),))
+@stored(indexes=(AttrIndex(("username",)),))
 class User:
     """Item representing a user object"""
 

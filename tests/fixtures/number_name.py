@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from marshy import dump
 
+from persisty.attr.attr import Attr
 from persisty.stored import stored
 
 
@@ -12,7 +13,7 @@ class NumberName:
 
     id: UUID
     title: str
-    value: int
+    value: int = Attr(sortable=True)
     created_at: datetime
     updated_at: datetime
 

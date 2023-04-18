@@ -518,7 +518,7 @@ SUPER_BOWL_RESULT_DICTS = [
 @stored(key_config=AttrKeyConfig("code", AttrType.STR))
 class SuperBowlResult:
     code: str = Attr()
-    year: int = Attr(schema=int_schema(minimum=1967))
+    year: int = Attr(schema=int_schema(minimum=1967), sortable=True)
     date: datetime
     winner_code: str
     runner_up_code: str

@@ -1,4 +1,6 @@
 import dataclasses
+import inspect
+from inspect import Signature
 from typing import Type, Optional, List
 
 from servey.action.action import Action, action, get_action
@@ -124,7 +126,7 @@ def action_for_delete(store_factory: StoreFactoryABC) -> Action:
 def action_for_search(
     store_factory: StoreFactoryABC,
     item_type: Type,
-    search_filter_type: Type[SearchFilterFactoryABC],
+    search_filter_type: Optional[Type[SearchFilterFactoryABC]],
     search_order_type: Type[SearchOrderFactoryABC],
 ) -> Action:
     store_meta = store_factory.get_meta()
@@ -170,6 +172,23 @@ def action_for_search(
             next_page_key=result_set.next_page_key,
         )
         return result_set
+
+    if search_order_type is None:
+        sig = inspect.signature(search)
+        sig = sig.replace(parameters=[p for p in sig.parameters.values() if p.name != 'search_order'])
+        search.__signature__ = sig
+
+    search = action(
+        fn=search,
+        name=f"{store_meta.name}_search",
+        description=f"Run a search in {store_meta.name}",
+        triggers=(
+            WebTrigger(
+                WebTriggerMethod.GET,
+                f"/actions/{store_meta.name.replace('_', '-')}-search",
+            ),
+        ),
+    )
 
     return get_action(search)
 

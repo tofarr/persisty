@@ -8,7 +8,7 @@ from marshy.types import ExternalItemType
 from persisty.attr.attr import Attr
 from persisty.attr.attr_type import AttrType
 from persisty.attr.generator.default_value_generator import DefaultValueGenerator
-from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex
+from persisty.impl.dynamodb.partition_sort_index import PartitionSortIndex
 from persisty.impl.dynamodb.dynamodb_store_factory import DynamodbStoreFactory
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.composite_key_config import CompositeKeyConfig
@@ -134,8 +134,8 @@ class TestDynamodbStore(TestCase, StoreTstABC):
         store_meta = get_meta(Tag)
         store_factory = DynamodbStoreFactory(
             meta=store_meta,
-            index=DynamodbIndex("pk", "sk"),
-            global_secondary_indexes=dict(gix__sk__pk=DynamodbIndex("sk", "pk")),
+            index=PartitionSortIndex("pk", "sk"),
+            global_secondary_indexes=dict(gix__sk__pk=PartitionSortIndex("sk", "pk")),
         )
         tags = list(
             dump(

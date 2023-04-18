@@ -6,13 +6,19 @@ from marshy.types import ExternalItemType
 
 from persisty.attr.attr import Attr
 from persisty.impl.dynamodb.dynamodb_key_config import DynamodbKeyConfig
+from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import AttrKeyConfig
 
 
 @dataclass(frozen=True)
-class DynamodbIndex:
+class PartitionSortIndex(IndexABC):
+    """
+    Index which functions similarly to an AttrIndex, but has an optional sort key (Useful for dynamodb)
+    Sql tables treat this as an attr index
+    """
     pk: str
     sk: Optional[str] = None
+    descending: bool = False
 
     def to_schema(self):
         schema = [dict(AttributeName=self.pk, KeyType="HASH")]
@@ -52,11 +58,11 @@ class DynamodbIndex:
 
 def from_schema(schema: List[Dict]):
     assert len(schema) == 1 or len(schema) == 2
-    index = DynamodbIndex(
+    index = PartitionSortIndex(
         pk=next(a["AttributeName"] for a in schema if a["KeyType"] == "HASH"),
         sk=next((a["AttributeName"] for a in schema if a["KeyType"] == "RANGE"), None),
     )
     return index
 
 
-ID_INDEX = DynamodbIndex("id")
+ID_INDEX = PartitionSortIndex("id")

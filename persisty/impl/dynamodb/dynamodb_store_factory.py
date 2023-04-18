@@ -8,8 +8,9 @@ from persisty.attr.attr import Attr
 from persisty.attr.attr_filter_op import TYPE_FILTER_OPS
 from persisty.attr.attr_type import attr_type, AttrType
 from persisty.errors import PersistyError
-from persisty.impl.dynamodb.dynamodb_index import DynamodbIndex, from_schema
+from persisty.impl.dynamodb.partition_sort_index import PartitionSortIndex, from_schema
 from persisty.impl.dynamodb.dynamodb_table_store import DynamodbTableStore
+from persisty.index.attr_index import AttrIndex
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
@@ -27,8 +28,8 @@ class DynamodbStoreFactory:
     aws_profile_name: Optional[str] = None
     region_name: Optional[str] = None
     table_name: Optional[str] = None
-    index: Optional[DynamodbIndex] = None
-    global_secondary_indexes: Optional[Dict[str, DynamodbIndex]] = None
+    index: Optional[PartitionSortIndex] = None
+    global_secondary_indexes: Optional[Dict[str, PartitionSortIndex]] = None
 
     def get_meta(self) -> StoreMeta:
         return self.meta
@@ -54,13 +55,17 @@ class DynamodbStoreFactory:
         if self.index is None:
             key_config = meta.key_config
             key_config_attrs = list(_get_attrs_from_key(key_config))
-            self.index = DynamodbIndex(*key_config_attrs)
+            self.index = PartitionSortIndex(*key_config_attrs)
         if self.global_secondary_indexes is None:
-            self.global_secondary_indexes = {
-                f"gix__{'__'.join(index.attr_names)}": DynamodbIndex(*index.attr_names)
-                for index in meta.indexes
-            }
-            # Dynamodb doesn't support unique indexes on gsis, so if these are specified we'll have to check in edit
+            self.global_secondary_indexes = {}
+            for index in meta.indexes:
+                if isinstance(index, AttrIndex):
+                    self.global_secondary_indexes[f"gix__{index.attr_name}"] = PartitionSortIndex(index.attr_name)
+                elif isinstance(index, PartitionSortIndex):
+                    if index.sk:
+                        self.global_secondary_indexes[f"gix__{index.pk}__{index.sk}"] = index
+                    else:
+                        self.global_secondary_indexes[f"gix__{index.pk}"] = index
 
     def get_session(self):
         kwargs = filter_none(
@@ -121,7 +126,7 @@ class DynamodbStoreFactory:
             for k, i in (self.global_secondary_indexes or {}).items()
         ]
 
-    def _attrs(self, index: DynamodbIndex, attrs: Dict):
+    def _attrs(self, index: PartitionSortIndex, attrs: Dict):
         attrs[index.pk] = self._attr(index.pk)
         if index.sk:
             attrs[index.sk] = self._attr(index.sk)
@@ -133,7 +138,7 @@ class DynamodbStoreFactory:
         )
 
 
-def _remove_index(indexed_attrs: Set[str], index: DynamodbIndex):
+def _remove_index(indexed_attrs: Set[str], index: PartitionSortIndex):
     indexed_attrs.remove(index.pk)
     if index.sk:
         indexed_attrs.remove(index.sk)
