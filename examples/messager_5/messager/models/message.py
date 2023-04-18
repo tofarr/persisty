@@ -12,7 +12,7 @@ from messager.models.message_state import MessageState
 @stored(
     indexes=(
         PartitionSortIndex('author_id', 'created_at'),
-        PartitionSortIndex('state', 'created_at'),
+        PartitionSortIndex('message_state', 'created_at'),
     )
 
 )
@@ -20,7 +20,7 @@ class Message:
     """Item representing a message object"""
 
     id: UUID
-    state: Optional[MessageState] = MessageState.FEATURED
+    message_state: Optional[MessageState] = MessageState.FEATURED
     message_text: str
     created_at: datetime
     updated_at: datetime

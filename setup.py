@@ -7,8 +7,8 @@ with open("README.md", "r") as fh:
 
 extras_require = {
     "sql": ["SQLAlchemy~=1.4"],
-    "server": ["servey[server]~=2.7"],
-    "serverless": ["servey[serverless]~=2.7"]
+    "server": ["servey[server]~=2.8"],
+    "serverless": ["servey[serverless]~=2.8"]
 }
 
 setuptools.setup(
@@ -22,10 +22,10 @@ setuptools.setup(
     url="https://github.com/tofarr/lambsync",
     packages=setuptools.find_packages(exclude=("tests",)),
     install_requires=[
-        "marshy~=3.0",
+        "marshy~=4.0",
         "pyaes~=1.6",
-        "schemey~=5.7",
-        "servey~=2.7",
+        "schemey~=6.0",
+        "servey~=2.8",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

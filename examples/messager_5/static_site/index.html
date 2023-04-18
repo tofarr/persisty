@@ -152,7 +152,7 @@
                 body: JSON.stringify({
                     query: `
                       query($pageKey: String) {
-                        messageSearch(searchFilter: {state__eq}, pageKey: $pageKey, limit: 10) {
+                        messageSearch(searchFilter: {messageState_Eq: FEATURED}, pageKey: $pageKey, limit: 10) {
                           nextPageKey
                         results{
                             id
