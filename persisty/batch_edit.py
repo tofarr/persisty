@@ -37,6 +37,7 @@ def batch_edit_dataclass_for(
             "update_item": Optional[update_input_type],
             "delete_key": Optional[str],
         },
+        "__doc__": f"Batch edit of {type_name}",
         "create_item": None,
         "update_item": None,
         "delete_key": None,

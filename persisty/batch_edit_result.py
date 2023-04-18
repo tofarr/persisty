@@ -27,6 +27,7 @@ def batch_edit_result_dataclass_for(batch_edit_type: Type) -> Type:
             "code": Optional[str],
             "details": Optional[str],
         },
+        "__doc__": f"Batch edit result of {batch_edit_type.__name__}",
         "success": False,
         "code": None,
         "details": None,

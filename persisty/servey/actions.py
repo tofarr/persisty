@@ -286,6 +286,7 @@ def wrap_links_in_actions(read_type: Type):
         if isinstance(v, LinkABC):
             overrides[k] = _to_action_fn(meta, v)
     if overrides:
+        overrides['__doc__'] = read_type.__dict__.get('__doc__')
         read_type = dataclasses.dataclass(
             type(read_type.__name__, (read_type,), overrides)
         )

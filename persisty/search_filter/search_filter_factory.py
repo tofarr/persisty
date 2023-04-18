@@ -49,6 +49,7 @@ def search_filter_dataclass_for(
     params = {k: None for k in annotations}
     params["__persisty_store_meta__"] = storage_meta
     params["__annotations__"] = annotations
+    params["__doc__"] = f"Search Filter for {storage_meta.name}"
     name = f"{to_camel_case(storage_meta.name)}SearchFilter"
     type_ = dataclass(type(name, (SearchFilterFactoryABC,), params))
     return type_

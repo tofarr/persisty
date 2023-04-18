@@ -17,6 +17,7 @@ def result_set_dataclass_for(type_: Type[T]) -> Type[ResultSet[T]]:
             "results": List[type_],
             "next_page_key": Optional[str],
         },
+        "__doc__": f"Result Set of {type_.__name__}",
         "next_page_key": None,
     }
     type_name = f"{type_.__name__}ResultSet"

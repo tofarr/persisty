@@ -1,5 +1,4 @@
 * Appsync is slow. Maybe look at batch processors from API gateway?
-* Check out ordering on search
 
 # Persisty - a better persistence Layer for Python
 

@@ -33,6 +33,7 @@ def search_order_dataclass_for(
             "attr": Optional[sortable_attrs],
             "desc": bool,
         },
+        "__doc__": f"Search Order for {store_meta.name}",
         "attr": None,
         "desc": False,
     }
