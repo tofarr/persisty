@@ -1,4 +1,4 @@
-# Persisty Example App : Messager : Part 5
+# Persisty Example App : Messager : Part 6
 
 In [the previous step](../messager_5), user SQL as our persistence mechanism.
 In this example we will deploy to AWS: Lambdas are used for actions, SQS for 

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Dict, Iterable, Optional
 
-from boto3.dynamodb.conditions import Key, And as DynAnd
 from marshy.types import ExternalItemType
 
 from persisty.attr.attr import Attr
@@ -27,6 +26,7 @@ class PartitionSortIndex(IndexABC):
         return schema
 
     def to_condition_expression(self, item: ExternalItemType):
+        from boto3.dynamodb.conditions import Key, And as DynAnd
         condition_expression = Key(self.pk).eq(item[self.pk])
         if self.sk and item.get(self.sk) is not None:
             sk = Key(self.sk).eq(item[self.sk])

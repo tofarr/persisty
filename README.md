@@ -1,5 +1,3 @@
-* Appsync is slow. Maybe look at batch processors from API gateway?
-
 # Persisty - a better persistence Layer for Python
 
 The objective of this project is to provide a resource oriented approach
@@ -74,68 +72,19 @@ metadata on the fly, and upload data that conforms to it.
 
 
 
+## Future Ideas
+
+* REDIS Store
+* A user app with support for OIDC, SAML and SCIM
+* A Rate Limiting app / Rate Limit Access Control
+* An AutoUI project in NPM
+* An Event Bridge Project (Backed by AWS Event bridge in AWS, or celery in other environments)
+* A Remote HTTP Store
+* A Distributed Lock
+* An explicit custom index (Spatial RTree)
 
 
-
-
-TODO:
-
-Migrations - need a way of building out serverless resources.
-Build an AutoUI project in NPM
-
-Extras
-======
-Move Triggers to extras.
-Dynamic storage
-File storage
-Consider building a user app
-Consider building a rate limiting app (Rate Limit access control)
-
-
-
-Outside the scope of this project: Repo Synchronization
-
-2 modes:
-
-
-sqlalchemy integration
-Revisit the filtered_storage class - make sure reads are not done unless required, and that they are definitely not repeated
-change authorization permissions to scopes
-make authorization jwt encodable / decodable
-
-
-Demos...
-
-Actions & Triggers. Not part of core! Recipes / Goodies
-Also timestamping built using this
-
-Triggers
-action_name may correspond to lambda name in aws
-trigger_type: before_create|after_create|...update|delete|web|timer
-
-Action
-name: str
-param_schema
-return_schema
-access_control: is_executable(authorization)
-
-Can also be periodic:
-
-
-Add redis support
-
-Add remote http support
-
-
-Rate Limiting - Not Part of Core! But useful.
-
-
-Demo a distributed lock.
-
-
-Demo a custom index.
-
-## Deploying new versions of this Servey to Pypi
+## Deploying new versions of Persisty to Pypi
 
 ```
 pip install setuptools wheel
