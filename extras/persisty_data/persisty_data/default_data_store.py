@@ -23,7 +23,7 @@ def default_data_store(
     persisty_data_s3_bucket = os.environ.get("PERSISTY_DATA_S3_BUCKET")
     if persisty_data_s3_bucket:
         from persisty_data.s3_data_store import S3DataStore
-        return S3DataStore()
+        return S3DataStore(persisty_data_s3_bucket)
     persisty_data_directory = os.environ.get("PERSISTY_DATA_DIRECTORY")
     if persisty_data_directory:
         return DirectoryDataStore(name=name, directory=Path(persisty_data_directory))

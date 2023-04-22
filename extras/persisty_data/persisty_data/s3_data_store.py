@@ -20,17 +20,20 @@ from persisty_data.s3_client import get_s3_client
 from persisty_data.s3_data_item import S3DataItem
 
 
+@dataclasses.dataclass
 class S3DataStore(DataStoreABC):
-    store_meta: StoreMeta
     bucket_name: str
+    store_meta: StoreMeta = None
 
-    def get_meta(self) -> StoreMeta:
+    def __post_init__(self):
         meta = self.store_meta
         if not meta:
-            meta = self.store_meta = dataclasses.replace(
+            self.store_meta = dataclasses.replace(
                 DATA_ITEM_META, name=self.bucket_name
             )
-        return meta
+
+    def get_meta(self) -> StoreMeta:
+        return self.store_meta
 
     def create(self, item: DataItemABC) -> Optional[S3DataItem]:
         if self.read(item.key):

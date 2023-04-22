@@ -1,6 +1,6 @@
 from copy import deepcopy
 from decimal import Decimal
-from typing import Optional, Dict, Tuple, List
+from typing import Optional, Dict, Tuple, List, Set
 from dataclasses import dataclass, field
 
 import boto3
@@ -163,37 +163,49 @@ class DynamodbTableStore(StoreABC[T]):
             search_order.validate_for_attrs(self.meta.attrs)
         if search_filter is EXCLUDE_ALL:
             return ResultSet([])
-        index_name, condition, filter_expression, handled, descending = self.to_dynamodb_filter(
-            search_filter
-        )
-        query_args = filter_none(
-            {
-                "KeyConditionExpression": condition,
-                "IndexName": index_name,
-                "Select": "SPECIFIC_ATTRIBUTES",
-                "ProjectionExpression": ",".join(
-                    a.name for a in self.meta.attrs if a.readable
-                ),
-                "FilterExpression": filter_expression,
-                "Limit": limit,
-            }
-        )
-        if descending:
-            query_args["ScanIndexForward"] = False
+        index_name, index = self._get_index_for_search(search_filter, search_order)
+        key_filter, other_filter = _separate_index_from_filter(index, search_filter)
+        if other_filter:
+            filter_expression, search_filter_handled_natively = other_filter.build_filter_expression(self.meta.attrs)
+        else:
+            filter_expression = None
+            search_filter_handled_natively = True
+        query_args = filter_none({
+            "KeyConditionExpression": self._to_key_condition_expression(key_filter),
+            "IndexName": index_name,
+            "Select": "SPECIFIC_ATTRIBUTES",
+            "ProjectionExpression": ",".join(
+                a.name for a in self.meta.attrs if a.readable
+            ),
+            "FilterExpression": filter_expression,
+            "ScanIndexForward": _get_scan_index_forward(index, search_order)
+        })
+        search_order_handled_natively = _is_search_order_handled_natively(index, search_order)
+        if search_order_handled_natively:
+            return self._search_native_order(
+                query_args, index, other_filter, search_filter_handled_natively, page_key, limit
+            )
+        else:
+            return self._search_local_order(
+                query_args, index, other_filter, search_filter_handled_natively, search_order, page_key, limit
+            )
+
+    def _search_native_order(
+            self,
+            query_args: Dict,
+            index: Optional[PartitionSortIndex],
+            search_filter: SearchFilterABC,
+            search_filter_handled_natively: bool,
+            page_key: Optional[str],
+            limit: int
+    ) -> ResultSet[T]:
         if page_key:
             query_args["ExclusiveStartKey"] = self.meta.key_config.to_key_dict(page_key)
         table = self._dynamodb_table()
         results = []
         while True:
-            if condition:
-                response = table.query(**query_args)
-            else:
-                response = table.scan(**query_args)
-            items = [self._load(item) for item in response["Items"]]
-            if not handled:
-                items = [
-                    item for item in items if search_filter.match(item, self.meta.attrs)
-                ]
+            response = _get_search_response(table, index, query_args)
+            items = self._load_items(response, search_filter, search_filter_handled_natively)
             results.extend(items)
             if len(results) >= limit:
                 results = results[:limit]
@@ -205,30 +217,66 @@ class DynamodbTableStore(StoreABC[T]):
                 return ResultSet(results)
             query_args["ExclusiveStartKey"] = last_evaluated_key
 
+    def _search_local_order(
+        self,
+        query_args: Dict,
+        index: Optional[PartitionSortIndex],
+        search_filter: SearchFilterABC,
+        search_filter_handled_natively: bool,
+        search_order: SearchOrder,
+        page_key: Optional[str],
+        limit: int
+    ) -> ResultSet[T]:
+        table = self._dynamodb_table()
+        results = []
+        while True:
+            response = _get_search_response(table, index, query_args)
+            items = self._load_items(response, search_filter, search_filter_handled_natively)
+            results.extend(items)
+            if len(items) > self.meta.batch_size * 5:
+                raise PersistyError('sort_failed')
+            last_evaluated_key = response.get("LastEvaluatedKey")
+            if not last_evaluated_key:
+                results = list(search_order.sort(results))
+                key_config = self.meta.key_config
+                offset = 0
+                if page_key:
+                    offset = next(
+                        i + 1 for i, result in enumerate(results)
+                        if key_config.to_key_str(result) == page_key
+                    )
+                next_page_key = None
+                if len(results) > offset + limit:
+                    next_page_key = key_config.to_key_str(results[offset+limit-1])
+                results = results[offset:(offset+limit)]
+                return ResultSet(results, next_page_key)
+            query_args["ExclusiveStartKey"] = last_evaluated_key
+
     @catch_client_error
     def count(self, search_filter: SearchFilterABC = INCLUDE_ALL) -> int:
         search_filter = search_filter.lock_attrs(self.meta.attrs)
         if search_filter is EXCLUDE_ALL:
             return 0
-        index_name, condition, filter_expression, handled, _ = self.to_dynamodb_filter(
-            search_filter
-        )
-        if not handled:
-            logger.warning(f"search_filter_not_handled_by_dynamodb:{search_filter}")
-            count = sum(1 for _ in self.search_all(search_filter))
-            return count
-        kwargs = filter_none(
-            {
-                "KeyConditionExpression": condition,
-                "IndexName": index_name,
-                "Select": "COUNT",
-                "FilterExpression": filter_expression,
-            }
-        )
+        index_name, index = self._get_index_for_search(search_filter, None)
+        key_filter, other_filter = _separate_index_from_filter(index, search_filter)
+        if other_filter:
+            filter_expression, search_filter_handled_natively = other_filter.build_filter_expression(self.meta.attrs)
+        else:
+            filter_expression = None
+            search_filter_handled_natively = True
+        if not search_filter_handled_natively:
+            result = sum(1 for _ in self.search_all(search_filter))
+            return result
+        kwargs = filter_none({
+            "KeyConditionExpression": self._to_key_condition_expression(key_filter),
+            "IndexName": index_name,
+            "Select": "COUNT",
+            "FilterExpression": filter_expression,
+        })
         table = self._dynamodb_table()
         count = 0
         while True:
-            if condition:
+            if index:
                 response = table.query(**kwargs)
             else:
                 response = table.scan(**kwargs)
@@ -237,6 +285,14 @@ class DynamodbTableStore(StoreABC[T]):
             kwargs["ExclusiveStartKey"] = last_evaluated_key
             if not last_evaluated_key:
                 return count
+
+    def _to_key_condition_expression(self, key_filter: Optional[AttrFilter]):
+        if not key_filter:
+            return
+        attr = next(a for a in self.meta.attrs if a.name == key_filter.name)
+        marshy.dump(key_filter.value, attr.schema.python_type)
+        value = marshy.dump(key_filter.value, attr.schema.python_type)
+        return Key(key_filter.name).eq(value)
 
     def _edit_batch(
         self, edits: List[BatchEdit], items_by_key: Dict[str, T]
@@ -357,52 +413,25 @@ class DynamodbTableStore(StoreABC[T]):
         else:
             return item
 
-    def to_dynamodb_filter(
+    def _get_index_for_search(
         self,
         search_filter: SearchFilterABC,
-    ) -> Tuple[Optional[str], Optional[ConditionBase], Optional[ConditionBase], bool, bool]:
-        eq_filters = _get_top_level_eq_filters(search_filter)
-        if not eq_filters:
-            filter_expression, handled = search_filter.build_filter_expression(
-                self.meta.attrs
-            )
-            return None, None, filter_expression, handled, False
-        index_name, index = self.get_index_for_eq_filters(eq_filters)
-        filter_expression = None
-        handled = False
-        if index:
-            index_condition, search_filter, index_handled, reverse = _separate_index_filters(
-                index, eq_filters
-            )
-            if search_filter:
-                filter_expression, handled = search_filter.build_filter_expression(
-                    self.meta.attrs
-                )
-            else:
-                handled = True
-            return (
-                index_name,
-                index_condition,
-                filter_expression,
-                handled and index_handled,
-                reverse
-            )
-        if search_filter:
-            filter_expression, handled = search_filter.build_filter_expression(
-                self.meta.attrs
-            )
-        return None, None, filter_expression, handled, False
-
-    def get_index_for_eq_filters(
-        self, eq_filters: List[AttrFilter]
+        search_order: Optional[SearchOrder],
     ) -> Tuple[Optional[str], Optional[PartitionSortIndex]]:
-        attr_names = {f.name for f in eq_filters}
-        if self.index.pk in attr_names:
-            return None, self.index
-        for name, index in self.global_secondary_indexes.items():
-            if index.pk in attr_names:
-                return name, index
-        return None, None
+        eq_attr_names = _get_top_level_eq_attrs(search_filter)
+        sort_attr_names = {s.attr for s in search_order.orders} if search_order else set()
+        name = None
+        score = _get_score_for_index(self.index, eq_attr_names, sort_attr_names)
+        index = self.index if score else None
+        for gsi_name, gsi in self.global_secondary_indexes.items():
+            gsi_score = _get_score_for_index(gsi, eq_attr_names, sort_attr_names)
+            if gsi_score > score:
+                name = gsi_name
+                score = gsi_score
+                index = gsi
+        if not score:
+            index = None
+        return name, index
 
     def _dynamodb_table(self):
         if hasattr(self, "_table"):
@@ -423,6 +452,14 @@ class DynamodbTableStore(StoreABC[T]):
         object.__setattr__(self, "_resource", resource)
         return resource
 
+    def _load_items(self, response, search_filter, search_filter_handled_natively):
+        items = [self._load(item) for item in response["Items"]]
+        if not search_filter_handled_natively:
+            items = [
+                item for item in items if search_filter.match(item, self.meta.attrs)
+            ]
+        return items
+
 
 def _build_update(updates: dict):
     update_str = "set "
@@ -437,22 +474,20 @@ def _build_update(updates: dict):
     return {"str": update_str, "names": names, "values": values}
 
 
-# noinspection PyTypeChecker
-def _get_top_level_eq_filters(search_filter: SearchFilterABC) -> List[AttrFilter]:
-    if _is_eq_filter(search_filter):
-        return [search_filter]
+def _get_top_level_eq_attrs(search_filter: SearchFilterABC) -> List[str]:
+    if isinstance(search_filter, AttrFilter) and search_filter.op == AttrFilterOp.eq:
+        return [search_filter.name]
     elif isinstance(search_filter, And):
-        return [f for f in search_filter.search_filters if _is_eq_filter(f)]
+        return [
+            f.name for f in search_filter.search_filters
+            if isinstance(f, AttrFilter) and f.op == AttrFilterOp.eq
+        ]
     return []
-
-
-def _is_eq_filter(search_filter: SearchFilterABC) -> bool:
-    return isinstance(search_filter, AttrFilter) and search_filter.op == AttrFilterOp.eq
 
 
 def _separate_index_filters(
     index: PartitionSortIndex, eq_filters: List[AttrFilter]
-) -> Tuple[ConditionBase, SearchFilterABC, bool, bool]:
+) -> Tuple[ConditionBase, SearchFilterABC, bool]:
     index_filters = [f for f in eq_filters if f.name == index.pk]
     value = index_filters[0].value
     if value.__class__ not in (str, int, float, bool):
@@ -463,4 +498,53 @@ def _separate_index_filters(
     if non_index_filters:
         non_index_filter = And(non_index_filters)
     handled = len(index_filters) == 1
-    return condition, non_index_filter, handled, index.descending
+    return condition, non_index_filter, handled
+
+
+def _get_score_for_index(index: PartitionSortIndex, eq_attrs: Set[str], sort_attrs: Set[str]):
+    if index.pk not in eq_attrs:
+        return 0
+    if index.sk in sort_attrs:
+        return 20
+    return 10
+
+
+def _separate_index_from_filter(
+    index: Optional[PartitionSortIndex],
+    search_filter: SearchFilterABC
+) -> Tuple[Optional[AttrFilter], Optional[SearchFilterABC]]:
+    if not index:
+        return None, search_filter
+    if isinstance(search_filter, AttrFilter):
+        return search_filter, None
+    index_filter = None
+    filters = []
+    # noinspection PyUnresolvedReferences
+    for f in search_filter.search_filters:
+        if f.name == index.pk:
+            index_filter = f
+        else:
+            filters.append(f)
+    filter_expression = And(filters) if filters else None
+    return index_filter, filter_expression
+
+
+def _get_scan_index_forward(index: Optional[PartitionSortIndex], search_order: Optional[SearchOrder]) -> Optional[bool]:
+    if search_order and _is_search_order_handled_natively(index, search_order):
+        return not search_order.orders[0].desc
+
+
+def _is_search_order_handled_natively(index: Optional[PartitionSortIndex], search_order: Optional[SearchOrder]) -> bool:
+    if not search_order:
+        return True
+    if len(search_order.orders) > 1 or not index:
+        return False
+    return search_order.orders[0].attr == index.sk
+
+
+def _get_search_response(table, index, query_args):
+    if index:
+        response = table.query(**query_args)
+    else:
+        response = table.scan(**query_args)
+    return response

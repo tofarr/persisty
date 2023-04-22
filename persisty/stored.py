@@ -118,7 +118,7 @@ def stored(
                 permitted_filter_ops = (
                     TYPE_FILTER_OPS.get(db_type) or DEFAULT_PERMITTED_FILTER_OPS
                 )
-                sortable = os.environ.get('PERSISTY_ATTRS_SORTABLE') == '1' and db_type in SORTABLE_TYPES
+                sortable = os.environ.get('PERSISTY_ATTRS_SORTABLE') != '0' and db_type in SORTABLE_TYPES
             attr = Attr(
                 name=name,
                 attr_type=db_type,

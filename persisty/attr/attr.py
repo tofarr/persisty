@@ -19,7 +19,7 @@ class Attr:
     creatable: bool = True
     readable: bool = True
     updatable: bool = True
-    sortable: bool = False
+    sortable: bool = True
     create_generator: Optional[AttrValueGeneratorABC] = None
     update_generator: Optional[AttrValueGeneratorABC] = None
     permitted_filter_ops: Tuple[AttrFilterOp, ...] = UNDEFINED

@@ -367,6 +367,8 @@ class StoreTstABC(ABC):
         self.assertEqual(NUMBER_NAMES[:10], page1.results)
         page2 = store.search(search_filter, search_order, page1.next_page_key, 10)
         self.assertEqual(NUMBER_NAMES[10:20], page2.results)
+        page3 = store.search(search_filter, search_order, page2.next_page_key, 10)
+        self.assertEqual(NUMBER_NAMES[20:30], page3.results)
 
     def test_search_all_id(self):
         store = self.new_number_name_store()

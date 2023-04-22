@@ -86,6 +86,7 @@ class ChunkDataStore(DataStoreABC):
             search_filter, search_order, page_key, limit
         )
         result_set.results = [self._chunk_data_item(c) for c in result_set.results]
+        return result_set
 
     def get_data_writer(self, key: str, content_type: Optional[str] = None):
         create = not self.content_meta_store.read(key)

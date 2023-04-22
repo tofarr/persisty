@@ -17,7 +17,6 @@ class PartitionSortIndex(IndexABC):
     """
     pk: str
     sk: Optional[str] = None
-    descending: bool = False
 
     def to_schema(self):
         schema = [dict(AttributeName=self.pk, KeyType="HASH")]

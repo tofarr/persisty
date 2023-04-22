@@ -121,7 +121,12 @@
             color: #CCC;
             padding: 0.5em 0;
         }
-        
+        #imageContainer, .messageImage{
+            display: flex;
+            justify-content: center;
+            padding: 1em;
+        }
+
     </style>
     <script type="text/javascript">
 
@@ -138,6 +143,14 @@
             element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.messageText))
             const messageContent= document.createElement('div')
             messageContent.className = 'messageContent'
+            if (message.userImageUrl) {
+                const messageImageContainer = document.createElement('div')
+                messageImageContainer.className = "messageImage"
+                const img = new Image()
+                img.src = message.userImageUrl
+                messageImageContainer.appendChild(img)
+                element.appendChild(messageImageContainer)
+            }
             return element
         }
 
@@ -152,11 +165,12 @@
                 body: JSON.stringify({
                     query: `
                       query($pageKey: String) {
-                        messageSearch(searchFilter: {messageState_Eq: FEATURED}, pageKey: $pageKey, limit: 10) {
+                        messageSearch(searchFilter: {messageState_Eq: FEATURED}, pageKey: $pageKey, limit: 10, searchOrder: {attr: created_at, desc: true}) {
                           nextPageKey
                         results{
                             id
                             messageText
+                            userImageUrl
                             createdAt
                             author{
                               id
@@ -233,8 +247,47 @@
                     sessionStorage.setItem('authorization', body)
                     loadAndRenderMessages()
                 } else {
-                    alert('Incorrect Username or Password')
+                    alert('Uncorrect Username or Password')
                 }
+            })
+        }
+
+        function handleUploadImage() {
+            const fileElement = document.getElementById('uploadFile')
+            let fileName = fileElement.value.split('/').pop().split('\\').pop()
+            const authorization = sessionStorage.getItem('authorization')
+            const current_user = JSON.parse(atob(authorization.split('.')[1]))
+            // Storage insists that ownership is established in the key
+            let key = current_user.sub + '/' + fileName
+            fetch(`actions/user-image-get-upload-form?key=${encodeURIComponent(key)}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${authorization}`
+                }
+            }).then(response => response.json()).then((uploadForm) => {
+                const formData = new FormData()
+                if (uploadForm.pre_populated_fields) {
+                    uploadForm.pre_populated_fields.forEach(f => formData.append(f.name, f.value))
+                }
+                formData.append(uploadForm.file_param, fileElement.files[0], fileName);
+                fetch(uploadForm.url, {
+                    method: uploadForm.method,
+                    body: formData
+                }).then((response) => {
+                    if (response.status === 200) {
+                        response.json().then(result => {
+                            currentImageKey = result.key
+                            const img = new Image()
+                            img.src = `/data/user-image/public/${result.key}`
+                            const container = document.getElementById("imageContainer")
+                            container.innerHTML = ""
+                            container.appendChild(img)
+                            setVisible('postMessageForm')
+                        })
+                    } else {
+                        alert('Error in upload')
+                    }
+                });
             })
         }
 
@@ -246,7 +299,8 @@
                 },
                 body: JSON.stringify({
                     item: {
-                        message_text: document.getElementById('messageText').value
+                        message_text: document.getElementById('messageText').value,
+                        user_image_key: currentImageKey
                     }
                 })
             }).then(response => response.json()).then(loadAndRenderMessages)
@@ -348,8 +402,27 @@
                 id="messageText"
                 oninput="this.style.height = '';this.style.height = this.scrollHeight + 'px'"></textarea>
         </div>
+        <div class="row">
+            <div id="imageContainer"></div>
+            <label for="imageButton">Image</label>
+            <input id="imageButton" type="button" value="Upload Image" onclick="setVisible('uploadImageForm')" />
+        </div>
         <div class="formControls">
             <input type="submit" value="Post Message" />
+            <input type="button" value="Cancel" onclick="setVisible('content')" />
+        </div>
+    </form>
+
+    <form id="uploadImageForm" onsubmit="handleUploadImage(); return false" class="initialHidden">
+        <div class="formHeader">
+            <h1>Upload Image</h1>
+        </div>
+        <div class="row">
+            <label for="messageText">File</label>
+            <input id="uploadFile" type="file" />
+        </div>
+        <div class="formControls">
+            <input type="submit" value="Upload Image" />
             <input type="button" value="Cancel" onclick="setVisible('content')" />
         </div>
     </form>
