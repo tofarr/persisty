@@ -10,6 +10,7 @@ extras_require = {
         "pytest-cov~=4.0",
         "pytest-xdist~=3.2",
         "pylint~=2.17",
+        "boto3~=1.26",
     ],
     "server": ["servey[server]~=2.8"],
     "serverless": ["servey[serverless]~=2.8", "opensearch-py~=2.2"],
