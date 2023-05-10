@@ -69,7 +69,8 @@ metadata on the fly, and upload data that conforms to it.
 
 ## Examples
 
-
+[The Messager Example App](examples/messager_1) demonstrates a step by step build of an
+application with security and business logic.
 
 
 ## Future Ideas
