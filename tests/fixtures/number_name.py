@@ -13,7 +13,7 @@ class NumberName:
 
     id: UUID
     title: str
-    value: int = Attr(sortable=True)
+    num_value: int = Attr(sortable=True)
     created_at: datetime
     updated_at: datetime
 
@@ -58,7 +58,7 @@ for n in range(1, 100):
         NumberName(
             id=UUID("00000000-0000-0000-0000-000000000" + (str(1000 + n)[1:])),
             title=title,
-            value=n,
+            num_value=n,
             created_at=datetime.fromtimestamp(0, tz=timezone.utc),
             updated_at=datetime.fromtimestamp(0, tz=timezone.utc),
         )

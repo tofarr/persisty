@@ -28,7 +28,7 @@ class TestSqlalchemyTableStore(TestCase, StoreTstABC):
         store_meta = get_meta(SuperBowlResult)
         factory = SqlalchemyTableStoreFactory(store_meta, self.context)
         store = factory.create()
-        number_names = ({**r.__dict__, "date": r.date} for r in SUPER_BOWL_RESULTS)
+        number_names = ({**r.__dict__, "result_date": r.result_date} for r in SUPER_BOWL_RESULTS)
         self.seed_table(store_meta, number_names)
         return store
 
@@ -62,13 +62,13 @@ class TestSqlalchemyTableStore(TestCase, StoreTstABC):
         filters = filter_factory(SuperBowlResult)
         self.assertEqual(
             list(reversed(SUPER_BOWL_RESULT_DICTS)),
-            list(store.search_all(INCLUDE_ALL, filters.year.desc())),
+            list(store.search_all(INCLUDE_ALL, filters.result_year.desc())),
         )
         self.assertEqual(
             list(reversed(SUPER_BOWL_RESULT_DICTS[17:37])),
             list(
                 store.search_all(
-                    filters.year.gte(1984) & filters.year.lt(2004), filters.year.desc()
+                    filters.result_year.gte(1984) & filters.result_year.lt(2004), filters.result_year.desc()
                 )
             ),
         )

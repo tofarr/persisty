@@ -37,20 +37,20 @@ class TestMemStore(TestCase, StoreTstABC):
         filters = filter_factory(SuperBowlResult)
         self.assertEqual(
             list(reversed(SUPER_BOWL_RESULTS)),
-            list(store.search_all(INCLUDE_ALL, filters.year.desc())),
+            list(store.search_all(INCLUDE_ALL, filters.result_year.desc())),
         )
         self.assertEqual(
             list(reversed(SUPER_BOWL_RESULTS[17:37])),
             list(
                 store.search_all(
-                    filters.year.gte(1984) & filters.year.lt(2004), filters.year.desc()
+                    filters.result_year.gte(1984) & filters.result_year.lt(2004), filters.result_year.desc()
                 )
             ),
         )
 
     def test_mem_store_no_dict(self):
         store = MemStoreFactory(get_meta(NumberName)).create()
-        created = store.create(NumberName(value=1, title="One"))
+        created = store.create(NumberName(num_value=1, title="One"))
         loaded = store.read(str(created.id))
         self.assertEqual(loaded, created)
 

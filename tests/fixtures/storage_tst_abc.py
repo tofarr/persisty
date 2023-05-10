@@ -44,8 +44,8 @@ class StoreTstABC(ABC):
             SuperBowlResult,
             {
                 "code": "iii",
-                "year": 1969,
-                "date": "1969-01-12T00:00:00+00:00",
+                "result_year": 1969,
+                "result_date": "1969-01-12T00:00:00+00:00",
                 "winner_code": "new_york_jets",
                 "runner_up_code": "baltimore",
                 "winner_score": 16,
@@ -67,8 +67,8 @@ class StoreTstABC(ABC):
                 SuperBowlResult,
                 {
                     "code": "vii",
-                    "year": 1973,
-                    "date": "1973-01-14T00:00:00+00:00",
+                    "result_year": 1973,
+                    "result_date": "1973-01-14T00:00:00+00:00",
                     "winner_code": "miami",
                     "runner_up_code": "washington",
                     "winner_score": 14,
@@ -80,8 +80,8 @@ class StoreTstABC(ABC):
                 SuperBowlResult,
                 {
                     "code": "ii",
-                    "year": 1968,
-                    "date": "1968-01-14T00:00:00+00:00",
+                    "result_year": 1968,
+                    "result_date": "1968-01-14T00:00:00+00:00",
                     "winner_code": "green_bay",
                     "runner_up_code": "oakland",
                     "winner_score": 33,
@@ -92,8 +92,8 @@ class StoreTstABC(ABC):
                 SuperBowlResult,
                 {
                     "code": "xx",
-                    "year": 1986,
-                    "date": "1986-01-26T00:00:00+00:00",
+                    "result_year": 1986,
+                    "result_date": "1986-01-26T00:00:00+00:00",
                     "winner_code": "chicago",
                     "runner_up_code": "new_england",
                     "winner_score": 46,
@@ -112,8 +112,8 @@ class StoreTstABC(ABC):
             SuperBowlResult,
             {
                 "code": "c",
-                "year": 2067,
-                "date": "2067-01-15T00:00:00+00:00",
+                "result_year": 2067,
+                "result_date": "2067-01-15T00:00:00+00:00",
                 "winner_code": "robots",
                 "runner_up_code": "humans",
                 "winner_score": 1234,
@@ -132,8 +132,8 @@ class StoreTstABC(ABC):
         item = SuperBowlResult(
             **{
                 "code": "c",
-                "year": "not_a_year",
-                "date": datetime.fromisoformat("2067-01-15T00:00:00+00:00"),
+                "result_year": "not_a_result_year",
+                "result_date": datetime.fromisoformat("2067-01-15T00:00:00+00:00"),
                 "winner_code": "robots",
                 "runner_up_code": "humans",
                 "winner_score": 1234,
@@ -151,8 +151,8 @@ class StoreTstABC(ABC):
             SuperBowlResult,
             {
                 "code": "i",
-                "year": 1971,
-                "date": "1967-01-15T00:00:00+00:00",
+                "result_year": 1971,
+                "result_date": "1967-01-15T00:00:00+00:00",
                 "winner_code": "green_bay",
                 "runner_up_code": "kansas_city",
                 "winner_score": 35,
@@ -181,8 +181,8 @@ class StoreTstABC(ABC):
             SuperBowlResult,
             {
                 "code": "li",
-                "year": 2017,
-                "date": "2017-02-05T00:00:00+00:00",
+                "result_year": 2017,
+                "result_date": "2017-02-05T00:00:00+00:00",
                 "winner_code": "tom_brady_fan_club",
                 "runner_up_code": "atlanta",
                 "winner_score": 34,
@@ -201,7 +201,7 @@ class StoreTstABC(ABC):
     def spec_for_update_missing_key(self, store):
         item = SuperBowlResult(
             code="not_a_key",
-            year=1971,
+            result_year=1971,
         )
         # noinspection PyDataclass
         updates = replace(item)
@@ -212,15 +212,15 @@ class StoreTstABC(ABC):
     def test_update_invalid_schema(self):
         store = self.new_super_bowl_results_store()
         with self.assertRaises(AttributeError):
-            store.update(SuperBowlResult(code="i", date="not_a_date"))
+            store.update(SuperBowlResult(code="i", result_date="not_a_date"))
         self.assertEqual(56, store.count())
         read = store.read("i")
         expected = marshy.load(
             SuperBowlResult,
             {
                 "code": "i",
-                "year": 1967,
-                "date": "1967-01-15T00:00:00+00:00",
+                "result_year": 1967,
+                "result_date": "1967-01-15T00:00:00+00:00",
                 "winner_code": "green_bay",
                 "runner_up_code": "kansas_city",
                 "winner_score": 35,
@@ -236,14 +236,14 @@ class StoreTstABC(ABC):
             code="li",
             winner_code="tom_brady_fan_club",
         )
-        self.assertTrue(store.update(item, AttrFilter("year", AttrFilterOp.eq, 2017)))
+        self.assertTrue(store.update(item, AttrFilter("result_year", AttrFilterOp.eq, 2017)))
         item = store.read("li")
         expected = marshy.load(
             SuperBowlResult,
             {
                 "code": "li",
-                "year": 2017,
-                "date": "2017-02-05T00:00:00+00:00",
+                "result_year": 2017,
+                "result_date": "2017-02-05T00:00:00+00:00",
                 "winner_code": "tom_brady_fan_club",
                 "runner_up_code": "atlanta",
                 "winner_score": 34,
@@ -255,14 +255,14 @@ class StoreTstABC(ABC):
     def test_update_invalid_filter(self):
         store = self.new_super_bowl_results_store()
         item = SuperBowlResult(code="li", winner_code="tom_brady_fan_club")
-        self.assertIsNone(store.update(item, AttrFilter("year", AttrFilterOp.eq, 2018)))
+        self.assertIsNone(store.update(item, AttrFilter("result_year", AttrFilterOp.eq, 2018)))
         item = store.read("li")
         expected = marshy.load(
             SuperBowlResult,
             {
                 "code": "li",
-                "year": 2017,
-                "date": "2017-02-05T00:00:00+00:00",
+                "result_year": 2017,
+                "result_date": "2017-02-05T00:00:00+00:00",
                 "winner_code": "new_england",
                 "runner_up_code": "atlanta",
                 "winner_score": 34,
@@ -285,10 +285,10 @@ class StoreTstABC(ABC):
         self.assertEqual(56, store.count())
         filters = filter_factory(SuperBowlResult)
         self.assertEqual(
-            20, store.count(filters.year.gte(1984) & filters.year.lt(2004))
+            20, store.count(filters.result_year.gte(1984) & filters.result_year.lt(2004))
         )
         self.assertEqual(6, store.count(filters.winner_code.contains("new_england")))
-        self.assertEqual(0, store.count(AttrFilter("year", AttrFilterOp.lt, 1967)))
+        self.assertEqual(0, store.count(AttrFilter("result_year", AttrFilterOp.lt, 1967)))
 
     def test_count_invalid_attr_filter(self):
         store = self.new_super_bowl_results_store()
@@ -335,7 +335,7 @@ class StoreTstABC(ABC):
     def test_count_non_indexed_filter(self):
         tag_store = self.new_number_name_store()
         filters = filter_factory(NumberName)
-        count = tag_store.count(filters.title.eq("Five") & filters.value.eq(5))
+        count = tag_store.count(filters.title.eq("Five") & filters.num_value.eq(5))
         self.assertEqual(1, count)
 
     def test_search_all(self):
@@ -344,7 +344,7 @@ class StoreTstABC(ABC):
         filters = filter_factory(SuperBowlResult)
         self.assertEqual(
             SUPER_BOWL_RESULTS[17:37],
-            list(store.search_all(filters.year.gte(1984) & filters.year.lt(2004))),
+            list(store.search_all(filters.result_year.gte(1984) & filters.result_year.lt(2004))),
         )
         self.assertEqual(
             [r for r in SUPER_BOWL_RESULTS if r.winner_code == "new_england"],
@@ -355,14 +355,14 @@ class StoreTstABC(ABC):
             ),
         )
         self.assertEqual(
-            [], list(store.search_all(AttrFilter("year", AttrFilterOp.lt, 1967)))
+            [], list(store.search_all(AttrFilter("result_year", AttrFilterOp.lt, 1967)))
         )
 
     def test_search(self):
         store = self.new_number_name_store()
         filters = filter_factory(NumberName)
-        search_filter = filters.value.lt(50)
-        search_order = filters.value.asc()
+        search_filter = filters.num_value.lt(50)
+        search_order = filters.num_value.asc()
         page1 = store.search(search_filter, search_order, None, 10)
         self.assertEqual(NUMBER_NAMES[:10], page1.results)
         page2 = store.search(search_filter, search_order, page1.next_page_key, 10)
@@ -390,7 +390,7 @@ class StoreTstABC(ABC):
 
     def test_edit_all(self):
         store = self.new_number_name_store()
-        edits = store.search_all(AttrFilter("value", AttrFilterOp.gt, 3))
+        edits = store.search_all(AttrFilter("num_value", AttrFilterOp.gt, 3))
         edits = (BatchEdit(delete_key=str(n.id)) for n in edits)
         list(store.edit_all(edits))
         self.assertEqual(3, store.count())
@@ -399,7 +399,7 @@ class StoreTstABC(ABC):
                 create_item=NumberName(
                     id=UUID("00000000-0000-0000-0001-000000000000"),
                     title="Minus One",
-                    value=-1,
+                    num_value=-1,
                 )
             ),
             BatchEdit(
@@ -419,9 +419,9 @@ class StoreTstABC(ABC):
         results = [r.success for r in store.edit_all(edits)]
         self.assertEqual(results, [True, False, True, False])
         results = list(
-            store.search_all(search_order=SearchOrder((SearchOrderAttr("value"),)))
+            store.search_all(search_order=SearchOrder((SearchOrderAttr("num_value"),)))
         )
-        results = sorted(results, key=lambda r: r.value)
+        results = sorted(results, key=lambda r: r.num_value)
         self.assertGreaterEqual(results[0].created_at, now)
         self.assertGreaterEqual(results[0].updated_at, now)
         self.assertLess(results[1].created_at, now)
@@ -432,28 +432,28 @@ class StoreTstABC(ABC):
                 id=UUID("00000000-0000-0000-0001-000000000000"),
                 title="Minus One",
                 updated_at=results[0].updated_at,
-                value=-1,
+                num_value=-1,
             ),
             NumberName(
                 created_at=datetime.fromisoformat("1970-01-01T00:00:00+00:00"),
                 id=UUID("00000000-0000-0000-0000-000000000001"),
                 title="First",
                 updated_at=results[1].updated_at,
-                value=1,
+                num_value=1,
             ),
             NumberName(
                 created_at=datetime.fromisoformat("1970-01-01T00:00:00+00:00"),
                 id=UUID("00000000-0000-0000-0000-000000000002"),
                 title="Two",
                 updated_at=datetime.fromisoformat("1970-01-01T00:00:00+00:00"),
-                value=2,
+                num_value=2,
             ),
             NumberName(
                 created_at=datetime.fromisoformat("1970-01-01T00:00:00+00:00"),
                 id=UUID("00000000-0000-0000-0000-000000000003"),
                 title="Three",
                 updated_at=datetime.fromisoformat("1970-01-01T00:00:00+00:00"),
-                value=3,
+                num_value=3,
             ),
         ]
         self.assertEqual(expected_results, results)
@@ -488,11 +488,11 @@ class StoreTstABC(ABC):
         store = self.new_number_name_store()
         search_filter = ValueLessThanFilter(21)
         page_1 = store.search(search_filter)
-        self.assertEqual(list(range(1, 11)), list(i.value for i in page_1.results))
+        self.assertEqual(list(range(1, 11)), list(i.num_value for i in page_1.results))
         page_2 = store.search(
             search_filter=search_filter, page_key=page_1.next_page_key
         )
-        self.assertEqual(list(range(11, 21)), list(i.value for i in page_2.results))
+        self.assertEqual(list(range(11, 21)), list(i.num_value for i in page_2.results))
         page_3 = store.search(
             search_filter=search_filter, page_key=page_2.next_page_key
         )
@@ -504,7 +504,7 @@ class StoreTstABC(ABC):
         for less_than in range(1, 31):
             kwargs = dict(
                 search_filter=ValueLessThanFilter(less_than),
-                search_order=SearchOrder((SearchOrderAttr("value"),)),
+                search_order=SearchOrder((SearchOrderAttr("num_value"),)),
                 limit=limit,
             )
             index = 1
@@ -513,7 +513,7 @@ class StoreTstABC(ABC):
                 expected_values = [
                     v for v in range(index, min(less_than, index + limit))
                 ]
-                values = [r.value for r in page.results]
+                values = [r.num_value for r in page.results]
                 self.assertEqual(expected_values, values)
                 if page.next_page_key:
                     kwargs["page_key"] = page.next_page_key
@@ -526,11 +526,11 @@ class StoreTstABC(ABC):
         edits = [
             BatchEdit(
                 create_item=NumberName(
-                    id=NUMBER_NAMES[1].id, value=-1, title="New Item"
+                    id=NUMBER_NAMES[1].id, num_value=-1, title="New Item"
                 )
             ),
             BatchEdit(
-                update_item=NumberName(id=uuid4(), value=-2, title="Updated Item")
+                update_item=NumberName(id=uuid4(), num_value=-2, title="Updated Item")
             ),
             BatchEdit(delete_key=str(uuid4())),
             BatchEdit(),
@@ -544,7 +544,7 @@ class StoreTstABC(ABC):
         item = NumberName(
             id=str(id),  # The type is wrong here, but we should handle it
             title="A Gazillion",
-            value=-1,
+            num_value=-1,
         )
         store.create(item)
         # noinspection PyTypeChecker
@@ -577,10 +577,10 @@ class ValueLessThanFilter(SearchFilterABC[T]):
     it into a native condition
     """
 
-    value: int
+    num_value: int
 
     def lock_attrs(self, attrs: Tuple[Attr, ...]) -> SearchFilterABC[T]:
         return self
 
     def match(self, item: T, attrs: Tuple[Attr, ...]) -> bool:
-        return item.value < self.value
+        return item.num_value < self.num_value
