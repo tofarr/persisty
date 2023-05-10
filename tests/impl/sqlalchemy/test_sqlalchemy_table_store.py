@@ -28,7 +28,9 @@ class TestSqlalchemyTableStore(TestCase, StoreTstABC):
         store_meta = get_meta(SuperBowlResult)
         factory = SqlalchemyTableStoreFactory(store_meta, self.context)
         store = factory.create()
-        number_names = ({**r.__dict__, "result_date": r.result_date} for r in SUPER_BOWL_RESULTS)
+        number_names = (
+            {**r.__dict__, "result_date": r.result_date} for r in SUPER_BOWL_RESULTS
+        )
         self.seed_table(store_meta, number_names)
         return store
 

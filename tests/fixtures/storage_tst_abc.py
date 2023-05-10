@@ -236,7 +236,9 @@ class StoreTstABC(ABC):
             code="li",
             winner_code="tom_brady_fan_club",
         )
-        self.assertTrue(store.update(item, AttrFilter("result_year", AttrFilterOp.eq, 2017)))
+        self.assertTrue(
+            store.update(item, AttrFilter("result_year", AttrFilterOp.eq, 2017))
+        )
         item = store.read("li")
         expected = marshy.load(
             SuperBowlResult,
@@ -255,7 +257,9 @@ class StoreTstABC(ABC):
     def test_update_invalid_filter(self):
         store = self.new_super_bowl_results_store()
         item = SuperBowlResult(code="li", winner_code="tom_brady_fan_club")
-        self.assertIsNone(store.update(item, AttrFilter("result_year", AttrFilterOp.eq, 2018)))
+        self.assertIsNone(
+            store.update(item, AttrFilter("result_year", AttrFilterOp.eq, 2018))
+        )
         item = store.read("li")
         expected = marshy.load(
             SuperBowlResult,
@@ -285,10 +289,13 @@ class StoreTstABC(ABC):
         self.assertEqual(56, store.count())
         filters = filter_factory(SuperBowlResult)
         self.assertEqual(
-            20, store.count(filters.result_year.gte(1984) & filters.result_year.lt(2004))
+            20,
+            store.count(filters.result_year.gte(1984) & filters.result_year.lt(2004)),
         )
         self.assertEqual(6, store.count(filters.winner_code.contains("new_england")))
-        self.assertEqual(0, store.count(AttrFilter("result_year", AttrFilterOp.lt, 1967)))
+        self.assertEqual(
+            0, store.count(AttrFilter("result_year", AttrFilterOp.lt, 1967))
+        )
 
     def test_count_invalid_attr_filter(self):
         store = self.new_super_bowl_results_store()
@@ -344,7 +351,11 @@ class StoreTstABC(ABC):
         filters = filter_factory(SuperBowlResult)
         self.assertEqual(
             SUPER_BOWL_RESULTS[17:37],
-            list(store.search_all(filters.result_year.gte(1984) & filters.result_year.lt(2004))),
+            list(
+                store.search_all(
+                    filters.result_year.gte(1984) & filters.result_year.lt(2004)
+                )
+            ),
         )
         self.assertEqual(
             [r for r in SUPER_BOWL_RESULTS if r.winner_code == "new_england"],

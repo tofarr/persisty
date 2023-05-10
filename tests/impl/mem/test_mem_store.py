@@ -43,7 +43,8 @@ class TestMemStore(TestCase, StoreTstABC):
             list(reversed(SUPER_BOWL_RESULTS[17:37])),
             list(
                 store.search_all(
-                    filters.result_year.gte(1984) & filters.result_year.lt(2004), filters.result_year.desc()
+                    filters.result_year.gte(1984) & filters.result_year.lt(2004),
+                    filters.result_year.desc(),
                 )
             ),
         )
