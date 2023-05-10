@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import os
+from dataclasses import dataclass, field
 from typing import Optional, Dict, Set, Iterator, List
 
 import boto3
@@ -26,7 +27,7 @@ from persisty.util import filter_none
 class DynamodbStoreFactory:
     meta: Optional[StoreMeta] = None
     aws_profile_name: Optional[str] = None
-    region_name: Optional[str] = None
+    region_name: Optional[str] = field(default_factory=lambda: os.environ.get('AWS_REGION'))
     table_name: Optional[str] = None
     index: Optional[PartitionSortIndex] = None
     global_secondary_indexes: Optional[Dict[str, PartitionSortIndex]] = None

@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 from decimal import Decimal
 from typing import Optional, Dict, Tuple, List, Set
@@ -52,7 +53,7 @@ class DynamodbTableStore(StoreABC[T]):
         default_factory=dict
     )
     aws_profile_name: Optional[str] = None
-    region_name: Optional[str] = None
+    region_name: Optional[str] = field(default_factory=lambda: os.environ.get('AWS_REGION'))
     decimal_format: str = "%.9f"
     max_local_search_size: int = None
 
