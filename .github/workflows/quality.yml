@@ -27,9 +27,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.X"
-      - name: Echo Env Variable
-        run: |
-          echo "AWS Region was: $AWS_REGION"
       - name: Install pytest code coverage
         run: python -m pip install ".[all]"
       - name: testcoverage
