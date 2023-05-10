@@ -28,11 +28,13 @@ class OwnedDataStoreFactory(DataStoreFactoryABC):
             authorization=authorization,
             require_owner_for_read=self.require_owner_for_read,
             require_owner_for_update=self.require_owner_for_update,
-            require_owner_for_delete=self.require_owner_for_delete
+            require_owner_for_delete=self.require_owner_for_delete,
         )
         return store
 
-    def get_upload_form(self, key: str, authorization: Optional[Authorization]) -> UploadForm:
+    def get_upload_form(
+        self, key: str, authorization: Optional[Authorization]
+    ) -> UploadForm:
         return self.data_store_factory.get_upload_form(key, authorization)
 
     def get_download_url(self, key: str, authorization: Optional[Authorization]) -> str:

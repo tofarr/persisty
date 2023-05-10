@@ -36,6 +36,7 @@ class SearchFilterABC(ABC, Generic[T]):
 
         return Not(self)
 
+    # pylint: disable=W0613
     def build_filter_expression(
         self, attrs: Tuple[Attr, ...]
     ) -> Tuple[Optional[Any], bool]:

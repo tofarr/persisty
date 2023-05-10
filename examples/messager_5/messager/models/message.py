@@ -11,10 +11,9 @@ from messager.models.message_state import MessageState
 
 @stored(
     indexes=(
-        PartitionSortIndex('author_id', 'created_at'),
-        PartitionSortIndex('message_state', 'created_at'),
+        PartitionSortIndex("author_id", "created_at"),
+        PartitionSortIndex("message_state", "created_at"),
     )
-
 )
 class Message:
     """Item representing a message object"""

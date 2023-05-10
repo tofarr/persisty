@@ -7,9 +7,7 @@ from persisty.link.belongs_to import BelongsTo
 from persisty.stored import stored
 
 
-@stored(indexes=(
-   Index(("author_id",)),
-))
+@stored(indexes=(Index(("author_id",)),))
 class Message:
     """Item representing a message object"""
 

@@ -28,9 +28,7 @@ class S3DataStore(DataStoreABC):
     def __post_init__(self):
         meta = self.store_meta
         if not meta:
-            self.store_meta = dataclasses.replace(
-                DATA_ITEM_META, name=self.bucket_name
-            )
+            self.store_meta = dataclasses.replace(DATA_ITEM_META, name=self.bucket_name)
 
     def get_meta(self) -> StoreMeta:
         return self.store_meta

@@ -15,9 +15,9 @@ def get_default_generator_for_create(
     if name == "id":
         if type_ == UUID:
             return True, UuidGenerator()
-        elif type_ == str:
+        if type_ == str:
             return False, StrSequenceGenerator()
-        elif type_ == int:
+        if type_ == int:
             return False, IntSequenceGenerator()
     elif type_ == datetime and name in ("created_at", "updated_at"):
         return False, TimestampGenerator()

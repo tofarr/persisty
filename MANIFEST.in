@@ -1,0 +1,6 @@
+recursive-exclude tests *
+exclude README.md
+recursive-exclude images
+recursive-exclude servey_main
+recursive-exclude static_site
+recursive-exclude examples

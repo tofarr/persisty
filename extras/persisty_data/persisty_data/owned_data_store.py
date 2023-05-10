@@ -27,12 +27,14 @@ class OwnedDataStore(DataStoreABC, WrapperStoreABC[DataItemABC]):
         return self.store
 
     def get_prefix(self):
-        return self.authorization.subject_id + '/'
+        return self.authorization.subject_id + "/"
 
     def create(self, item: DataItemABC) -> Optional[DataItemABC]:
         prefix = self.get_prefix()
         if not item.key.startswith(prefix):
-            raise PersistyError(f'invalid_key:must_start_with:{self.authorization.subject_id}')
+            raise PersistyError(
+                f"invalid_key:must_start_with:{self.authorization.subject_id}"
+            )
         return self.store.create(item)
 
     def read(self, key: str) -> Optional[DataItemABC]:
@@ -41,7 +43,9 @@ class OwnedDataStore(DataStoreABC, WrapperStoreABC[DataItemABC]):
         item = self.store.read(key)
         return item
 
-    def _update(self, key: str, item: DataItemABC, updates: DataItemABC) -> Optional[DataItemABC]:
+    def _update(
+        self, key: str, item: DataItemABC, updates: DataItemABC
+    ) -> Optional[DataItemABC]:
         self._check_key_for_edit(key)
         return self.store._update(key, item, updates)
 
@@ -51,7 +55,9 @@ class OwnedDataStore(DataStoreABC, WrapperStoreABC[DataItemABC]):
 
     def count(self, search_filter: SearchFilterABC[DataItemABC] = INCLUDE_ALL) -> int:
         if self.require_owner_for_read:
-            search_filter &= AttrFilter('key', AttrFilterOp.startswith, self.get_prefix())
+            search_filter &= AttrFilter(
+                "key", AttrFilterOp.startswith, self.get_prefix()
+            )
         return self.store.count(search_filter)
 
     def search(
@@ -62,7 +68,9 @@ class OwnedDataStore(DataStoreABC, WrapperStoreABC[DataItemABC]):
         limit: Optional[int] = None,
     ) -> ResultSet[DataItemABC]:
         if self.require_owner_for_read:
-            search_filter &= AttrFilter('key', AttrFilterOp.startswith, self.get_prefix())
+            search_filter &= AttrFilter(
+                "key", AttrFilterOp.startswith, self.get_prefix()
+            )
         return self.store.search(search_filter, search_order, page_key, limit)
 
     def search_all(
@@ -71,11 +79,15 @@ class OwnedDataStore(DataStoreABC, WrapperStoreABC[DataItemABC]):
         search_order: Optional[SearchOrder[DataItemABC]] = None,
     ) -> Iterator[DataItemABC]:
         if self.require_owner_for_read:
-            search_filter &= AttrFilter('key', AttrFilterOp.startswith, self.get_prefix())
+            search_filter &= AttrFilter(
+                "key", AttrFilterOp.startswith, self.get_prefix()
+            )
         return self.store.search_all(search_filter, search_order)
 
     def _edit_batch(
-        self, edits: List[BatchEdit[DataItemABC, DataItemABC]], items_by_key: Dict[str, DataItemABC]
+        self,
+        edits: List[BatchEdit[DataItemABC, DataItemABC]],
+        items_by_key: Dict[str, DataItemABC],
     ) -> List[BatchEditResult[DataItemABC, DataItemABC]]:
         filtered_edits = []
         for edit in edits:
@@ -110,4 +122,4 @@ class OwnedDataStore(DataStoreABC, WrapperStoreABC[DataItemABC]):
     def _check_key_for_edit(self, key: str):
         prefix = self.get_prefix()
         if not key.startswith(prefix):
-            raise PersistyError(f'invalid_key:must_start_with:{prefix}')
+            raise PersistyError(f"invalid_key:must_start_with:{prefix}")

@@ -25,6 +25,7 @@ class SqlalchemyTableConverter:
     metadata: MetaData
     schema: Dict[str, StoreMeta] = field(default_factory=dict)
 
+    # pylint: disable=R0914
     def to_sqlalchemy_table_and_indexes(
         self, store_meta: StoreMeta
     ) -> Tuple[Table, List[Index]]:

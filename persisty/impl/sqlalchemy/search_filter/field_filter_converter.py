@@ -26,6 +26,7 @@ class AttrFilterConverter(AndFilterConverter):
             clause = self.get_clause(col, search_filter.op, search_filter.value)
             return clause, True
 
+    # pylint: disable=R0911,R0912
     @staticmethod
     def get_clause(col: Column, op: AttrFilterOp, value: Any):
         """

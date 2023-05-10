@@ -22,6 +22,7 @@ from persisty.util.undefined import UNDEFINED
 T = TypeVar("T")
 
 
+# pylint: disable=R0902
 @dataclass
 class StoreMeta:
     """
@@ -167,6 +168,7 @@ def get_update_dataclass(type_: Type[T]) -> Type[T]:
     return get_meta(type_).get_update_dataclass()
 
 
+# pylint: disable=W0613
 # noinspection PyDecorator,PyUnusedLocal
 @classmethod
 def _schema_factory(

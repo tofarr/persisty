@@ -19,8 +19,8 @@ class ObjFilterFactory:
         try:
             attr = next(a for a in self.meta.attrs if a.name == name and a.readable)
             return AttrFilterFactory(attr)
-        except StopIteration:
-            raise PersistyError(f"no_such_field:{name}")
+        except StopIteration as exc:
+            raise PersistyError(f"no_such_field:{name}") from exc
 
 
 @dataclass

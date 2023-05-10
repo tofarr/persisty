@@ -15,7 +15,8 @@ class ExcludeAll(SearchFilterABC[T], SingletonABC):
     def lock_attrs(self, attrs: Tuple[Attr, ...]) -> ExcludeAll:
         return self
 
-    def match(self, value: T, attrs: Tuple[Attr, ...]) -> bool:
+    # pylint: disable=W0613
+    def match(self, item: T, attrs: Tuple[Attr, ...]) -> bool:
         return False
 
     def build_filter_expression(

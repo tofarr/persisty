@@ -8,10 +8,9 @@ from persisty.stored import stored
 from schemey.schema import int_schema, str_schema
 
 
-@stored(indexes=(
-    AttrIndex("stream_id"),
-    PartitionSortIndex("stream_id", "part_number")
-))
+@stored(
+    indexes=(AttrIndex("stream_id"), PartitionSortIndex("stream_id", "part_number"))
+)
 class Chunk:
     id: UUID
     item_key: str = Attr(updatable=False, schema=str_schema(max_length=255))

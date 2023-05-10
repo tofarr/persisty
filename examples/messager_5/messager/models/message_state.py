@@ -2,4 +2,4 @@ from enum import Enum
 
 
 class MessageState(Enum):
-    FEATURED = 'featured'
+    FEATURED = "featured"

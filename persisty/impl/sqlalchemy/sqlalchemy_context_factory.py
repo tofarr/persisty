@@ -13,6 +13,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SqlalchemyContextFactory(SqlalchemyContextFactoryABC):
+    # pylint: disable=W1203
     def create(self) -> Optional[SqlalchemyContext]:
         sql_urn = os.environ.get("PERSISTY_SQL_URN")
         # If we have not defined an sql urn, then we are in developer mode, where tables are created on the fly

@@ -31,10 +31,12 @@ class OwnedStore(StoreABC[T]):
     require_ownership_for_delete: bool = True
 
     def get_meta(self) -> StoreMeta:
-        meta = getattr(self, '_meta', None)
+        meta = getattr(self, "_meta", None)
         if meta is None:
-            meta = meta_with_non_editable_subject_id(self.store.get_meta(), self.subject_id_attr_name)
-            setattr(self, '_meta', meta)
+            meta = meta_with_non_editable_subject_id(
+                self.store.get_meta(), self.subject_id_attr_name
+            )
+            setattr(self, "_meta", meta)
         return meta
 
     def create(self, item: T) -> Optional[T]:
@@ -51,6 +53,7 @@ class OwnedStore(StoreABC[T]):
                 return
         return item
 
+    # pylint: disable=W0212
     def _update(self, key: str, item: T, updates: T) -> Optional[T]:
         if self.require_ownership_for_update:
             if (
@@ -61,6 +64,7 @@ class OwnedStore(StoreABC[T]):
         setattr(updates, self.subject_id_attr_name, self.authorization.subject_id)
         return self.store._update(key, item, updates)
 
+    # pylint: disable=W0212
     def _delete(self, key: str, item: T) -> bool:
         if self.require_ownership_for_delete:
             if (
@@ -129,13 +133,12 @@ class OwnedStore(StoreABC[T]):
                     and existing_subject_id != self.authorization.subject_id
                 ):
                     continue
-                else:
-                    setattr(
-                        edit.create_item,
-                        self.subject_id_attr_name,
-                        self.authorization.subject_id,
-                    )
-                    filtered_edits.append(edit)
+                setattr(
+                    edit.create_item,
+                    self.subject_id_attr_name,
+                    self.authorization.subject_id,
+                )
+                filtered_edits.append(edit)
             else:
                 existing_item = items_by_key.get(edit.delete_key)
                 existing_subject_id = getattr(existing_item, self.subject_id_attr_name)
@@ -144,8 +147,7 @@ class OwnedStore(StoreABC[T]):
                     and existing_subject_id != self.authorization.subject_id
                 ):
                     continue
-                else:
-                    filtered_edits.append(edit)
+                filtered_edits.append(edit)
         filtered_results = self.store._edit_batch(filtered_edits, items_by_key)
         results_by_id = {r.edit.id: r for r in filtered_results}
         results = []
@@ -158,7 +160,9 @@ class OwnedStore(StoreABC[T]):
         return results
 
 
-def meta_with_non_editable_subject_id(meta: StoreMeta, subject_id_attr_name: str) -> StoreMeta:
+def meta_with_non_editable_subject_id(
+    meta: StoreMeta, subject_id_attr_name: str
+) -> StoreMeta:
     attrs = []
     for attr in meta.attrs:
         if attr.name == subject_id_attr_name:

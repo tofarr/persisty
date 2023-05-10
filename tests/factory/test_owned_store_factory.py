@@ -22,11 +22,14 @@ class TestOwnedStoreFactory(TestCase):
     def test_getters(self):
         meta = get_meta(Message)
         store = MemStore(meta)
-        meta = dataclasses.replace(meta, attrs=[
-            meta.attrs[0],
-            dataclasses.replace(meta.attrs[1], creatable=False, updatable=False),
-            meta.attrs[2],
-        ])
+        meta = dataclasses.replace(
+            meta,
+            attrs=[
+                meta.attrs[0],
+                dataclasses.replace(meta.attrs[1], creatable=False, updatable=False),
+                meta.attrs[2],
+            ],
+        )
         factory = OwnedStoreFactory(DefaultStoreFactory(store), "owner")
         self.assertEqual(meta, factory.get_meta())
         subject_1 = Authorization("subject-1", frozenset(), None, None)

@@ -1,9 +1,8 @@
 from dataclasses import dataclass
-from typing import Optional, ForwardRef, List, Dict
+from typing import Dict, ForwardRef, Generic, List, Optional, TypeVar
 
 from marshy.types import ExternalItemType
 from schemey import schema_from_type
-from schemey.schema import str_schema
 from servey.security.authorization import Authorization
 
 from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
@@ -11,8 +10,6 @@ from persisty.attr.attr_type import AttrType
 from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.link.on_delete import OnDelete
-
-from typing import Generic, TypeVar
 
 T = TypeVar("T")
 

@@ -61,10 +61,10 @@ def login(username: str, password: str) -> Optional[str]:
 
 @action(triggers=WEB_GET, cache_control=TtlCacheControl(ttl=86400))
 def get_appsync_api_key() -> Optional[str]:
-    """ Appsync requires the use of an API key, so we add the ability to get it """
+    """Appsync requires the use of an API key, so we add the ability to get it"""
     if not is_lambda_env():
         return
-    appsync_client = boto3.client('appsync')
+    appsync_client = boto3.client("appsync")
     api_id = _get_api_id(appsync_client)
     if not api_id:
         return
@@ -76,25 +76,23 @@ def _get_api_id(appsync_client) -> Optional[str]:
     kwargs = {}
     while True:
         response = appsync_client.list_graphql_apis(**kwargs)
-        for graphql_api in response.get('graphqlApis') or []:
-            if graphql_api['name'].lower() == os.environ['SERVEY_MAIN']:
-                return graphql_api['apiId']
-        if response['nextToken']:
-            kwargs['nextToken'] = response['nextToken']
+        for graphql_api in response.get("graphqlApis") or []:
+            if graphql_api["name"].lower() == os.environ["SERVEY_MAIN"]:
+                return graphql_api["apiId"]
+        if response["nextToken"]:
+            kwargs["nextToken"] = response["nextToken"]
         else:
             return
 
 
 def _get_api_key(appsync_client, api_id: str) -> Optional[str]:
-    kwargs = {
-        'apiId': api_id
-    }
+    kwargs = {"apiId": api_id}
     while True:
         response = appsync_client.list_api_keys(**kwargs)
-        for api_key in response.get('apiKeys') or []:
-            if api_key.get('expires') > datetime.now().timestamp():
-                return api_key['id']
-        if response['nextToken']:
-            kwargs['nextToken'] = response['nextToken']
+        for api_key in response.get("apiKeys") or []:
+            if api_key.get("expires") > datetime.now().timestamp():
+                return api_key["id"]
+        if response["nextToken"]:
+            kwargs["nextToken"] = response["nextToken"]
         else:
             return

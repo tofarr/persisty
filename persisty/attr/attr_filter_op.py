@@ -60,6 +60,7 @@ class AttrFilterOp(Enum):
     oneof = partial(_oneof)
     startswith = partial(_startswith)
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     @classmethod
     def __marshaller_factory__(cls, marshaller_context: MarshallerContext):

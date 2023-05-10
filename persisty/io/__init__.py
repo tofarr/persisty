@@ -33,6 +33,7 @@ def export_meta(directory: str, store: StoreABC):
     path = Path(directory, store_meta.name, "meta.json")
     path.parent.mkdir(exist_ok=True, parents=True)
     meta = marshy.dump(store_meta)
+    # pylint: disable=W1514
     with open(path, "w") as f:
         json.dump(meta, f)
 
@@ -51,6 +52,7 @@ def export_content(directory: str, store: StoreABC, page_size: int = 500):
         if not batch:
             return
         path = Path(directory, store_meta.name, str(index) + ".json")
+        # pylint: disable=W1514
         with open(path, "w") as f:
             json.dump(batch, f)
         index += 1
@@ -79,6 +81,7 @@ def import_store(
 
 def import_meta(directory: str, store_name: str) -> StoreMeta:
     path = Path(directory, store_name, "meta.yml")
+    # pylint: disable=W1514
     with open(path, "r") as f:
         meta = json.load(f)
     store_meta = marshy.load(StoreMeta, meta)
@@ -103,6 +106,7 @@ def read_all_items(directory: Path) -> Iterator[ExternalItemType]:
         file = Path(directory, str(index) + ".yml")
         if not exists(file):
             return
+        # pylint: disable=W1514
         with open(file, "r") as f:
             # noinspection PyTypeChecker
             items = json.loads(f)

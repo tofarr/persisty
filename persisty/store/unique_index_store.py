@@ -25,10 +25,12 @@ class UniqueIndexStore(WrapperStoreABC[T]):
         self._check_create(item)
         return self.get_store().create(item)
 
+    # pylint: disable=W0212
     def _update(self, key: str, item: T, updates: T) -> Optional[T]:
         self._check_update(key, item, updates)
         return self.get_store()._update(key, item, updates)
 
+    # pylint: disable=W0212
     def _edit_batch(
         self, edits: List[BatchEdit[T, T]], items_by_key: Dict[str, T]
     ) -> List[BatchEditResult[T, T]]:
@@ -51,13 +53,15 @@ class UniqueIndexStore(WrapperStoreABC[T]):
     def _check_create(self, item: T):
         store = self.get_store()
         for index in self.unique_indexes:
-            search_filter = And(tuple(
-                AttrFilter(a, AttrFilterOp.eq, getattr(item, a))
-                for a in index.attr_names
-            ))
+            search_filter = And(
+                tuple(
+                    AttrFilter(a, AttrFilterOp.eq, getattr(item, a))
+                    for a in index.attr_names
+                )
+            )
             item = next(store.search_all(search_filter), None)
             if item:
-                raise PersistyError('non_unique_item')
+                raise PersistyError("non_unique_item")
 
     def _check_update(self, key: str, item: T, updates: T):
         store = self.get_store()
@@ -70,10 +74,14 @@ class UniqueIndexStore(WrapperStoreABC[T]):
                     value = getattr(item, attr_name)
                 search_filters.append(AttrFilter(attr_name, AttrFilterOp.eq, value))
             search_filter = And(search_filters)
-            results = (item for item in store.search_all(search_filter) if key_config.to_key_str(item) != key)
+            results = (
+                item
+                for item in store.search_all(search_filter)
+                if key_config.to_key_str(item) != key
+            )
             item = next(results, None)
             if item:
-                raise PersistyError('non_unique_item')
+                raise PersistyError("non_unique_item")
 
 
 def unique_index_store(store: StoreABC):

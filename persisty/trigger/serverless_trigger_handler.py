@@ -28,6 +28,7 @@ class ServerlessTriggerHandler(TriggerHandlerABC):
         stream = lambda_definition.get("stream")
         if not stream:
             stream = lambda_definition["stream"] = []
+        # pylint: disable=E1101
         arn = self.unmanaged_table_arns_by_store_name.get(trigger.store_name)
         if not arn:
             arn = {
@@ -37,8 +38,8 @@ class ServerlessTriggerHandler(TriggerHandlerABC):
                 ]
             }
         stream.append(
-            dict(
-                type="dynamodb",
-                arn=arn,
-            )
+            {
+                "type": "dynamodb",
+                "arn": arn,
+            }
         )

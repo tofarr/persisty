@@ -27,14 +27,12 @@ class SearchOrderAttr(Generic[T]):
         value = getattr(item, self.attr, UNDEFINED)
         if value in (None, UNDEFINED):
             return not self.desc, ""
-        else:
-            return self.desc, value
+        return self.desc, value
 
     def lt(self, a: T, b: T) -> bool:
         if self.desc:
             return self.key(a) > self.key(b)
-        else:
-            return self.key(a) < self.key(b)
+        return self.key(a) < self.key(b)
 
     def eq(self, a: T, b: T) -> bool:
         return self.key(a) == self.key(b)

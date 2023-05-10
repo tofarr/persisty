@@ -7,6 +7,7 @@ from persisty.impl.sqlalchemy.sqlalchemy_context import SqlalchemyContext
 
 _DEFAULT_CONTEXT = None
 
+
 class SqlalchemyContextFactoryABC(ABC):
     priority: int = 100
 
@@ -24,6 +25,7 @@ def create_default_context() -> Optional[SqlalchemyContext]:
             return context
 
 
+# pylint: disable=W0603
 def get_default_context() -> Optional[SqlalchemyContext]:
     global _DEFAULT_CONTEXT
     if not _DEFAULT_CONTEXT:

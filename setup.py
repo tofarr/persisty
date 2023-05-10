@@ -1,19 +1,30 @@
 import setuptools
 
-from persisty.__version__ import __version__
-
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 extras_require = {
-    "sql": ["SQLAlchemy~=1.4"],
+    "dev": [
+        "black~=23.3",
+        "pytest~=7.2",
+        "pytest-cov~=4.0",
+        "pytest-xdist~=3.2",
+        "pylint~=2.17",
+    ],
     "server": ["servey[server]~=2.8"],
-    "serverless": ["servey[serverless]~=2.8"]
+    "serverless": ["servey[serverless]~=2.8", "opensearch-py~=2.2"],
+    "sql": ["SQLAlchemy~=1.4"],
 }
+extras_require["all"] = list(
+    {
+        dependency
+        for dependencies in extras_require.values()
+        for dependency in dependencies
+    }
+)
 
 setuptools.setup(
     name="persisty",
-    version=__version__,
     author="Tim O'Farrell",
     author_email="tofarr@gmail.com",
     description="A better persistence layer for python",
@@ -22,11 +33,11 @@ setuptools.setup(
     url="https://github.com/tofarr/lambsync",
     packages=setuptools.find_packages(exclude=("tests*",)),
     install_requires=[
-        "marshy~=4.0",
         "pyaes~=1.6",
-        "schemey~=6.0",
         "servey~=2.8",
     ],
+    setup_requires=["setuptools-git-versioning"],
+    setuptools_git_versioning={"enabled": True, "dirty_template": "{tag}"},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

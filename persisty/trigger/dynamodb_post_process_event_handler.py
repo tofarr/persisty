@@ -1,5 +1,5 @@
 import inspect
-from dataclasses import dataclass, attr
+from dataclasses import dataclass, field
 from typing import Optional, Type
 
 from boto3.dynamodb.types import TypeDeserializer
@@ -55,15 +55,13 @@ class DynamodbPostProcessEventHandler(EventHandlerABC):
             elif new_image:
                 if _has_trigger(self.action, AfterCreateTrigger):
                     self.action.fn(new_image)
-            else:
-                if _has_trigger(self.action, AfterDeleteTrigger):
-                    self.action.fn(old_image)
-        return None
+            elif _has_trigger(self.action, AfterDeleteTrigger):
+                self.action.fn(old_image)
 
 
 @dataclass
 class DynamodbPostProcessEventHandlerFactory(EventHandlerFactoryABC):
-    marshaller_context: MarshallerContext = attr(default_factory=get_default_context)
+    marshaller_context: MarshallerContext = field(default_factory=get_default_context)
 
     def create(self, action: Action) -> Optional[EventHandlerABC]:
         if (

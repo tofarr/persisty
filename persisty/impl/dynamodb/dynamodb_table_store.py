@@ -35,11 +35,12 @@ def catch_client_error(fn):
         try:
             return fn(*args, **kwargs)
         except ClientError as e:
-            raise PersistyError(e)
+            raise PersistyError(e) from e
 
     return wrapper
 
 
+# pylint: disable=R0902
 @dataclass(frozen=True)
 class DynamodbTableStore(StoreABC[T]):
     """Store backed by a dynamodb table. Does not do single table design or anything of that nature."""
@@ -47,10 +48,17 @@ class DynamodbTableStore(StoreABC[T]):
     meta: StoreMeta
     table_name: str
     index: PartitionSortIndex
-    global_secondary_indexes: Dict[str, PartitionSortIndex] = field(default_factory=dict)
+    global_secondary_indexes: Dict[str, PartitionSortIndex] = field(
+        default_factory=dict
+    )
     aws_profile_name: Optional[str] = None
     region_name: Optional[str] = None
     decimal_format: str = "%.9f"
+    max_local_search_size: int = None
+
+    def __post_init__(self):
+        if self.max_local_search_size is None:
+            object.__setattr__(self, "max_local_search_size", self.meta.batch_size * 5)
 
     def get_meta(self) -> StoreMeta:
         return self.meta
@@ -101,10 +109,10 @@ class DynamodbTableStore(StoreABC[T]):
 
     @catch_client_error
     def update(
-        self, updates: T, search_filter: SearchFilterABC = INCLUDE_ALL
+        self, updates: T, precondition: SearchFilterABC = INCLUDE_ALL
     ) -> Optional[T]:
-        if search_filter is not INCLUDE_ALL:
-            search_filter = search_filter.lock_attrs(self.meta.attrs)
+        if precondition is not INCLUDE_ALL:
+            search_filter = precondition.lock_attrs(self.meta.attrs)
             item = self.read(self.meta.key_config.to_key_str(updates))
             if not search_filter.match(item, self.meta.attrs):
                 return None
@@ -166,38 +174,56 @@ class DynamodbTableStore(StoreABC[T]):
         index_name, index = self._get_index_for_search(search_filter, search_order)
         key_filter, other_filter = _separate_index_from_filter(index, search_filter)
         if other_filter:
-            filter_expression, search_filter_handled_natively = other_filter.build_filter_expression(self.meta.attrs)
+            (
+                filter_expression,
+                search_filter_handled_natively,
+            ) = other_filter.build_filter_expression(self.meta.attrs)
         else:
             filter_expression = None
             search_filter_handled_natively = True
-        query_args = filter_none({
-            "KeyConditionExpression": self._to_key_condition_expression(key_filter),
-            "IndexName": index_name,
-            "Select": "SPECIFIC_ATTRIBUTES",
-            "ProjectionExpression": ",".join(
-                a.name for a in self.meta.attrs if a.readable
-            ),
-            "FilterExpression": filter_expression,
-            "ScanIndexForward": _get_scan_index_forward(index, search_order)
-        })
-        search_order_handled_natively = _is_search_order_handled_natively(index, search_order)
+        query_args = filter_none(
+            {
+                "KeyConditionExpression": self._to_key_condition_expression(key_filter),
+                "IndexName": index_name,
+                "Select": "SPECIFIC_ATTRIBUTES",
+                "ProjectionExpression": ",".join(
+                    a.name for a in self.meta.attrs if a.readable
+                ),
+                "FilterExpression": filter_expression,
+                "ScanIndexForward": _get_scan_index_forward(index, search_order),
+            }
+        )
+        search_order_handled_natively = _is_search_order_handled_natively(
+            index, search_order
+        )
         if search_order_handled_natively:
             return self._search_native_order(
-                query_args, index, other_filter, search_filter_handled_natively, page_key, limit
+                query_args,
+                index,
+                other_filter,
+                search_filter_handled_natively,
+                page_key,
+                limit,
             )
-        else:
-            return self._search_local_order(
-                query_args, index, other_filter, search_filter_handled_natively, search_order, page_key, limit
-            )
+        return self._search_local_order(
+            query_args,
+            index,
+            other_filter,
+            search_filter_handled_natively,
+            search_order,
+            page_key,
+            limit,
+        )
 
+    # pylint: disable=R0913
     def _search_native_order(
-            self,
-            query_args: Dict,
-            index: Optional[PartitionSortIndex],
-            search_filter: SearchFilterABC,
-            search_filter_handled_natively: bool,
-            page_key: Optional[str],
-            limit: int
+        self,
+        query_args: Dict,
+        index: Optional[PartitionSortIndex],
+        search_filter: SearchFilterABC,
+        search_filter_handled_natively: bool,
+        page_key: Optional[str],
+        limit: int,
     ) -> ResultSet[T]:
         if page_key:
             query_args["ExclusiveStartKey"] = self.meta.key_config.to_key_dict(page_key)
@@ -205,7 +231,9 @@ class DynamodbTableStore(StoreABC[T]):
         results = []
         while True:
             response = _get_search_response(table, index, query_args)
-            items = self._load_items(response, search_filter, search_filter_handled_natively)
+            items = self._load_items(
+                response, search_filter, search_filter_handled_natively
+            )
             results.extend(items)
             if len(results) >= limit:
                 results = results[:limit]
@@ -217,6 +245,7 @@ class DynamodbTableStore(StoreABC[T]):
                 return ResultSet(results)
             query_args["ExclusiveStartKey"] = last_evaluated_key
 
+    # pylint: disable=R0914
     def _search_local_order(
         self,
         query_args: Dict,
@@ -225,16 +254,18 @@ class DynamodbTableStore(StoreABC[T]):
         search_filter_handled_natively: bool,
         search_order: SearchOrder,
         page_key: Optional[str],
-        limit: int
+        limit: int,
     ) -> ResultSet[T]:
         table = self._dynamodb_table()
         results = []
         while True:
             response = _get_search_response(table, index, query_args)
-            items = self._load_items(response, search_filter, search_filter_handled_natively)
+            items = self._load_items(
+                response, search_filter, search_filter_handled_natively
+            )
             results.extend(items)
-            if len(items) > self.meta.batch_size * 5:
-                raise PersistyError('sort_failed')
+            if len(items) > self.max_local_search_size:
+                raise PersistyError("sort_failed")
             last_evaluated_key = response.get("LastEvaluatedKey")
             if not last_evaluated_key:
                 results = list(search_order.sort(results))
@@ -242,13 +273,14 @@ class DynamodbTableStore(StoreABC[T]):
                 offset = 0
                 if page_key:
                     offset = next(
-                        i + 1 for i, result in enumerate(results)
+                        i + 1
+                        for i, result in enumerate(results)
                         if key_config.to_key_str(result) == page_key
                     )
                 next_page_key = None
                 if len(results) > offset + limit:
-                    next_page_key = key_config.to_key_str(results[offset+limit-1])
-                results = results[offset:(offset+limit)]
+                    next_page_key = key_config.to_key_str(results[offset + limit - 1])
+                results = results[offset : (offset + limit)]
                 return ResultSet(results, next_page_key)
             query_args["ExclusiveStartKey"] = last_evaluated_key
 
@@ -260,19 +292,24 @@ class DynamodbTableStore(StoreABC[T]):
         index_name, index = self._get_index_for_search(search_filter, None)
         key_filter, other_filter = _separate_index_from_filter(index, search_filter)
         if other_filter:
-            filter_expression, search_filter_handled_natively = other_filter.build_filter_expression(self.meta.attrs)
+            (
+                filter_expression,
+                search_filter_handled_natively,
+            ) = other_filter.build_filter_expression(self.meta.attrs)
         else:
             filter_expression = None
             search_filter_handled_natively = True
         if not search_filter_handled_natively:
             result = sum(1 for _ in self.search_all(search_filter))
             return result
-        kwargs = filter_none({
-            "KeyConditionExpression": self._to_key_condition_expression(key_filter),
-            "IndexName": index_name,
-            "Select": "COUNT",
-            "FilterExpression": filter_expression,
-        })
+        kwargs = filter_none(
+            {
+                "KeyConditionExpression": self._to_key_condition_expression(key_filter),
+                "IndexName": index_name,
+                "Select": "COUNT",
+                "FilterExpression": filter_expression,
+            }
+        )
         table = self._dynamodb_table()
         count = 0
         while True:
@@ -355,16 +392,14 @@ class DynamodbTableStore(StoreABC[T]):
     def _convert_from_decimals(self, item):
         if isinstance(item, dict):
             return {k: self._convert_from_decimals(v) for k, v in item.items()}
-        elif isinstance(item, list):
+        if isinstance(item, list):
             return [self._convert_from_decimals(i) for i in item]
-        elif isinstance(item, Decimal):
+        if isinstance(item, Decimal):
             int_val = int(item)
             if int_val == item:
                 return int_val
-            else:
-                return float(item)
-        else:
-            return item
+            return float(item)
+        return item
 
     def _dump_create(self, to_create: T):
         result = {}
@@ -402,16 +437,14 @@ class DynamodbTableStore(StoreABC[T]):
     def _convert_to_decimals(self, item):
         if isinstance(item, dict):
             return {k: self._convert_to_decimals(v) for k, v in item.items()}
-        elif isinstance(item, list):
+        if isinstance(item, list):
             return [self._convert_to_decimals(i) for i in item]
-        elif isinstance(item, float):
+        if isinstance(item, float):
             int_val = int(item)
             if int_val == item:
                 return int_val
-            else:
-                return Decimal(self.decimal_format % item)
-        else:
-            return item
+            return Decimal(self.decimal_format % item)
+        return item
 
     def _get_index_for_search(
         self,
@@ -419,7 +452,9 @@ class DynamodbTableStore(StoreABC[T]):
         search_order: Optional[SearchOrder],
     ) -> Tuple[Optional[str], Optional[PartitionSortIndex]]:
         eq_attr_names = _get_top_level_eq_attrs(search_filter)
-        sort_attr_names = {s.attr for s in search_order.orders} if search_order else set()
+        sort_attr_names = (
+            {s.attr for s in search_order.orders} if search_order else set()
+        )
         name = None
         score = _get_score_for_index(self.index, eq_attr_names, sort_attr_names)
         index = self.index if score else None
@@ -445,7 +480,7 @@ class DynamodbTableStore(StoreABC[T]):
         if hasattr(self, "_resource"):
             return self._resource
         kwargs = filter_none(
-            dict(profile_name=self.aws_profile_name, region_name=self.region_name)
+            {"profile_name": self.aws_profile_name, "region_name": self.region_name}
         )
         session = boto3.Session(**kwargs)
         resource = session.resource("dynamodb")
@@ -477,9 +512,10 @@ def _build_update(updates: dict):
 def _get_top_level_eq_attrs(search_filter: SearchFilterABC) -> List[str]:
     if isinstance(search_filter, AttrFilter) and search_filter.op == AttrFilterOp.eq:
         return [search_filter.name]
-    elif isinstance(search_filter, And):
+    if isinstance(search_filter, And):
         return [
-            f.name for f in search_filter.search_filters
+            f.name
+            for f in search_filter.search_filters
             if isinstance(f, AttrFilter) and f.op == AttrFilterOp.eq
         ]
     return []
@@ -501,7 +537,9 @@ def _separate_index_filters(
     return condition, non_index_filter, handled
 
 
-def _get_score_for_index(index: PartitionSortIndex, eq_attrs: Set[str], sort_attrs: Set[str]):
+def _get_score_for_index(
+    index: PartitionSortIndex, eq_attrs: Set[str], sort_attrs: Set[str]
+):
     if index.pk not in eq_attrs:
         return 0
     if index.sk in sort_attrs:
@@ -510,8 +548,7 @@ def _get_score_for_index(index: PartitionSortIndex, eq_attrs: Set[str], sort_att
 
 
 def _separate_index_from_filter(
-    index: Optional[PartitionSortIndex],
-    search_filter: SearchFilterABC
+    index: Optional[PartitionSortIndex], search_filter: SearchFilterABC
 ) -> Tuple[Optional[AttrFilter], Optional[SearchFilterABC]]:
     if not index:
         return None, search_filter
@@ -529,12 +566,16 @@ def _separate_index_from_filter(
     return index_filter, filter_expression
 
 
-def _get_scan_index_forward(index: Optional[PartitionSortIndex], search_order: Optional[SearchOrder]) -> Optional[bool]:
+def _get_scan_index_forward(
+    index: Optional[PartitionSortIndex], search_order: Optional[SearchOrder]
+) -> Optional[bool]:
     if search_order and _is_search_order_handled_natively(index, search_order):
         return not search_order.orders[0].desc
 
 
-def _is_search_order_handled_natively(index: Optional[PartitionSortIndex], search_order: Optional[SearchOrder]) -> bool:
+def _is_search_order_handled_natively(
+    index: Optional[PartitionSortIndex], search_order: Optional[SearchOrder]
+) -> bool:
     if not search_order:
         return True
     if len(search_order.orders) > 1 or not index:

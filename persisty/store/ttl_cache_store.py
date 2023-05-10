@@ -2,7 +2,7 @@ from copy import deepcopy
 from time import time
 from typing import Optional, Dict, List, Generic
 
-from dataclasses import dataclass, attr
+from dataclasses import dataclass, field
 
 from marshy import dump, get_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
@@ -27,8 +27,8 @@ class TtlEntry(Generic[T]):
 @dataclass(frozen=True)
 class TtlCacheStore(StoreABC[T]):
     store: StoreABC[T]
-    cache: Dict[str, TtlEntry] = attr(default_factory=dict)
-    cached_result_sets: Dict[str, TtlEntry] = attr(default_factory=dict)
+    cache: Dict[str, TtlEntry] = field(default_factory=dict)
+    cached_result_sets: Dict[str, TtlEntry] = field(default_factory=dict)
     ttl: int = 30
     marshaller: MarshallerABC[T] = None
 
@@ -90,6 +90,7 @@ class TtlCacheStore(StoreABC[T]):
         items = [items_by_key.get(key) for key in keys]
         return items
 
+    # pylint: disable=W0212
     def _update(
         self,
         key: str,
@@ -101,6 +102,7 @@ class TtlCacheStore(StoreABC[T]):
             self.store_item_in_cache(key, item)
         return item
 
+    # pylint: disable=W0212
     def _delete(self, key: str, item: T) -> bool:
         destroyed = self.store._delete(key, item)
         if key in self.cache:
@@ -139,7 +141,7 @@ class TtlCacheStore(StoreABC[T]):
             key = key_config.to_key_str(item)
             self.store_item_in_cache(key, item, expire_at)
             keys.append(key)
-        entry = dict(keys=keys, next_page_key=result_set.next_page_key)
+        entry = {"keys": keys, "next_page_key": result_set.next_page_key}
         self.cached_result_sets[result_set_key] = TtlEntry(entry, expire_at)
         return result_set
 

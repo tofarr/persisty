@@ -12,16 +12,21 @@ from persisty.search_filter.search_filter_abc import SearchFilterABC, T
 class Or(SearchFilterABC[T]):
     search_filters: Tuple[SearchFilterABC, ...]
 
+    # pylint: disable=W0221
     def __new__(cls, search_filters: Tuple[SearchFilterABC, ...]):
         """Strip out nested And logic"""
         if not search_filters:
             return EXCLUDE_ALL
-        elif len(search_filters) == 1:
+        if len(search_filters) == 1:
             return search_filters[0]
-        flatten = next((
-            True for f in search_filters
-            if isinstance(f, Or) or f is INCLUDE_ALL or f is EXCLUDE_ALL
-        ), False)
+        flatten = next(
+            (
+                True
+                for f in search_filters
+                if isinstance(f, Or) or f is INCLUDE_ALL or f is EXCLUDE_ALL
+            ),
+            False,
+        )
         if flatten:
             existing = set()
             flattened = []
@@ -46,9 +51,9 @@ class Or(SearchFilterABC[T]):
         result = Or(tuple(f.lock_attrs(attrs) for f in self.search_filters))
         return result
 
-    def match(self, value: T, attrs: Tuple[Attr, ...]) -> bool:
+    def match(self, item: T, attrs: Tuple[Attr, ...]) -> bool:
         match = next(
-            (True for f in self.search_filters if not f.match(value, attrs)), False
+            (True for f in self.search_filters if not f.match(item, attrs)), False
         )
         return match
 

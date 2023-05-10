@@ -1,6 +1,5 @@
 import dataclasses
 import inspect
-from inspect import Signature
 from typing import Type, Optional, List
 
 from servey.action.action import Action, action, get_action
@@ -115,7 +114,6 @@ def action_for_delete(store_factory: StoreFactoryABC) -> Action:
         ),
     )
     def delete(key: str, authorization: Optional[Authorization] = None) -> bool:
-
         store = store_factory.create(authorization)
         result = store.delete(key)
         return result
@@ -173,7 +171,9 @@ def action_for_search(
 
     if search_order_type is None:
         sig = inspect.signature(search)
-        sig = sig.replace(parameters=[p for p in sig.parameters.values() if p.name != 'search_order'])
+        sig = sig.replace(
+            parameters=[p for p in sig.parameters.values() if p.name != "search_order"]
+        )
         search.__signature__ = sig
 
     search = action(
@@ -286,7 +286,7 @@ def wrap_links_in_actions(read_type: Type):
         if isinstance(v, LinkABC):
             overrides[k] = _to_action_fn(meta, v)
     if overrides:
-        overrides['__doc__'] = read_type.__dict__.get('__doc__')
+        overrides["__doc__"] = read_type.__dict__.get("__doc__")
         read_type = dataclasses.dataclass(
             type(read_type.__name__, (read_type,), overrides)
         )
@@ -297,6 +297,7 @@ def wrap_links_in_actions(read_type: Type):
 def _to_action_fn(meta: StoreMeta, link: LinkABC):
     return_type = link.get_linked_type("persisty.servey.generated")
 
+    # pylint: disable=C2801
     def wrapper(self, authorization: Optional[Authorization] = None) -> return_type:
         fn = link
         if hasattr(link, "__get__"):

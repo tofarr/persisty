@@ -11,6 +11,7 @@ from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorA
 from persisty.util.undefined import UNDEFINED
 
 
+# pylint: disable=R0902
 @dataclass
 class Attr:
     name: str = UNDEFINED  # Can be populated by __set_name__
@@ -40,7 +41,7 @@ class Attr:
 
     def to_field(self) -> Field:
         result = field(
-            default=UNDEFINED, metadata=dict(schemey=self.schema, persisty=self)
+            default=UNDEFINED, metadata={"schemey": self.schema, "persisty": self}
         )
         result.name = self.name
         result.type = self.schema.python_type
@@ -55,7 +56,7 @@ class Attr:
         type_ = ATTR_TYPE_MAP[self.attr_type]
         if isinstance(value, type_):
             return value
-        elif isinstance(value, Enum) and isinstance(value.value, type_):
+        if isinstance(value, Enum) and isinstance(value.value, type_):
             return value
         value = type_(value)
         return value

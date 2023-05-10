@@ -50,31 +50,37 @@ class SqlalchemyColumnConverter:
         column = Column(*args, **kwargs)
         return column
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     @staticmethod
     def _create_binary(attr: Attr):
         return LargeBinary
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     @staticmethod
     def _create_bool(attr: Attr):
         return Boolean
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     @staticmethod
     def _create_datetime(attr: Attr):
         return DateTime
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     @staticmethod
     def _create_float(attr: Attr):
         return Float
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     @staticmethod
     def _create_int(attr: Attr):
         return Integer
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     def _create_json(self, attr: Attr):
         if self.dialect == POSTGRES:
@@ -95,6 +101,7 @@ class SqlalchemyColumnConverter:
             return Text
         return String(length=length)
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     def _create_uuid(self, attr: Attr):
         # AFAIK at the moment, the only dialect with a native UUID type is postgres.

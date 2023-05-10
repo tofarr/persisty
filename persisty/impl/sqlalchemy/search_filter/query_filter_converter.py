@@ -15,6 +15,7 @@ _NULL = None
 
 
 class QueryFilterConverter(AndFilterConverter):
+    # pylint: disable=E1120
     def convert(
         self,
         search_filter: SearchFilterABC,

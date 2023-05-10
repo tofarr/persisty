@@ -8,4 +8,5 @@ class AttrIndex(IndexABC):
     """
     Standard single attribute index, usually translated into a btree and used for boosting performance
     """
+
     attr_name: str

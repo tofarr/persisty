@@ -84,11 +84,17 @@ metadata on the fly, and upload data that conforms to it.
 * An explicit custom index (Spatial RTree)
 
 
-## Deploying new versions of Persisty to Pypi
+## Installing local development dependencies
 
 ```
-pip install setuptools wheel
-python setup.py sdist bdist_wheel
-pip install twine
-python -m twine upload dist/*
+python setup.py install easy_install "servey[dev]"
 ```
+
+## Release Procedure
+
+![status](https://github.com/tofarr/persisty/actions/workflows/quality.yml/badge.svg?branch=main)
+
+The typical process here is:
+* Create a PR with changes. Merge these to main (The `Quality` workflows make sure that your PR
+  meets the styling, linting, and code coverage standards).
+* New releases created in github are automatically uploaded to pypi

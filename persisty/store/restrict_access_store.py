@@ -57,6 +57,7 @@ class RestrictAccessStore(StoreABC[T]):
             raise PersistyError("unavailable_operation")
         return self.store.update(updates, precondition)
 
+    # pylint: disable=W0212
     def _update(self, key: str, item: T, updates: T) -> Optional[T]:
         if not self.get_store_access().updatable:
             raise PersistyError("unavailable_operation")
@@ -67,6 +68,7 @@ class RestrictAccessStore(StoreABC[T]):
             raise PersistyError("unavailable_operation")
         return self.store.delete(key)
 
+    # pylint: disable=W0212
     def _delete(self, key: str, item: T) -> bool:
         if not self.get_store_access().deletable:
             raise PersistyError("unavailable_operation")
@@ -98,27 +100,13 @@ class RestrictAccessStore(StoreABC[T]):
         return self.store.search_all(search_filter, search_order)
 
     def edit_batch(self, edits: List[BatchEdit]) -> List[BatchEditResult]:
-        store_access = self.get_store_access()
-        for edit in edits:
-            if (
-                (edit.create_item and not store_access.creatable)
-                or (edit.update_item and not store_access.updatable)
-                or (edit.delete_key and not store_access.deletable)
-            ):
-                raise PersistyError("unavailable_operation")
+        _check_edits(edits, self.get_store_access())
         return self.store.edit_batch(edits)
 
     def _edit_batch(
         self, edits: List[BatchEdit], items_by_key: Dict[str, T]
     ) -> List[BatchEditResult]:
-        store_access = self.get_store_access()
-        for edit in edits:
-            if (
-                (edit.create_item and not store_access.creatable)
-                or (edit.update_item and not store_access.updatable)
-                or (edit.delete_key and not store_access.deletable)
-            ):
-                raise PersistyError("unavailable_operation")
+        _check_edits(edits, self.get_store_access())
         return self.store._edit_batch(edits, items_by_key)
 
 
@@ -126,3 +114,12 @@ def restrict_access_store(store: StoreABC, store_access: StoreAccess) -> StoreAB
     if store_access == ALL_ACCESS:
         return store
     return RestrictAccessStore(store, store_access)
+
+
+def _check_edits(edits: List[BatchEdit], store_access: StoreAccess):
+    for edit in edits:
+        create_error = edit.create_item and not store_access.creatable
+        update_error = edit.update_item and not store_access.updatable
+        delete_error = edit.delete_key and not store_access.deletable
+        if create_error or update_error or delete_error:
+            raise PersistyError("unavailable_operation")

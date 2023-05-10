@@ -27,6 +27,7 @@ class StoreFactoryABC(Generic[T], ABC):
     def create(self, authorization: Optional[Authorization]) -> Optional[StoreABC[T]]:
         """Create a new store instance"""
 
+    # pylint: disable=R0914
     def create_actions(self) -> Iterator[Action]:
         """Create actions for this factory"""
         from persisty.servey.actions import wrap_links_in_actions

@@ -21,8 +21,8 @@ class AttrFilter(SearchFilterABC[T]):
             assert attr.readable and self.op in attr.permitted_filter_ops
             value = attr.sanitize_type(self.value)
             return AttrFilter(self.name, self.op, value)
-        except (StopIteration, AssertionError):
-            raise PersistyError("attr_filter_invalid_for_attrs")
+        except (StopIteration, AssertionError) as exc:
+            raise PersistyError("attr_filter_invalid_for_attrs") from exc
 
     def match(self, item: T, attrs: Tuple[Attr, ...] = None) -> bool:
         value = getattr(item, self.name)
@@ -44,13 +44,12 @@ class AttrFilter(SearchFilterABC[T]):
                 value = marshy.dump(value)
             condition = getattr(attr, self.op.name)(value)
             return condition, True
-        elif self.op == AttrFilterOp.startswith:
+        if self.op == AttrFilterOp.startswith:
             if not isinstance(value, str):
                 value = marshy.dump(value)
             return attr.begins_with(value), True
-        elif self.op == AttrFilterOp.exists:
+        if self.op == AttrFilterOp.exists:
             return attr.exists(), True
-        elif self.op == AttrFilterOp.not_exists:
+        if self.op == AttrFilterOp.not_exists:
             return attr.not_exists(), True
-        else:
-            return None, False
+        return None, False

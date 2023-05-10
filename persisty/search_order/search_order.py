@@ -23,7 +23,7 @@ class SearchOrder(Generic[T]):
         for order in self.orders:
             if order.lt(a, b):
                 return True
-            elif not order.eq(a, b):
+            if not order.eq(a, b):
                 return False
 
     def eq(self, a: T, b: T) -> bool:

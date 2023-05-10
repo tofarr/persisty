@@ -31,9 +31,11 @@ class WrapperStoreABC(StoreABC[T], ABC):
     def read_batch(self, keys: List[str]) -> List[Optional[T]]:
         return self.get_store().read_batch(keys)
 
+    # pylint: disable=W0212
     def _update(self, key: str, item: T, updates: T) -> Optional[T]:
         return self.get_store()._update(key, item, updates)
 
+    # pylint: disable=W0212
     def _delete(self, key: str, item: T) -> bool:
         return self.get_store()._delete(key, item)
 
@@ -57,6 +59,7 @@ class WrapperStoreABC(StoreABC[T], ABC):
     def count(self, search_filter: SearchFilterABC[T] = INCLUDE_ALL) -> int:
         return self.get_store().count(search_filter)
 
+    # pylint: disable=W0212
     def _edit_batch(
         self, edits: List[BatchEdit[T, T]], items_by_key: Dict[str, T]
     ) -> List[BatchEditResult[T, T]]:

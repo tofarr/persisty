@@ -24,8 +24,7 @@ class BatchEdit(Generic[C, U]):
             return key_config.to_key_str(self.create_item)
         if self.update_item:
             return key_config.to_key_str(self.update_item)
-        else:
-            return self.delete_key
+        return self.delete_key
 
 
 def batch_edit_dataclass_for(

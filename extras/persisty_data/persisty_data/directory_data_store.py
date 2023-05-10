@@ -68,7 +68,7 @@ class DirectoryDataStore(DataStoreABC):
 
     def _search_all(self, search_filter: SearchFilterABC[DataItemABC]):
         meta = self.get_meta()
-        for (root, _, files) in os.walk(self.directory):
+        for root, _, files in os.walk(self.directory):
             for file in files:
                 path = Path(root, file)
                 key = str(Path(root, file))

@@ -93,6 +93,7 @@ def configure_indexes(context: MarshallerContext):
     register_impl(IndexABC, UniqueIndex, context)
     try:
         from persisty.impl.dynamodb.partition_sort_index import PartitionSortIndex
+
         register_impl(IndexABC, PartitionSortIndex, context)
     except ImportError as e:
         raise_non_ignored(e)
@@ -114,8 +115,8 @@ def configure_sqlalchemy(context: MarshallerContext):
     except ImportError as e:
         msg = str(e)
         if msg.startswith("No module named '"):
-            module_name = msg[len("No module named '"):-1]
-            if module_name == 'sqlalchemy':
+            module_name = msg[len("No module named '") : -1]
+            if module_name == "sqlalchemy":
                 return
         raise_non_ignored(e)
 

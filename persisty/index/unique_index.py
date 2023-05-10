@@ -6,7 +6,8 @@ from persisty.index.index_abc import IndexABC
 
 @dataclass
 class UniqueIndex(IndexABC):
-    """ Unique attribute index """
+    """Unique attribute index"""
+
     attr_names: Tuple[str, ...]
 
 

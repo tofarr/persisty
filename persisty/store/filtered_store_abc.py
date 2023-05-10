@@ -32,6 +32,7 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
         """search_filter an stored before create"""
         return item
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     def filter_update(self, item: T, updates: T) -> T:
         """search_filter an stored before create"""
@@ -41,6 +42,7 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
         """search_filter an stored after read"""
         return item
 
+    # pylint: disable=W0613
     # noinspection PyUnusedLocal
     def allow_delete(self, item: T) -> bool:
         """Filter a delete of an stored"""
@@ -72,12 +74,14 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
         items = [self.filter_read(item) if item else None for item in items]
         return items
 
+    # pylint: disable=W0212
     def _update(self, key: str, item: T, updates: T) -> Optional[T]:
         updates = self.filter_update(item, updates)
         if not updates:
             return None
         return self.get_store()._update(key, item, updates)
 
+    # pylint: disable=W0212
     def _delete(self, key: str, item: T) -> bool:
         if self.allow_delete(item):
             return self.get_store()._delete(key, item)
@@ -127,16 +131,15 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
                 if not result_set.next_page_key:
                     return ResultSet(results)
                 return ResultSet(results, encrypt([result_set.next_page_key, None]))
-            elif len(results) > limit:
+            if len(results) > limit:
                 results = results[:limit]
                 return ResultSet(
                     results,
                     encrypt([nested_page_key, key_config.to_key_str(results[-1])]),
                 )
-            elif not result_set.next_page_key:
+            if not result_set.next_page_key:
                 return ResultSet(results)
-            else:
-                nested_page_key = result_set.next_page_key
+            nested_page_key = result_set.next_page_key
 
     def search_all(
         self,
@@ -163,6 +166,7 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
         count = sum(1 for _ in items)
         return count
 
+    # pylint: disable=R0912
     def _edit_batch(
         self, edits: List[BatchEdit[T, T]], items_by_key: Dict[str, T]
     ) -> List[BatchEditResult[T, T]]:

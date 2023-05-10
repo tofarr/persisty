@@ -15,17 +15,19 @@ class PartitionSortIndex(IndexABC):
     Index which functions similarly to an AttrIndex, but has an optional sort key (Useful for dynamodb)
     Sql tables treat this as an attr index
     """
+
     pk: str
     sk: Optional[str] = None
 
     def to_schema(self):
-        schema = [dict(AttributeName=self.pk, KeyType="HASH")]
+        schema = [{"AttributeName": self.pk, "KeyType": "HASH"}]
         if self.sk:
-            schema.append(dict(AttributeName=self.sk, KeyType="RANGE"))
+            schema.append({"AttributeName": self.sk, "KeyType": "RANGE"})
         return schema
 
     def to_condition_expression(self, item: ExternalItemType):
         from boto3.dynamodb.conditions import Key, And as DynAnd
+
         condition_expression = Key(self.pk).eq(item[self.pk])
         if self.sk and item.get(self.sk) is not None:
             sk = Key(self.sk).eq(item[self.sk])

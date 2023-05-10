@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional, Iterator
-from uuid import UUID
+from typing import Iterator
 
 import marshy
 from marshy.types import ExternalItemType, ExternalType
@@ -36,16 +35,16 @@ class AttrKeyConfig(KeyConfigABC[T]):
         if key not in (None, UNDEFINED):
             if self.attr_type is AttrType.INT:
                 return int(key)
-            elif self.attr_type is AttrType.FLOAT:
+            if self.attr_type is AttrType.FLOAT:
                 return float(key)
-            elif self.attr_type in (AttrType.UUID, AttrType.STR):
+            if self.attr_type in (AttrType.UUID, AttrType.STR):
                 return str(key)
-            elif self.attr_name is AttrType.DATETIME:
+            if self.attr_name is AttrType.DATETIME:
                 if isinstance(key, datetime):
                     return marshy.dump(key)
-                elif isinstance(key, str):
+                if isinstance(key, str):
                     return key
-            elif self.attr_name is AttrType.BOOL:
+            if self.attr_name is AttrType.BOOL:
                 return bool(key)
         raise PersistyError("invalid_type")
 

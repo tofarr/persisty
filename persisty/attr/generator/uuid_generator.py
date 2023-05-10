@@ -8,5 +8,4 @@ class UuidGenerator(AttrValueGeneratorABC):
     def transform(self, value):
         if value is UNDEFINED:
             return uuid4()
-        else:
-            return value
+        return value

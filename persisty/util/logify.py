@@ -29,13 +29,13 @@ def logify_callable(name, fn: Callable, logger: Optional[Logger] = None):
             end = time()
             time_taken = round(end - start)
             msg = filter_none(
-                dict(
-                    name=name,
-                    time=time_taken,
-                    error=error,
-                    args=args if args else None,
-                    kwargs=kwargs if kwargs else None,
-                )
+                {
+                    "name": name,
+                    "time": time_taken,
+                    "error": error,
+                    "args": args if args else None,
+                    "kwargs": kwargs if kwargs else None,
+                }
             )
             logger.info(msg)
 

@@ -24,6 +24,7 @@ class DefaultStore(WrapperStoreABC[T]):
             from persisty.impl.sqlalchemy.sqlalchemy_table_store_factory import (
                 SqlalchemyTableStoreFactory,
             )
+
             factory = SqlalchemyTableStoreFactory(self.meta)
         elif is_lambda_env():
             from persisty.impl.dynamodb.dynamodb_store_factory import (

@@ -60,16 +60,20 @@ class DynamodbStoreFactory:
             self.global_secondary_indexes = {}
             for index in meta.indexes:
                 if isinstance(index, AttrIndex):
-                    self.global_secondary_indexes[f"gix__{index.attr_name}"] = PartitionSortIndex(index.attr_name)
+                    self.global_secondary_indexes[
+                        f"gix__{index.attr_name}"
+                    ] = PartitionSortIndex(index.attr_name)
                 elif isinstance(index, PartitionSortIndex):
                     if index.sk:
-                        self.global_secondary_indexes[f"gix__{index.pk}__{index.sk}"] = index
+                        self.global_secondary_indexes[
+                            f"gix__{index.pk}__{index.sk}"
+                        ] = index
                     else:
                         self.global_secondary_indexes[f"gix__{index.pk}"] = index
 
     def get_session(self):
         kwargs = filter_none(
-            dict(profile_name=self.aws_profile_name, region_name=self.region_name)
+            {"profile_name": self.aws_profile_name, "region_name": self.region_name}
         )
         session = boto3.Session(**kwargs)
         return session
@@ -97,12 +101,12 @@ class DynamodbStoreFactory:
 
     def create_table_in_aws(self):
         dynamodb = self.get_session().client("dynamodb")
-        kwargs = dict(
-            AttributeDefinitions=self.get_attribute_definitions(),
-            TableName=self.table_name,
-            KeySchema=self.index.to_schema(),
-            BillingMode="PAY_PER_REQUEST",  # Ops teams will want to look at these values
-        )
+        kwargs = {
+            "AttributeDefinitions": self.get_attribute_definitions(),
+            "TableName": self.table_name,
+            "KeySchema": self.index.to_schema(),
+            "BillingMode": "PAY_PER_REQUEST",  # Ops teams will want to look at these values
+        }
         if self.global_secondary_indexes:
             kwargs["GlobalSecondaryIndexes"] = self.get_global_secondary_indexes()
         response = dynamodb.create_table(**kwargs)
@@ -133,9 +137,10 @@ class DynamodbStoreFactory:
 
     def _attr(self, name: str):
         attr = next(a for a in self.meta.attrs if a.name == name)
-        return dict(
-            AttributeName=name, AttributeType=_FIELD_TYPE_2_DYNAMODB[attr.attr_type]
-        )
+        return {
+            "AttributeName": name,
+            "AttributeType": _FIELD_TYPE_2_DYNAMODB[attr.attr_type],
+        }
 
 
 def _remove_index(indexed_attrs: Set[str], index: PartitionSortIndex):

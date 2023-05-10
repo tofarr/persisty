@@ -7,6 +7,7 @@ from uuid import UUID
 
 import marshy
 from marshy.types import ExternalItemType
+from sqlalchemy import Table, and_, select, func, Column
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import DatabaseError
 from sqlalchemy.sql.elements import BindParameter, or_
@@ -26,9 +27,6 @@ from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.store.store_abc import StoreABC, T
 from persisty.store_meta import StoreMeta
-
-from sqlalchemy import Table, and_, select, func, Column
-
 from persisty.util import UNDEFINED, from_base64, to_base64
 
 
@@ -37,7 +35,7 @@ def catch_db_error(fn):
         try:
             return fn(*args, **kwargs)
         except DatabaseError as e:
-            raise PersistyError(e)
+            raise PersistyError(e) from e
 
     return wrapper
 
@@ -106,6 +104,7 @@ class SqlalchemyTableStore(StoreABC):
         items = [self._load_row(r) for r in results]
         return items
 
+    # pylint: disable=W0613
     @catch_db_error
     def _update(
         self,
@@ -151,6 +150,7 @@ class SqlalchemyTableStore(StoreABC):
             row = connection.execute(stmt).first()
             return row[0]
 
+    # pylint: disable=R0914,E1101
     @catch_db_error
     def search(
         self,
@@ -266,6 +266,7 @@ class SqlalchemyTableStore(StoreABC):
         for insert in edits:
             results_by_id[insert.id] = BatchEditResult(insert, True)
 
+    # pylint: disable=E1101
     def _batch_update(
         self,
         connection,
@@ -380,7 +381,7 @@ class SqlalchemyTableStore(StoreABC):
     def _key_where_clause(self):
         key_where_clause = None
         for attr_name in self.meta.key_config.get_key_attrs():
-            # exp = self.table.columns.get(attr_.name) == f':{attr_.name}'
+            # pylint: disable=E1101
             exp = self.table.columns.get(attr_name) == BindParameter(attr_name)
             if key_where_clause:
                 key_where_clause &= exp
@@ -401,6 +402,7 @@ class SqlalchemyTableStore(StoreABC):
         return where_clause
 
     def _key_where_clause_from_dict(self, item: ExternalItemType):
+        # pylint: disable=E1101
         where_clause = and_(
             self.table.columns.get(attr_name) == item.get(attr_name)
             for attr_name in self.meta.key_config.get_key_attrs()
@@ -439,6 +441,7 @@ class SqlalchemyTableStore(StoreABC):
         search_order.validate_for_attrs(self.meta.attrs)
         orders = []
         for order_attr in search_order.orders:
+            # pylint: disable=E1101
             order = self.table.columns.get(order_attr.attr)
             if order_attr.desc:
                 order = order.desc()
@@ -446,6 +449,7 @@ class SqlalchemyTableStore(StoreABC):
         return orders
 
     def _default_order_by(self) -> List[Column]:
+        # pylint: disable=E1101
         orders = [
             self.table.columns.get(attr_name)
             for attr_name in self.meta.key_config.get_key_attrs()

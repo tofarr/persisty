@@ -66,9 +66,9 @@ class SchemaValidatingStore(FilteredStoreABC[T]):
             raise PersistyError(error)
         return item
 
-    def filter_update(self, old_item: T, updates: T) -> T:
+    def filter_update(self, item: T, updates: T) -> T:
         new_item = {
-            **self.marshaller_for_update.dump(old_item),
+            **self.marshaller_for_update.dump(item),
             **self.marshaller_for_update.dump(updates),
         }
         error = next(self.schema_for_update.iter_errors(new_item), None)
