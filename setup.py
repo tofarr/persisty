@@ -36,6 +36,7 @@ setuptools.setup(
         "pyaes~=1.6",
         "servey~=2.8",
     ],
+    extras_require=extras_require,
     setup_requires=["setuptools-git-versioning"],
     setuptools_git_versioning={"enabled": True, "dirty_template": "{tag}"},
     classifiers=[
