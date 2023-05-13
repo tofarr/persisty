@@ -6,14 +6,14 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="persisty-data",
+    name="persisty-events",
     version=__version__,
     author="Tim O'Farrell",
     author_email="tofarr@gmail.com",
-    description="A binary data persistence layer built on top of persisty",
+    description="An event bridge built on top of persisty",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/tofarr/persisty-data",
+    url="https://github.com/tofarr/lambsync",
     packages=setuptools.find_packages(exclude=("tests*",)),
     install_requires=[
         "persisty",

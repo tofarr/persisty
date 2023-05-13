@@ -71,5 +71,5 @@ application to store the API key.
 
 ## Summary
 
-We now have a version of the messager app deployed to AWS. In the next step we'll add some basic image upload
-capabilities.
+We now have a version of the messager app deployed to AWS. A further step could be to use
+[persisty-data](https://github.com/tofarr/persisty-data) to add image upload capabilities.

@@ -1,3 +1,0 @@
-persisty
-persisty-data
-bcrypt

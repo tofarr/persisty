@@ -88,7 +88,7 @@ application with security and business logic.
 ## Installing local development dependencies
 
 ```
-python setup.py install easy_install "servey[dev]"
+python setup.py install easy_install "persisty[all]"
 ```
 
 ## Release Procedure
