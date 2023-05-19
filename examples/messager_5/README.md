@@ -1,6 +1,6 @@
 # Persisty Example App : Messager : Part 5
 
-In [the previous step](../messager_5), user SQL as our persistence mechanism.
+In [the previous step](../messager_5), using SQL as our persistence mechanism.
 In this example we will deploy to AWS: Lambdas are used for actions, SQS for 
 subscriptions, KMS for Keys, and Dynamodb will be used for persistence.
 

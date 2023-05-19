@@ -82,21 +82,7 @@ class DynamodbYmlConfig(YmlConfigABC):
                         ]
                     }
                 )
-        iam_role_statement = {
-            "Effect": "Allow",
-            "Action": [
-                "dynamodb:DescribeTable",
-                "dynamodb:Query",
-                "dynamodb:Scan",
-                "dynamodb:BatchGetItem",
-                "dynamodb:GetItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-            ],
-            "Resource": resources,
-        }
-        return {"iamRoleStatements": [iam_role_statement]}
+        return {"iamRoleStatements": [self._iam_role_statement(resources)]}
 
     @staticmethod
     def _iam_role_statement(resource):
