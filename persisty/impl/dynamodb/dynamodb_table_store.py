@@ -357,11 +357,12 @@ class DynamodbTableStore(StoreABC[T]):
                         if attr.update_generator:
                             if attr.updatable:
                                 value = attr.update_generator.transform(
-                                    getattr(updates, attr.name),
-                                    updates
+                                    getattr(updates, attr.name), updates
                                 )
                             else:
-                                value = attr.update_generator.transform(UNDEFINED, updates)
+                                value = attr.update_generator.transform(
+                                    UNDEFINED, updates
+                                )
                         elif attr.updatable:
                             value = getattr(updates, attr.name)
                             if value is UNDEFINED:

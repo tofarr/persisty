@@ -21,7 +21,11 @@ def get_seed_items(store_meta: StoreMeta) -> Iterable[T]:
             item = marshy.load(item_dataclass, data)
             for attr in store_meta.attrs:
                 if attr.create_generator and getattr(item, attr.name) is UNDEFINED:
-                    setattr(item, attr.name, attr.create_generator.transform(UNDEFINED, item))
+                    setattr(
+                        item,
+                        attr.name,
+                        attr.create_generator.transform(UNDEFINED, item),
+                    )
             seed_items.append(item)
         return seed_items
     except Exception as e:
