@@ -5,7 +5,7 @@ from persisty.util.undefined import UNDEFINED
 
 
 class UuidGenerator(AttrValueGeneratorABC):
-    def transform(self, value):
+    def transform(self, value, item):
         if value is UNDEFINED:
             return uuid4()
         return value

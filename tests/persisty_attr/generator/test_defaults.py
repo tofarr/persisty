@@ -7,11 +7,11 @@ class TestDefaults(TestCase):
     def test_str(self):
         creatable, generator = get_default_generator_for_create("id", str)
         self.assertFalse(creatable)
-        self.assertEqual("1", generator.transform(None))
-        self.assertEqual("2", generator.transform(None))
+        self.assertEqual("1", generator.transform(None, None))
+        self.assertEqual("2", generator.transform(None, None))
 
     def test_int(self):
         creatable, generator = get_default_generator_for_create("id", int)
         self.assertFalse(creatable)
-        self.assertEqual(1, generator.transform(None))
-        self.assertEqual(2, generator.transform(None))
+        self.assertEqual(1, generator.transform(None, None))
+        self.assertEqual(2, generator.transform(None, None))

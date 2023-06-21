@@ -16,7 +16,7 @@ class StrSequenceGenerator(AttrValueGeneratorABC):
     value: int = 1
     step: int = 1
 
-    def transform(self, value):
+    def transform(self, value, item):
         if self.always or not value:
             value = self.format.format(value=self.value)
             self.value += self.step

@@ -34,7 +34,7 @@ class MemStore(StoreABC[T]):
             if attr.creatable:
                 value = getattr(item, attr.name, UNDEFINED)
             if attr.create_generator:
-                value = attr.create_generator.transform(value)
+                value = attr.create_generator.transform(value, item)
             if value is not UNDEFINED:
                 value = attr.sanitize_type(value)
                 kwargs[attr.name] = value
@@ -67,7 +67,7 @@ class MemStore(StoreABC[T]):
                 if attr.updatable:
                     value = getattr(updates, attr.name, UNDEFINED)
                 if attr.update_generator:
-                    value = attr.update_generator.transform(value)
+                    value = attr.update_generator.transform(value, item)
                 if value is not UNDEFINED:
                     value = attr.sanitize_type(value)
                     setattr(stored_item, attr.name, value)
