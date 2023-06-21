@@ -357,10 +357,12 @@ class DynamodbTableStore(StoreABC[T]):
                         if attr.update_generator:
                             if attr.updatable:
                                 value = attr.update_generator.transform(
-                                    getattr(updates, attr.name)
+                                    getattr(updates, attr.name), updates
                                 )
                             else:
-                                value = attr.update_generator.transform(UNDEFINED)
+                                value = attr.update_generator.transform(
+                                    UNDEFINED, updates
+                                )
                         elif attr.updatable:
                             value = getattr(updates, attr.name)
                             if value is UNDEFINED:
@@ -432,7 +434,7 @@ class DynamodbTableStore(StoreABC[T]):
         if accepts_input:
             value = getattr(item, attr.name, UNDEFINED)
         if generator:
-            value = generator.transform(value)
+            value = generator.transform(value, item)
         if value is not UNDEFINED:
             value = marshy.dump(value, attr.schema.python_type)
             target[attr.name] = self._convert_to_decimals(value)

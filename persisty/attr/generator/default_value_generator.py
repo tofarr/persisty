@@ -9,5 +9,5 @@ from persisty.util.undefined import UNDEFINED
 class DefaultValueGenerator(AttrValueGeneratorABC):
     default_value: Any
 
-    def transform(self, value):
+    def transform(self, value, item):
         return self.default_value if value is UNDEFINED else value

@@ -293,10 +293,12 @@ class SqlalchemyTableStore(StoreABC):
                 if attr.update_generator:
                     if attr.updatable:
                         value = attr.update_generator.transform(
-                            getattr(edit.update_item, attr.name)
+                            getattr(edit.update_item, attr.name), edit.update_item
                         )
                     else:
-                        value = attr.update_generator.transform(UNDEFINED)
+                        value = attr.update_generator.transform(
+                            UNDEFINED, edit.update_item
+                        )
                 elif attr.updatable:
                     value = getattr(edit.update_item, attr.name)
                     if value is UNDEFINED:
@@ -365,7 +367,7 @@ class SqlalchemyTableStore(StoreABC):
             else:
                 generator = attr_.create_generator
             if generator:
-                value = generator.transform(value)
+                value = generator.transform(value, item)
             setattr(item, attr_.name, value)
             if value is UNDEFINED:
                 continue
