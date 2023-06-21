@@ -22,6 +22,7 @@ from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
+from persisty.store_access import StoreAccess, ALL_ACCESS
 from persisty.store_meta import StoreMeta
 from persisty.util import to_snake_case
 from persisty.util.undefined import UNDEFINED
@@ -31,6 +32,7 @@ def stored(
     cls=None,
     *,
     key_config: Optional[KeyConfigABC] = None,
+    store_access: StoreAccess = ALL_ACCESS,
     cache_control: Optional[CacheControlABC] = None,
     batch_size: int = 100,
     schema_context: Optional[SchemaContext] = None,
@@ -121,6 +123,7 @@ def stored(
             name=to_snake_case(cls_.__name__),
             attrs=tuple(attrs_by_name.values()),
             key_config=_derive_key_config(key_config, cls_, attrs_by_name),
+            store_access=store_access,
             cache_control=cache_control,
             batch_size=batch_size,
             description=cls_.__doc__,

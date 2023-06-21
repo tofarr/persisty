@@ -43,7 +43,7 @@ class CeleryTriggerStore(WrapperStoreABC[T]):
         if old_item:
             new_item = self.store.update(updates, precondition)
             if new_item:
-                for action_ in self.store_triggers.get_after_create_actions():
+                for action_ in self.store_triggers.get_after_update_actions():
                     task = getattr(celery_app, action_.name)
                     task.apply_async(old_item, new_item)
                 return new_item
@@ -56,7 +56,7 @@ class CeleryTriggerStore(WrapperStoreABC[T]):
         if item:
             result = self.store.delete(key)
             if result:
-                for action_ in self.store_triggers.get_after_create_actions():
+                for action_ in self.store_triggers.get_after_delete_actions():
                     task = getattr(celery_app, action_.name)
                     task.apply_async(item)
         return result
