@@ -9,6 +9,8 @@ from persisty.impl.sqlalchemy.sqlalchemy_table_store_factory import (
 )
 from persisty.store.store_abc import StoreABC
 from persisty.store_meta import StoreMeta, get_meta
+from tests.fixtures.author import AUTHOR_DICTS, Author
+from tests.fixtures.book import Book, BOOK_DICTS
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES
 from tests.fixtures.storage_tst_abc import StoreTstABC
 from tests.fixtures.super_bowl_results import (
@@ -48,6 +50,20 @@ class TestSqlalchemyTableStore(TestCase, StoreTstABC):
             for r in NUMBER_NAMES
         )
         self.seed_table(store_meta, number_names)
+        return store
+
+    def new_author_store(self) -> StoreABC:
+        store_meta = get_meta(Author)
+        factory = SqlalchemyTableStoreFactory(store_meta, self.context)
+        store = factory.create()
+        self.seed_table(store_meta, AUTHOR_DICTS)
+        return store
+
+    def new_book_store(self) -> StoreABC:
+        store_meta = get_meta(Book)
+        factory = SqlalchemyTableStoreFactory(store_meta, self.context)
+        store = factory.create()
+        self.seed_table(store_meta, BOOK_DICTS)
         return store
 
     def seed_table(self, store_meta: StoreMeta, items: Iterator[ExternalItemType]):

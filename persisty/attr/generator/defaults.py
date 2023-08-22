@@ -29,4 +29,6 @@ def get_default_generator_for_update(
 ) -> Tuple[bool, Optional[AttrValueGeneratorABC]]:
     if type_ == datetime and name == "updated_at":
         return False, TimestampGenerator()
+    if type_ == datetime and name == "created_at":
+        return False, None
     return True, None

@@ -365,12 +365,12 @@ class DynamodbTableStore(StoreABC[T]):
                                 )
                         elif attr.updatable:
                             value = getattr(updates, attr.name)
-                            if value is UNDEFINED:
-                                value = getattr(item, attr.name)
-                        if value is not UNDEFINED:
+                        if value is UNDEFINED:
+                            value = getattr(item, attr.name)
+                        else:
                             setattr(item, attr.name, value)
-                            value = marshy.dump(value, attr.schema.python_type)
-                            to_put[attr.name] = self._convert_to_decimals(value)
+                        value = marshy.dump(value, attr.schema.python_type)
+                        to_put[attr.name] = self._convert_to_decimals(value)
                     to_put = self._convert_to_decimals(to_put)
                     batch.put_item(Item=to_put)
                     edit.update_item = deepcopy(item)  # In case of multi put

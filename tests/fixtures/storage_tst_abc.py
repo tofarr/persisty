@@ -14,6 +14,7 @@ from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.attr_filter_op import AttrFilterOp
 from persisty.batch_edit import BatchEdit
 from persisty.errors import PersistyError
+from persisty.factory.default_store_factory import DefaultStoreFactory
 from persisty.result_set import ResultSet
 from persisty.search_filter.filter_factory import filter_factory
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
@@ -21,9 +22,10 @@ from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_attr import SearchOrderAttr
 from persisty.store.store_abc import StoreABC, T
+from persisty.util.undefined import UNDEFINED
 from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULTS, SuperBowlResult
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES
-
+from tests.fixtures.book import BOOKS
 
 # noinspection PyUnresolvedReferences
 class StoreTstABC(ABC):
@@ -36,6 +38,14 @@ class StoreTstABC(ABC):
     @abstractmethod
     def new_number_name_store(self) -> StoreABC:
         """Create a new store object containing only Number Names"""
+
+    @abstractmethod
+    def new_author_store(self) -> StoreABC:
+        """Create a new store object containing only Authors"""
+
+    @abstractmethod
+    def new_book_store(self) -> StoreABC:
+        """Create a new store object containing only Books"""
 
     def test_read(self):
         store = self.new_super_bowl_results_store()
@@ -435,7 +445,7 @@ class StoreTstABC(ABC):
         results = sorted(results, key=lambda r: r.num_value)
         self.assertGreaterEqual(results[0].created_at, now)
         self.assertGreaterEqual(results[0].updated_at, now)
-        self.assertLess(results[1].created_at, now)
+        self.assertEqual(results[1].created_at, datetime.fromisoformat("1970-01-01T00:00:00+00:00"))
         self.assertGreaterEqual(results[1].updated_at, now)
         expected_results = [
             NumberName(
@@ -578,6 +588,22 @@ class StoreTstABC(ABC):
         )  # Again - type is wrong - this should be a str
         # noinspection PyTypeChecker
         self.assertFalse(store.read(id))  # Again - type is wrong - this should be a str
+
+    def test_link_read(self):
+        author_store = self.new_author_store()
+        book_store = self.new_book_store()
+        author_store.get_meta().links[0].linked_store_factory = DefaultStoreFactory(book_store)
+        book_store.get_meta().links[0].linked_store_factory = DefaultStoreFactory(author_store)
+        mary_shelley = author_store.read("2")
+        assert(mary_shelley is not None)
+        books = mary_shelley.books()
+        expected_books = ResultSet([
+            BOOKS[2]
+        ])
+        self.assertEqual(expected_books, books)
+
+    def test_link_delete(self):
+        assert False
 
 
 @dataclass

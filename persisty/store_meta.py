@@ -1,7 +1,7 @@
 import dataclasses
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Tuple, Type, Iterator, TypeVar, Dict
+from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable
 
 from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
 from marshy.marshaller_context import MarshallerContext
@@ -43,30 +43,36 @@ class StoreMeta:
         return self._get_dataclass(
             "_stored_dataclass",
             self.name.title().replace("_", ""),
-            iter(self.attrs),
+            self.attrs,
             self.links,
         )
 
     def get_read_dataclass(self) -> Type:
-        attrs = (a for a in self.attrs if a.readable)
+        attrs = [a for a in self.attrs if a.readable]
         return self._get_dataclass(
             "_read_dataclass", self.name.title().replace("_", ""), attrs, self.links
         )
 
     def get_create_dataclass(self) -> Type:
-        attrs = (a for a in self.attrs if a.creatable)
+        required_attr_names = {a.name for a in self.attrs if a.creatable and not a.create_generator}
+        attrs = [a for a in self.attrs if a.creatable]
         return self._get_dataclass(
             "_create_dataclass",
             self.name.title().replace("_", "") + "Create",
             attrs,
+            None,
+            required_attr_names
         )
 
     def get_update_dataclass(self) -> Type:
-        attrs = (a for a in self.attrs if a.updatable)
+        required_attr_names = self.key_config.get_key_attrs()
+        attrs = [a for a in self.attrs if a.updatable]
         return self._get_dataclass(
             "_update_dataclass",
             self.name.title().replace("_", "") + "Update",
             attrs,
+            None,
+            required_attr_names
         )
 
     def get_search_filter_factory_dataclass(self) -> Optional[Type]:
@@ -116,16 +122,22 @@ class StoreMeta:
         self,
         attr_name: str,
         name: str,
-        attrs: Iterator[Attr],
+        attrs: Iterable[Attr],
         links: Optional[Tuple[LinkABC, ...]] = None,
+        required_attr_names: Optional[Set[str]] = None,
     ) -> Optional[Type]:
         result = getattr(self, attr_name, None)
         if result is None:
             annotations = {}
             params = {"__annotations__": annotations, "__stored_type__": attr_name}
             for attr in attrs:
-                params[attr.name] = attr.to_field()
-                annotations[attr.name] = attr.schema.python_type
+                if required_attr_names and attr.name in required_attr_names:
+                    params[attr.name] = attr.to_field(True)
+                    annotations[attr.name] = attr.schema.python_type
+            for attr in attrs:
+                if not required_attr_names or attr.name not in required_attr_names:
+                    params[attr.name] = attr.to_field(False)
+                    annotations[attr.name] = attr.schema.python_type
             if annotations:
                 if links:
                     for link in links:
@@ -183,6 +195,9 @@ def _schema_factory(
         },
         "additionalProperties": False,
     }
+    required = [f.name for f in dataclasses.fields(cls) if f.default is not UNDEFINED]
+    if required:
+        schema["required"] = required
     if cls.__doc__:
         schema["description"] = cls.__doc__.strip()
     schema = Schema(schema, cls)

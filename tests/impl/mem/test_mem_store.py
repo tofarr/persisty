@@ -8,6 +8,8 @@ from persisty.search_filter.filter_factory import filter_factory
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.store.store_abc import StoreABC
 from persisty.store_meta import get_meta, StoreMeta
+from tests.fixtures.author import Author, AUTHORS
+from tests.fixtures.book import Book, BOOKS
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES
 from tests.fixtures.storage_tst_abc import StoreTstABC
 from tests.fixtures.super_bowl_results import (
@@ -29,6 +31,20 @@ class TestMemStore(TestCase, StoreTstABC):
         factory = MemStoreFactory(
             get_meta(NumberName),
             {str(r.id): dataclasses.replace(r) for r in NUMBER_NAMES},
+        )
+        return factory.create()
+
+    def new_author_store(self) -> StoreABC:
+        factory = MemStoreFactory(
+            get_meta(Author),
+            {str(r.id): dataclasses.replace(r) for r in AUTHORS},
+        )
+        return factory.create()
+
+    def new_book_store(self) -> StoreABC:
+        factory = MemStoreFactory(
+            get_meta(Book),
+            {str(r.id): dataclasses.replace(r) for r in BOOKS},
         )
         return factory.create()
 

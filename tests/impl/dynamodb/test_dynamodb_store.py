@@ -21,6 +21,8 @@ from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC
 from persisty.store_meta import get_meta
 from persisty.stored import stored
+from tests.fixtures.author import Author, AUTHOR_DICTS
+from tests.fixtures.book import Book, BOOK_DICTS
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES_DICTS
 from tests.fixtures.storage_tst_abc import StoreTstABC
 from tests.fixtures.super_bowl_results import SuperBowlResult, SUPER_BOWL_RESULT_DICTS
@@ -38,6 +40,18 @@ class TestDynamodbStore(TestCase, StoreTstABC):
     def new_number_name_store(self) -> StoreABC:
         store_factory = DynamodbStoreFactory(meta=get_meta(NumberName))
         self.seed_table(store_factory, NUMBER_NAMES_DICTS)
+        store = store_factory.create()
+        return store
+
+    def new_author_store(self) -> StoreABC:
+        store_factory = DynamodbStoreFactory(meta=get_meta(Author))
+        self.seed_table(store_factory, AUTHOR_DICTS)
+        store = store_factory.create()
+        return store
+
+    def new_book_store(self) -> StoreABC:
+        store_factory = DynamodbStoreFactory(meta=get_meta(Book))
+        self.seed_table(store_factory, BOOK_DICTS)
         store = store_factory.create()
         return store
 

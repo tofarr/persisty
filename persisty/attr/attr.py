@@ -1,4 +1,4 @@
-from dataclasses import dataclass, Field, field
+from dataclasses import dataclass, Field, field, MISSING
 from enum import Enum
 from typing import Optional, Tuple
 
@@ -39,9 +39,10 @@ class Attr:
                 TYPE_FILTER_OPS.get(self.attr_type) or DEFAULT_PERMITTED_FILTER_OPS
             )
 
-    def to_field(self) -> Field:
+    def to_field(self, is_required: bool) -> Field:
         result = field(
-            default=UNDEFINED, metadata={"schemey": self.schema, "persisty": self}
+            default=MISSING if is_required else UNDEFINED,
+            metadata={"schemey": self.schema, "persisty": self}
         )
         result.name = self.name
         result.type = self.schema.python_type
