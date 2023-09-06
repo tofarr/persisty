@@ -2,3 +2,4 @@ persisty
 bcrypt
 python-dotenv[cli]
 servey[web_page]
+boto3

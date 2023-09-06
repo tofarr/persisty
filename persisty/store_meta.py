@@ -1,7 +1,7 @@
 import dataclasses
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable
+from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable, List
 
 from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
 from marshy.marshaller_context import MarshallerContext
@@ -38,6 +38,8 @@ class StoreMeta:
     description: Optional[str] = None
     links: Tuple[LinkABC, ...] = tuple()
     indexes: Tuple[IndexABC, ...] = tuple()
+    label_attr_names: Tuple[str, ...] = tuple()
+    summary_attr_names: Tuple[str, ...] = tuple()
 
     def get_stored_dataclass(self) -> Type:
         return self._get_dataclass(
@@ -189,6 +191,7 @@ def _schema_factory(
     """Override the default schemey behavior and do not include defaults with these generated dataclasses"""
     # noinspection PyDataclass
     schema = {
+        "name": cls.__name__,
         "type": "object",
         "properties": {
             f.name: f.metadata.get("schemey").schema for f in dataclasses.fields(cls)
@@ -200,6 +203,22 @@ def _schema_factory(
         schema["required"] = required
     if cls.__doc__:
         schema["description"] = cls.__doc__.strip()
+    store_meta = get_meta(cls)
+    schema["label_attr_names"] = [
+        f.name for f in dataclasses.fields(cls)
+        if f.name in store_meta.label_attr_names
+    ]
+    schema["summary_attr_names"] = [
+        f.name for f in dataclasses.fields(cls)
+        if f.name in store_meta.summary_attr_names
+    ]
+    schema["links"] = context.marshaller_context.dump(store_meta.links, List[LinkABC])
+    missing_key_attr = next((
+        k for k in store_meta.key_config.get_key_attrs()
+        if k not in schema["properties"]
+    ), None)
+    if not missing_key_attr:
+        schema["key_config"] = context.marshaller_context.dump(store_meta.key_config, KeyConfigABC)
     schema = Schema(schema, cls)
     return schema
 

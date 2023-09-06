@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional, Type
 
+from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
+from marshy.marshaller_context import MarshallerContext
 from servey.security.authorization import Authorization
 
 from persisty.attr.attr_filter import AttrFilter, AttrFilterOp
@@ -48,3 +50,16 @@ class HasCount(LinkedStoreABC):
 
     def get_linked_type(self, forward_ref_ns: str) -> Type[int]:
         return int
+
+    @classmethod
+    def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
+        return dataclass_marshaller(
+            type_=cls,
+            context=marshaller_context,
+            include=[
+                "name",
+                "linked_store_name",
+                "local_key_attr_name",
+                "remote_key_attr_name",
+            ]
+        )

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict, ForwardRef, Generic, List, Optional, TypeVar
 
+from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
+from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
 from schemey import schema_from_type
 from servey.security.authorization import Authorization
@@ -81,3 +83,17 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
 
         id_attr_schema = json_schema.get("properties").get(self.key_attr_name)
         id_attr_schema["persistyBelongsTo"] = self.linked_store_name
+
+    @classmethod
+    def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
+        return dataclass_marshaller(
+            type_=cls,
+            context=marshaller_context,
+            include=[
+                "name",
+                "linked_store_name",
+                "key_attr_name",
+                "optional",
+                "on_delete",
+            ]
+        )

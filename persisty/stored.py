@@ -37,6 +37,8 @@ def stored(
     batch_size: int = 100,
     schema_context: Optional[SchemaContext] = None,
     indexes: Tuple[IndexABC, ...] = tuple(),
+    label_attr_names: Optional[Tuple[str, ...]] = None,
+    summary_attr_names: Optional[Tuple[str, ...]] = None,
 ):
     """Decorator inspired by dataclasses, containing stored meta."""
     if schema_context is None:
@@ -44,7 +46,7 @@ def stored(
 
     # pylint: disable=R0912,R0914,R0915
     def wrapper(cls_):
-        nonlocal key_config, cache_control, batch_size, indexes
+        nonlocal key_config, cache_control, batch_size, indexes, label_attr_names, summary_attr_names
         links_by_name = {}
         attrs_by_name = {}
         key_config, cache_control, batch_size, indexes = _derive_args(
@@ -119,16 +121,29 @@ def stored(
                 links_by_name[name] = value
                 value.update_attrs(attrs_by_name)
 
+        key_config = _derive_key_config(key_config, cls_, attrs_by_name)
+        label_attr_names = tuple(
+            a.name for a in attrs_by_name.values()
+            if a.attr_type == AttrType.STR
+        )
+        label_attr_names = label_attr_names[0:]
+        if not label_attr_names:
+            label_attr_names = tuple(key_config.get_key_attrs())
+        if not summary_attr_names:
+            summary_attr_names = tuple(attrs_by_name.keys())
+
         store_meta = StoreMeta(
             name=to_snake_case(cls_.__name__),
             attrs=tuple(attrs_by_name.values()),
-            key_config=_derive_key_config(key_config, cls_, attrs_by_name),
+            key_config=key_config,
             store_access=store_access,
             cache_control=cache_control,
             batch_size=batch_size,
             description=cls_.__doc__,
             links=tuple(links_by_name.values()),
             indexes=indexes,
+            label_attr_names=label_attr_names,
+            summary_attr_names=summary_attr_names,
         )
         result = store_meta.get_stored_dataclass()
         return result

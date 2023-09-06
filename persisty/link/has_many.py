@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional, Generic, TypeVar, ForwardRef
 
+from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
+from marshy.marshaller_context import MarshallerContext
 from servey.security.authorization import Authorization
 
 from persisty.attr.attr_filter import AttrFilter, AttrFilterOp
@@ -34,7 +36,6 @@ class HasManyCallable(Generic[T]):
 @dataclass
 class HasMany(LinkedStoreABC, Generic[T]):
     name: Optional[str] = None  # Allows None so __set_name__ can exist
-    key_attr_name: Optional[str] = None
     local_key_attr_name: str = "id"
     remote_key_attr_name: Optional[str] = None
     limit: int = 10
@@ -63,3 +64,19 @@ class HasMany(LinkedStoreABC, Generic[T]):
             search_filter=AttrFilter(self.remote_key_attr_name, AttrFilterOp.eq, key),
             search_order=self.search_order,
         )
+
+    @classmethod
+    def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
+        return dataclass_marshaller(
+            type_=cls,
+            context=marshaller_context,
+            include=[
+                "name",
+                "linked_store_name",
+                "local_key_attr_name",
+                "remote_key_attr_name",
+                "limit",
+                "search_order"
+            ]
+        )
+
