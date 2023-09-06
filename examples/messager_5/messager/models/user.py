@@ -13,7 +13,10 @@ from persisty.attr.attr import Attr
 from persisty.stored import stored
 
 
-@stored(indexes=(AttrIndex("username"),))
+@stored(
+    indexes=(AttrIndex("username"),),
+    label_attr_names=("username",),
+)
 class User:
     """Item representing a user object"""
 

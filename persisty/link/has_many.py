@@ -64,19 +64,3 @@ class HasMany(LinkedStoreABC, Generic[T]):
             search_filter=AttrFilter(self.remote_key_attr_name, AttrFilterOp.eq, key),
             search_order=self.search_order,
         )
-
-    @classmethod
-    def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
-        return dataclass_marshaller(
-            type_=cls,
-            context=marshaller_context,
-            include=[
-                "name",
-                "linked_store_name",
-                "local_key_attr_name",
-                "remote_key_attr_name",
-                "limit",
-                "search_order"
-            ]
-        )
-

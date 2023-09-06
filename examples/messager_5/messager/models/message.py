@@ -13,7 +13,8 @@ from messager.models.message_state import MessageState
     indexes=(
         PartitionSortIndex("author_id", "created_at"),
         PartitionSortIndex("message_state", "created_at"),
-    )
+    ),
+    label_attr_names=("id",),
 )
 class Message:
     """Item representing a message object"""

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Dict, ForwardRef, Generic, List, Optional, TypeVar
 
+import marshy
 from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
 from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
@@ -79,21 +80,11 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
 
     def update_json_schema(self, json_schema: ExternalItemType):
         id_attr_schema = json_schema.get("properties").get(self.key_attr_name)
-        id_attr_schema["persistyBelongsTo"] = self.linked_store_name
-
-        id_attr_schema = json_schema.get("properties").get(self.key_attr_name)
-        id_attr_schema["persistyBelongsTo"] = self.linked_store_name
-
-    @classmethod
-    def __marshaller_factory__(cls, marshaller_context: MarshallerContext):
-        return dataclass_marshaller(
-            type_=cls,
-            context=marshaller_context,
-            include=[
-                "name",
-                "linked_store_name",
-                "key_attr_name",
-                "optional",
-                "on_delete",
-            ]
-        )
+        if not id_attr_schema:
+            return
+        linked_meta = self.get_linked_store_factory().get_meta()
+        id_attr_schema["persistyBelongsTo"] = {
+            "linked_store_name": self.get_linked_store_name(),
+            "on_delete": marshy.dump(self.on_delete),
+            "label_attr_names": linked_meta.label_attr_names,
+        }

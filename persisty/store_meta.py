@@ -212,7 +212,8 @@ def _schema_factory(
         f.name for f in dataclasses.fields(cls)
         if f.name in store_meta.summary_attr_names
     ]
-    schema["links"] = context.marshaller_context.dump(store_meta.links, List[LinkABC])
+    for link in store_meta.links:
+        link.update_json_schema(schema)
     missing_key_attr = next((
         k for k in store_meta.key_config.get_key_attrs()
         if k not in schema["properties"]

@@ -122,11 +122,13 @@ def stored(
                 value.update_attrs(attrs_by_name)
 
         key_config = _derive_key_config(key_config, cls_, attrs_by_name)
-        label_attr_names = tuple(
-            a.name for a in attrs_by_name.values()
-            if a.attr_type == AttrType.STR
-        )
-        label_attr_names = label_attr_names[0:]
+        if not label_attr_names:
+            label_attr_names = tuple(
+                a.name for a in attrs_by_name.values()
+                if a.attr_type == AttrType.STR
+            )
+            label_attr_names = label_attr_names[0:]
+
         if not label_attr_names:
             label_attr_names = tuple(key_config.get_key_attrs())
         if not summary_attr_names:

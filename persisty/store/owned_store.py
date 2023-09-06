@@ -1,12 +1,15 @@
 import dataclasses
 from typing import Optional, Iterator, List, Dict
+from uuid import UUID
 
 from servey.security.authorization import Authorization
 
 from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.attr_filter_op import AttrFilterOp
+from persisty.attr.attr_type import AttrType
 from persisty.batch_edit import BatchEdit
 from persisty.batch_edit_result import BatchEditResult
+from persisty.errors import PersistyError
 from persisty.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
@@ -46,20 +49,14 @@ class OwnedStore(StoreABC[T]):
     def read(self, key: str) -> Optional[T]:
         item = self.store.read(key)
         if item and self.require_ownership_for_read:
-            if (
-                getattr(item, self.subject_id_attr_name)
-                != self.authorization.subject_id
-            ):
+            if not self._is_owner(item):
                 return
         return item
 
     # pylint: disable=W0212
     def _update(self, key: str, item: T, updates: T) -> Optional[T]:
         if self.require_ownership_for_update:
-            if (
-                getattr(item, self.subject_id_attr_name)
-                != self.authorization.subject_id
-            ):
+            if not self._is_owner(item):
                 return
         setattr(updates, self.subject_id_attr_name, self.authorization.subject_id)
         return self.store._update(key, item, updates)
@@ -67,21 +64,36 @@ class OwnedStore(StoreABC[T]):
     # pylint: disable=W0212
     def _delete(self, key: str, item: T) -> bool:
         if self.require_ownership_for_delete:
-            if (
-                getattr(item, self.subject_id_attr_name)
-                != self.authorization.subject_id
-            ):
+            if not self._is_owner(item):
                 return False
         return self.store._delete(key, item)
 
     def count(self, search_filter: SearchFilterABC[T] = INCLUDE_ALL) -> int:
         if self.require_ownership_for_read:
-            search_filter &= AttrFilter(
-                self.subject_id_attr_name,
-                AttrFilterOp.eq,
-                self.authorization.subject_id,
-            )
+            search_filter &= self._get_owner_filter()
         return self.store.count(search_filter)
+
+    def _get_owner_filter(self):
+        return AttrFilter(
+            self.subject_id_attr_name,
+            AttrFilterOp.eq,
+            self.authorization.subject_id,
+        )
+
+    def _is_owner(self, item: T) -> bool:
+        item_subject = getattr(item, self.subject_id_attr_name)
+        return self._get_subject_id() == item_subject
+
+    def _get_subject_id(self):
+        subject_id = self.authorization.subject_id
+        attr = next(attr for attr in self.get_meta().attrs if attr.name == self.subject_id_attr_name)
+        if attr.attr_type == AttrType.INT:
+            return int(subject_id)
+        if attr.attr_type == AttrType.STR:
+            return subject_id
+        if attr.attr_type == AttrType.UUID:
+            return UUID(subject_id)
+        raise PersistyError('invalid_store')
 
     def search(
         self,
@@ -91,11 +103,7 @@ class OwnedStore(StoreABC[T]):
         limit: Optional[int] = None,
     ) -> ResultSet[T]:
         if self.require_ownership_for_read:
-            search_filter &= AttrFilter(
-                self.subject_id_attr_name,
-                AttrFilterOp.eq,
-                self.authorization.subject_id,
-            )
+            search_filter &= self._get_owner_filter()
         return self.store.search(search_filter, search_order, page_key, limit)
 
     def search_all(
@@ -104,11 +112,7 @@ class OwnedStore(StoreABC[T]):
         search_order: Optional[SearchOrder[T]] = None,
     ) -> Iterator[T]:
         if self.require_ownership_for_read:
-            search_filter &= AttrFilter(
-                self.subject_id_attr_name,
-                AttrFilterOp.eq,
-                self.authorization.subject_id,
-            )
+            search_filter &= self._get_owner_filter()
         return self.store.search_all(search_filter, search_order)
 
     def _edit_batch(
@@ -168,4 +172,4 @@ def meta_with_non_editable_subject_id(
         if attr.name == subject_id_attr_name:
             attr = dataclasses.replace(attr, creatable=False, updatable=False)
         attrs.append(attr)
-    return dataclasses.replace(meta, attrs=attrs)
+    return dataclasses.replace(meta, attrs=tuple(attrs))
