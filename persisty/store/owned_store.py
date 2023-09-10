@@ -86,14 +86,18 @@ class OwnedStore(StoreABC[T]):
 
     def _get_subject_id(self):
         subject_id = self.authorization.subject_id
-        attr = next(attr for attr in self.get_meta().attrs if attr.name == self.subject_id_attr_name)
+        attr = next(
+            attr
+            for attr in self.get_meta().attrs
+            if attr.name == self.subject_id_attr_name
+        )
         if attr.attr_type == AttrType.INT:
             return int(subject_id)
         if attr.attr_type == AttrType.STR:
             return subject_id
         if attr.attr_type == AttrType.UUID:
             return UUID(subject_id)
-        raise PersistyError('invalid_store')
+        raise PersistyError("invalid_store")
 
     def search(
         self,

@@ -42,7 +42,7 @@ class Attr:
     def to_field(self, is_required: bool) -> Field:
         result = field(
             default=MISSING if is_required else UNDEFINED,
-            metadata={"schemey": self.schema, "persisty": self}
+            metadata={"schemey": self.schema, "persisty": self},
         )
         result.name = self.name
         result.type = self.schema.python_type

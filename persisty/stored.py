@@ -44,7 +44,7 @@ def stored(
     if schema_context is None:
         schema_context = get_default_schema_context()
 
-    # pylint: disable=R0912,R0914,R0915
+    # pylint: disable=R0912,R0914
     def wrapper(cls_):
         nonlocal key_config, cache_control, batch_size, indexes, label_attr_names, summary_attr_names
         links_by_name = {}
@@ -60,61 +60,7 @@ def stored(
         )
         cls_dict = cls_.__dict__
         annotations = cls_dict.get("__annotations__") or {}
-        for name, type_ in annotations.items():
-            if name.startswith("__"):
-                continue
-            value = cls_dict.get(name, UNDEFINED)
-            if isinstance(value, LinkABC):
-                continue
-            if isinstance(value, Attr):
-                attrs_by_name[value.name] = value
-                continue
-
-            creatable = True
-            updatable = True
-            update_generator = None
-            if isinstance(value, Field):
-                if value.metadata.get("persisty"):
-                    attrs_by_name[name] = value.metadata.get("persisty")
-                    continue
-                if value.default is not MISSING:
-                    create_generator = DefaultValueGenerator(value.default)
-                else:
-                    creatable, create_generator = get_default_generator_for_create(
-                        name, type_
-                    )
-                updatable, update_generator = get_default_generator_for_update(
-                    name, type_
-                )
-                schema = value.metadata.get(
-                    "schemey"
-                ) or schema_context.schema_from_type(type_)
-            else:
-                schema = schema_context.schema_from_type(type_)
-                if value is UNDEFINED:
-                    creatable, create_generator = get_default_generator_for_create(
-                        name, type_
-                    )
-                    updatable, update_generator = get_default_generator_for_update(
-                        name, type_
-                    )
-                else:
-                    create_generator = DefaultValueGenerator(value)
-
-            db_type = attr_type(type_)
-            permitted_filter_ops, sortable = _derive_filter_and_sort(type, db_type)
-            attr = Attr(
-                name=name,
-                attr_type=db_type,
-                schema=schema,
-                creatable=creatable,
-                updatable=updatable,
-                sortable=sortable,
-                create_generator=create_generator,
-                update_generator=update_generator,
-                permitted_filter_ops=permitted_filter_ops,
-            )
-            attrs_by_name[name] = attr
+        attrs_by_name = _derive_attrs(annotations, cls_dict, schema_context)
 
         for name, value in cls_dict.items():
             if isinstance(value, LinkABC):
@@ -124,8 +70,7 @@ def stored(
         key_config = _derive_key_config(key_config, cls_, attrs_by_name)
         if not label_attr_names:
             label_attr_names = tuple(
-                a.name for a in attrs_by_name.values()
-                if a.attr_type == AttrType.STR
+                a.name for a in attrs_by_name.values() if a.attr_type == AttrType.STR
             )
             label_attr_names = label_attr_names[0:]
 
@@ -211,3 +156,68 @@ def _derive_args(
     if cache_control is None:
         cache_control = SecureHashCacheControl()
     return key_config, cache_control, batch_size, indexes
+
+
+# pylint: disable=R0914
+def _derive_attrs(
+    annotations: Dict[str, Type],
+    cls_dict: Dict,
+    schema_context: SchemaContext
+) -> Dict[str, Attr]:
+    attrs_by_name = {}
+    for name, type_ in annotations.items():
+        if name.startswith("__"):
+            continue
+        value = cls_dict.get(name, UNDEFINED)
+        if isinstance(value, LinkABC):
+            continue
+        if isinstance(value, Attr):
+            attrs_by_name[value.name] = value
+            continue
+
+        creatable = True
+        updatable = True
+        update_generator = None
+        if isinstance(value, Field):
+            if value.metadata.get("persisty"):
+                attrs_by_name[name] = value.metadata.get("persisty")
+                continue
+            if value.default is not MISSING:
+                create_generator = DefaultValueGenerator(value.default)
+            else:
+                creatable, create_generator = get_default_generator_for_create(
+                    name, type_
+                )
+            updatable, update_generator = get_default_generator_for_update(
+                name, type_
+            )
+            schema = value.metadata.get(
+                "schemey"
+            ) or schema_context.schema_from_type(type_)
+        else:
+            schema = schema_context.schema_from_type(type_)
+            if value is UNDEFINED:
+                creatable, create_generator = get_default_generator_for_create(
+                    name, type_
+                )
+                updatable, update_generator = get_default_generator_for_update(
+                    name, type_
+                )
+            else:
+                create_generator = DefaultValueGenerator(value)
+
+        db_type = attr_type(type_)
+        permitted_filter_ops, sortable = _derive_filter_and_sort(type, db_type)
+        attr = Attr(
+            name=name,
+            attr_type=db_type,
+            schema=schema,
+            creatable=creatable,
+            updatable=updatable,
+            sortable=sortable,
+            create_generator=create_generator,
+            update_generator=update_generator,
+            permitted_filter_ops=permitted_filter_ops,
+        )
+        attrs_by_name[name] = attr
+    return attrs_by_name

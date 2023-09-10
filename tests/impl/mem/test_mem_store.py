@@ -114,3 +114,6 @@ class TestMemStore(TestCase, StoreTstABC):
         with self.assertRaises(PersistyError):
             store.update(NumberName(title="foobar"))
         self.assertEqual(0, store.count())
+
+    def test_foobar(self):
+        self.test_link_read()

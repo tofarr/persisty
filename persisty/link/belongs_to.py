@@ -2,8 +2,6 @@ from dataclasses import dataclass
 from typing import Dict, ForwardRef, Generic, List, Optional, TypeVar
 
 import marshy
-from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
-from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
 from schemey import schema_from_type
 from servey.security.authorization import Authorization

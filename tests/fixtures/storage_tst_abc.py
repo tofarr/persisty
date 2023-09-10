@@ -27,6 +27,7 @@ from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULTS, SuperBowlResul
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES
 from tests.fixtures.book import BOOKS
 
+
 # noinspection PyUnresolvedReferences
 class StoreTstABC(ABC):
     """Tests which expect store to have the bands data loaded"""
@@ -445,7 +446,9 @@ class StoreTstABC(ABC):
         results = sorted(results, key=lambda r: r.num_value)
         self.assertGreaterEqual(results[0].created_at, now)
         self.assertGreaterEqual(results[0].updated_at, now)
-        self.assertEqual(results[1].created_at, datetime.fromisoformat("1970-01-01T00:00:00+00:00"))
+        self.assertEqual(
+            results[1].created_at, datetime.fromisoformat("1970-01-01T00:00:00+00:00")
+        )
         self.assertGreaterEqual(results[1].updated_at, now)
         expected_results = [
             NumberName(
@@ -592,14 +595,16 @@ class StoreTstABC(ABC):
     def test_link_read(self):
         author_store = self.new_author_store()
         book_store = self.new_book_store()
-        author_store.get_meta().links[0].linked_store_factory = DefaultStoreFactory(book_store)
-        book_store.get_meta().links[0].linked_store_factory = DefaultStoreFactory(author_store)
+        author_store.get_meta().links[0].linked_store_factory = DefaultStoreFactory(
+            book_store
+        )
+        book_store.get_meta().links[0].linked_store_factory = DefaultStoreFactory(
+            author_store
+        )
         mary_shelley = author_store.read("2")
-        assert(mary_shelley is not None)
+        assert mary_shelley is not None
         books = mary_shelley.books()
-        expected_books = ResultSet([
-            BOOKS[2]
-        ])
+        expected_books = ResultSet([BOOKS[2]])
         self.assertEqual(expected_books, books)
 
     def test_link_delete(self):

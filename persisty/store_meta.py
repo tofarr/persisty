@@ -1,7 +1,7 @@
 import dataclasses
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable, List
+from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable
 
 from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
 from marshy.marshaller_context import MarshallerContext
@@ -56,14 +56,16 @@ class StoreMeta:
         )
 
     def get_create_dataclass(self) -> Type:
-        required_attr_names = {a.name for a in self.attrs if a.creatable and not a.create_generator}
+        required_attr_names = {
+            a.name for a in self.attrs if a.creatable and not a.create_generator
+        }
         attrs = [a for a in self.attrs if a.creatable]
         return self._get_dataclass(
             "_create_dataclass",
             self.name.title().replace("_", "") + "Create",
             attrs,
             None,
-            required_attr_names
+            required_attr_names,
         )
 
     def get_update_dataclass(self) -> Type:
@@ -74,7 +76,7 @@ class StoreMeta:
             self.name.title().replace("_", "") + "Update",
             attrs,
             None,
-            required_attr_names
+            required_attr_names,
         )
 
     def get_search_filter_factory_dataclass(self) -> Optional[Type]:
@@ -120,6 +122,7 @@ class StoreMeta:
             setattr(self, "_sortable_attrs", result)
         return result
 
+    # pylint: disable=R0913
     def _get_dataclass(
         self,
         attr_name: str,
@@ -205,21 +208,27 @@ def _schema_factory(
         schema["description"] = cls.__doc__.strip()
     store_meta = get_meta(cls)
     schema["label_attr_names"] = [
-        f.name for f in dataclasses.fields(cls)
-        if f.name in store_meta.label_attr_names
+        f.name for f in dataclasses.fields(cls) if f.name in store_meta.label_attr_names
     ]
     schema["summary_attr_names"] = [
-        f.name for f in dataclasses.fields(cls)
+        f.name
+        for f in dataclasses.fields(cls)
         if f.name in store_meta.summary_attr_names
     ]
     for link in store_meta.links:
         link.update_json_schema(schema)
-    missing_key_attr = next((
-        k for k in store_meta.key_config.get_key_attrs()
-        if k not in schema["properties"]
-    ), None)
+    missing_key_attr = next(
+        (
+            k
+            for k in store_meta.key_config.get_key_attrs()
+            if k not in schema["properties"]
+        ),
+        None,
+    )
     if not missing_key_attr:
-        schema["key_config"] = context.marshaller_context.dump(store_meta.key_config, KeyConfigABC)
+        schema["key_config"] = context.marshaller_context.dump(
+            store_meta.key_config, KeyConfigABC
+        )
     schema = Schema(schema, cls)
     return schema
 

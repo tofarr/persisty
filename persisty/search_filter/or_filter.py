@@ -52,9 +52,7 @@ class Or(SearchFilterABC[T]):
         return result
 
     def match(self, item: T, attrs: Tuple[Attr, ...]) -> bool:
-        match = next(
-            (True for f in self.search_filters if f.match(item, attrs)), False
-        )
+        match = next((True for f in self.search_filters if f.match(item, attrs)), False)
         return match
 
     def build_filter_expression(
