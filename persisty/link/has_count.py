@@ -43,7 +43,8 @@ class HasCount(LinkedStoreABC):
         self.name = name
         if self.remote_key_attr_name is None:
             self.remote_key_attr_name = f"{to_snake_case(owner.__name__)}_id"
-        if owner.__dict__["__annotations__"].get(name) != int:
+        type_ = owner.__dict__["__annotations__"].get(name)
+        if type_ not in (int, None):
             raise PersistyError(f"annotation_should_be_int:{name}")
 
     def get_name(self) -> str:

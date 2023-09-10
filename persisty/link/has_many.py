@@ -45,9 +45,9 @@ class HasMany(LinkedStoreABC, Generic[T]):
         self.name = name
         if self.remote_key_attr_name is None:
             self.remote_key_attr_name = f"{to_snake_case(owner.__name__)}_id"
-        type_ = owner.__dict__["__annotations__"][name]
         if self.linked_store_type is not None:
             return
+        type_ = owner.__dict__["__annotations__"][name]
         if typing_inspect.get_origin(type_) is not ResultSet:
             raise PersistyError(f"not_a_result_set:{type_}")
         self.linked_store_type = typing_inspect.get_args(type_)[0]
