@@ -56,6 +56,8 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
         self.name = name
         if self.key_attr_name is None:
             self.key_attr_name = f"{name}_id"
+        if self.linked_store_type is None:
+            self.linked_store_type = owner.__dict__["__annotations__"][name]
 
     def __get__(self, obj, obj_type) -> BelongsToCallable[T]:
         return BelongsToCallable(

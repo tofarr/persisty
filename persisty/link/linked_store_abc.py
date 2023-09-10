@@ -13,7 +13,7 @@ from persisty.util import to_snake_case
 
 @dataclass
 class LinkedStoreABC(LinkABC, ABC):
-    linked_store_type: Union[Type, str, ForwardRef]
+    linked_store_type: Union[Type, str, ForwardRef, None] = None
     name: Optional[str] = None  # Allows None so __set_name__ can exist
     linked_store_name: Optional[str] = None
     linked_store_factory: Optional[StoreFactoryABC] = None

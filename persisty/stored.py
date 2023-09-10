@@ -160,9 +160,7 @@ def _derive_args(
 
 # pylint: disable=R0914
 def _derive_attrs(
-    annotations: Dict[str, Type],
-    cls_dict: Dict,
-    schema_context: SchemaContext
+    annotations: Dict[str, Type], cls_dict: Dict, schema_context: SchemaContext
 ) -> Dict[str, Attr]:
     attrs_by_name = {}
     for name, type_ in annotations.items():
@@ -188,12 +186,10 @@ def _derive_attrs(
                 creatable, create_generator = get_default_generator_for_create(
                     name, type_
                 )
-            updatable, update_generator = get_default_generator_for_update(
-                name, type_
+            updatable, update_generator = get_default_generator_for_update(name, type_)
+            schema = value.metadata.get("schemey") or schema_context.schema_from_type(
+                type_
             )
-            schema = value.metadata.get(
-                "schemey"
-            ) or schema_context.schema_from_type(type_)
         else:
             schema = schema_context.schema_from_type(type_)
             if value is UNDEFINED:

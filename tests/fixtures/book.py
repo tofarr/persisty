@@ -12,7 +12,7 @@ class Book:
 
     id: int
     title: str
-    author = BelongsTo(linked_store_type=ForwardRef("tests.fixtures.author.Author"))
+    author: ForwardRef("tests.fixtures.author.Author") = BelongsTo()
 
 
 BOOKS = [

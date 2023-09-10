@@ -10,6 +10,7 @@ from persisty.index import Index
 from persisty.link.has_count import HasCount
 from persisty.link.has_many import HasMany
 from persisty.attr.attr import Attr
+from persisty.result_set import ResultSet
 from persisty.stored import stored
 
 
@@ -32,11 +33,12 @@ class User:
     admin: bool = False
     created_at: datetime
     updated_at: datetime
-    authored_message_count = HasCount(
+    authored_message_count: int = HasCount(
         linked_store_type=ForwardRef("servey_main.models.message.Message"),
         remote_key_attr_name="author_id",
     )
-    authored_messages = HasMany(
-        linked_store_type=ForwardRef("servey_main.models.message.Message"),
+    authored_messages: ResultSet[
+        ForwardRef("servey_main.models.message.Message")
+    ] = HasMany(
         remote_key_attr_name="author_id",
     )

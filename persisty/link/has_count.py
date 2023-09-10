@@ -4,6 +4,7 @@ from typing import Optional, Type
 from servey.security.authorization import Authorization
 
 from persisty.attr.attr_filter import AttrFilter, AttrFilterOp
+from persisty.errors import PersistyError
 from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
@@ -42,6 +43,8 @@ class HasCount(LinkedStoreABC):
         self.name = name
         if self.remote_key_attr_name is None:
             self.remote_key_attr_name = f"{to_snake_case(owner.__name__)}_id"
+        if owner.__dict__["__annotations__"].get(name) != int:
+            raise PersistyError(f"annotation_should_be_int:{name}")
 
     def get_name(self) -> str:
         return self.name

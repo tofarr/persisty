@@ -15,4 +15,4 @@ class Message:
     created_at: datetime
     updated_at: datetime
     author_id: UUID
-    author = BelongsTo(linked_store_type=ForwardRef("servey_main.models.user.User"))
+    author: ForwardRef("servey_main.models.user.User") = BelongsTo()
