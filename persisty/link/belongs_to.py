@@ -8,6 +8,7 @@ from servey.security.authorization import Authorization
 
 from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
 from persisty.attr.attr_type import AttrType
+from persisty.attr.generator.default_value_generator import DefaultValueGenerator
 from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.link.on_delete import OnDelete
@@ -70,11 +71,13 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
             return
         type_ = Optional[str] if self.optional else str
         schema = schema_from_type(type_)
+        create_generator = DefaultValueGenerator(None) if self.optional else None
         attrs_by_name[self.key_attr_name] = Attr(
             self.key_attr_name,
             AttrType.STR,
             schema,
             sortable=False,
+            create_generator=create_generator,
             permitted_filter_ops=DEFAULT_PERMITTED_FILTER_OPS,
         )
 
