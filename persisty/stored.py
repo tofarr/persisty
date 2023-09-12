@@ -136,7 +136,7 @@ def _derive_args(
     batch_size: int,
     indexes: Tuple[IndexABC, ...],
     attrs_by_name: Dict[str, Attr],
-    links_by_name: Dict[str, IndexABC],
+    links_by_name: Dict[str, LinkABC],
 ):
     mro = list(cls_.__mro__)[1:-1]
     mro.reverse()
