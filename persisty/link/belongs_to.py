@@ -85,9 +85,7 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
         id_attr_schema = json_schema.get("properties").get(self.key_attr_name)
         if not id_attr_schema:
             return
-        linked_meta = self.get_linked_store_factory().get_meta()
         id_attr_schema["persistyBelongsTo"] = {
             "linked_store_name": self.get_linked_store_name(),
             "on_delete": marshy.dump(self.on_delete),
-            "label_attr_names": linked_meta.label_attr_names,
         }
