@@ -21,10 +21,13 @@ def add_seed_data(op):
     target_metadata = get_target_metadata()
     for store in find_stores():
         meta = store.get_meta()
+        seed_data = get_seed_data(meta.name)
+        if not seed_data:
+            continue
         table = target_metadata.tables.get(meta.name)
         cols = list(table.columns)
         items = []
-        for item in get_seed_data(meta.name):
+        for item in seed_data:
             filtered_item = {**item}
             for col in cols:
                 if col.type.python_type == datetime:

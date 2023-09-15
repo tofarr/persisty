@@ -39,6 +39,9 @@ def get_seed_data(name: str) -> List[ExternalItemType]:
     items = getattr(seeds, name, None)
     if items is not None:
         return items
-    seed_data = resources.read_text(seeds_package, name + ".json")
+    try:
+        seed_data = resources.read_text(seeds_package, name + ".json")
+    except FileNotFoundError:
+        return []
     seed_data = json.loads(seed_data)
     return seed_data

@@ -15,6 +15,7 @@ from persisty.impl.sqlalchemy.sqlalchemy_constraint_converter import (
 from persisty.index.attr_index import AttrIndex
 from persisty.index.unique_index import UniqueIndex
 from persisty.store_meta import StoreMeta
+from persisty.util import secure_hash
 
 
 @dataclass
@@ -43,7 +44,9 @@ class SqlalchemyTableConverter:
             args.append(column)
         for index in store_meta.indexes:
             if isinstance(index, AttrIndex):
-                name = f"idx_{index.attr_name}"
+                name = f"idx_{store_meta.name}_{index.attr_name}"
+                if len(name) > 60:
+                    name = f"idx_{secure_hash(name).replace('+', '').replace('=', '')}"
                 index_cols = [columns_by_name[index.attr_name]]
                 unique = False
             elif isinstance(index, UniqueIndex):

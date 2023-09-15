@@ -1,5 +1,6 @@
 import json
 from datetime import timezone
+from enum import Enum
 from typing import Optional, List, Iterator, Tuple, Any, Dict
 
 from dataclasses import dataclass
@@ -353,6 +354,8 @@ class SqlalchemyTableStore(StoreABC):
                 if not value.tzinfo:
                     value.replace(tzinfo=timezone.utc)
                 value = value.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+            if isinstance(value, Enum):
+                value = value.name
             loaded[attr_.name] = value
         # noinspection PyTypeChecker
         result = marshy.load(self.meta.get_read_dataclass(), loaded)
