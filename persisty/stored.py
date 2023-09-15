@@ -74,6 +74,11 @@ def stored(
             )
             label_attr_names = label_attr_names[0:]
 
+        # Make sure key attributes are not updatable...
+        for attr_name in key_config.get_key_attrs():
+            attr = attrs_by_name[attr_name]
+            attr.updatable = False
+
         if not label_attr_names:
             label_attr_names = tuple(key_config.get_key_attrs())
         if not summary_attr_names:

@@ -74,7 +74,6 @@ def action_for_update(
     search_filter_type: Type[SearchFilterFactoryABC],
 ) -> Action:
     store_meta = store_factory.get_meta()
-
     @action(
         name=f"{store_meta.name}_update",
         description=f"Update and return an item in {store_meta.name}",
