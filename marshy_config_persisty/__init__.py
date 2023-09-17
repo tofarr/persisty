@@ -10,6 +10,7 @@ from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from servey.cache_control.timestamp_cache_control import TimestampCacheControl
 from servey.cache_control.ttl_cache_control import TtlCacheControl
+from servey.security.authorizer.authorizer_factory_abc import AuthorizerFactoryABC
 
 from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorABC
@@ -35,6 +36,9 @@ from persisty.search_filter.not_filter import Not
 from persisty.search_filter.or_filter import Or
 from persisty.search_filter.query_filter import QueryFilter
 from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.security.jwt_permission_authorizer_factory import (
+    JwtPermissionAuthorizerFactory,
+)
 from persisty.util import UNDEFINED
 
 priority = 100
@@ -53,10 +57,12 @@ def configure(context: MarshallerContext):
     configure_indexes(context)
     configure_links(context)
     configure_finders(context)
+    configure_security(context)
 
     configure_sqlalchemy(context)
     configure_celery(context)
     configure_serverless(context)
+    configure_aws(context)
 
 
 def configure_search_filters(context: MarshallerContext):
@@ -95,7 +101,7 @@ def configure_indexes(context: MarshallerContext):
         from persisty.impl.dynamodb.partition_sort_index import PartitionSortIndex
 
         register_impl(IndexABC, PartitionSortIndex, context)
-    except ImportError as e:
+    except ModuleNotFoundError as e:
         raise_non_ignored(e)
 
 
@@ -112,7 +118,7 @@ def configure_sqlalchemy(context: MarshallerContext):
 
         sqlalchemy_config.configure_converters(context)
         sqlalchemy_config.configure_sqlalchemy_context(context)
-    except ImportError as e:
+    except ModuleNotFoundError as e:
         msg = str(e)
         if msg.startswith("No module named '"):
             module_name = msg[len("No module named '") : -1]
@@ -133,7 +139,7 @@ def configure_celery(context: MarshallerContext):
         )
 
         register_impl(CeleryConfigABC, CeleryStoreTriggerConfig, context)
-    except ImportError as e:
+    except ModuleNotFoundError as e:
         raise_non_ignored(e)
 
 
@@ -143,5 +149,23 @@ def configure_serverless(context: MarshallerContext):
         from persisty.migration.serverless.dynamodb_yml_config import DynamodbYmlConfig
 
         register_impl(YmlConfigABC, DynamodbYmlConfig, context)
-    except ImportError as e:
+    except ModuleNotFoundError as e:
+        raise_non_ignored(e)
+
+
+def configure_security(context: MarshallerContext):
+    register_impl(AuthorizerFactoryABC, JwtPermissionAuthorizerFactory, context)
+
+
+def configure_aws(context: MarshallerContext):
+    try:
+        from persisty.security.kms_permission_authorizer_factory import (
+            KmsPermissionAuthorizerFactory,
+        )
+        from servey.security.authorizer.authorizer_factory_abc import (
+            AuthorizerFactoryABC,
+        )
+
+        register_impl(AuthorizerFactoryABC, KmsPermissionAuthorizerFactory, context)
+    except ModuleNotFoundError as e:
         raise_non_ignored(e)

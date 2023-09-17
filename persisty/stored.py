@@ -71,7 +71,9 @@ def stored(
         if label_attr_names:
             for label_attr_name in label_attr_names:
                 if label_attr_name not in attrs_by_name:
-                    raise PersistyError(f'unknown_label_attr:{label_attr_name}:{cls_.__name__}')
+                    raise PersistyError(
+                        f"unknown_label_attr:{label_attr_name}:{cls_.__name__}"
+                    )
         else:
             label_attr_names = tuple(
                 a.name for a in attrs_by_name.values() if a.attr_type == AttrType.STR
@@ -88,7 +90,9 @@ def stored(
         if summary_attr_names:
             for summary_attr_name in summary_attr_names:
                 if summary_attr_name not in attrs_by_name:
-                    raise PersistyError(f'unknown_summary_attr:{summary_attr_name}:{cls_.__name__}')
+                    raise PersistyError(
+                        f"unknown_summary_attr:{summary_attr_name}:{cls_.__name__}"
+                    )
         else:
             summary_attr_names = tuple(attrs_by_name.keys())
 
