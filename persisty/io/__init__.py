@@ -8,9 +8,9 @@ from typing import Type, List, Iterator
 import marshy
 from marshy.types import ExternalItemType
 
+from build.lib.persisty.impl.default_store import DefaultStore
 from persisty.finder.stored_finder_abc import find_stored
 from persisty.batch_edit import BatchEdit
-from persisty.impl.default_store import DefaultStore
 from persisty.store.store_abc import StoreABC
 from persisty.store_meta import StoreMeta
 

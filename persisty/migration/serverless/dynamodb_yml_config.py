@@ -5,8 +5,8 @@ from servey.servey_aws.serverless.yml_config.yml_config_abc import (
     create_yml_file,
 )
 
+from build.lib.persisty.impl.default_store import DefaultStore
 from persisty.finder.stored_finder_abc import find_stored
-from persisty.impl.default_store import DefaultStore
 from persisty.impl.dynamodb.dynamodb_store_factory import DynamodbStoreFactory
 from persisty.impl.dynamodb.dynamodb_table_store import DynamodbTableStore
 

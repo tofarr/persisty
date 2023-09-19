@@ -167,6 +167,9 @@ class TestDynamodbStore(TestCase, StoreTstABC):
     def test_performance(self):
         self.test_search_all_id()
 
+    def test_foobar(self):
+        super().test_update()
+
 
 @stored(
     batch_size=100,

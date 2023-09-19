@@ -16,7 +16,7 @@ class LinkedStoreABC(LinkABC, ABC):
     linked_store_type: Union[Type, str, ForwardRef, None] = None
     name: Optional[str] = None  # Allows None so __set_name__ can exist
     linked_store_name: Optional[str] = None
-    linked_meta: Optional[StoreMeta] = None
+    linked_store_meta: Optional[StoreMeta] = None
 
     def get_linked_store_name(self):
         linked_store_name = self.linked_store_name
@@ -29,19 +29,19 @@ class LinkedStoreABC(LinkABC, ABC):
             linked_store_name = to_snake_case(linked_type)
         return linked_store_name
 
-    def get_linked_meta(self):
-        linked_meta = self.linked_meta
-        if not linked_meta:
-            linked_meta = next(
+    def get_linked_store_meta(self):
+        linked_store_meta = self.linked_store_meta
+        if not linked_store_meta:
+            linked_store_meta = next(
                 meta
                 for meta in find_stored()
                 if meta.name == self.get_linked_store_name()
             )
-            self.linked_meta = linked_meta
-        return linked_meta
+            self.linked_store_meta = linked_store_meta
+        return linked_store_meta
 
     def get_linked_store(self, authorization: Optional[Authorization] = None):
-        meta = self.get_linked_meta()
+        meta = self.get_linked_store_meta()
         store = meta.store_factory.create(meta)
         store = meta.store_security.get_secured(store, authorization)
         return store

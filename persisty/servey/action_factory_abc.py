@@ -12,7 +12,7 @@ T = TypeVar("T")
 @dataclass
 class ActionFactoryABC(Generic[T], ABC):
     def create_actions(self, store: _StoreABC) -> Iterator[Action]:
-        """Create actions for this factory"""
+        """Create actions for this security"""
 
     def create_routes(self, store: _StoreABC) -> Iterator[ROUTE]:
-        """Create routes for this factory"""
+        """Create routes for this security"""

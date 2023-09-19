@@ -17,13 +17,13 @@ T = TypeVar("T")
 
 
 class BelongsToCallable(Generic[T]):
-    def __init__(self, key: str, meta: StoreMeta):
+    def __init__(self, key: str, store_meta: StoreMeta):
         self.key = key
-        self.meta = meta
+        self.store_meta = store_meta
 
     def __call__(self, authorization: Optional[Authorization] = None) -> Optional[T]:
-        store = self.meta.store_factory.create(self.meta)
-        store = self.meta.store_security.get_secured(store, authorization)
+        store = self.store_meta.store_factory.create(self.store_meta)
+        store = self.store_meta.store_security.get_secured(store, authorization)
         item = store.read(self.key)
         return item
 
@@ -64,7 +64,7 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
     def __get__(self, obj, obj_type) -> BelongsToCallable[T]:
         return BelongsToCallable(
             key=getattr(obj, self.key_attr_name),
-            meta=self.get_linked_meta(),
+            store_meta=self.get_linked_store_meta(),
         )
 
     def update_attrs(self, attrs_by_name: Dict[str, Attr]):

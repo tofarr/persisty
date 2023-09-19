@@ -380,7 +380,9 @@ class SqlalchemyTableStore(StoreABC):
             ):
                 value = json.dumps(value)
             dumped[attr_.name] = _transform_type(value)
-
+        if is_update:
+            for attr_name in self.meta.key_config.get_key_attrs():
+                dumped[f"{attr_name}_1"] = dumped[attr_name]
         return dumped
 
     def _key_where_clause(self):

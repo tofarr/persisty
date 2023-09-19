@@ -2,41 +2,27 @@ from dataclasses import dataclass
 from unittest import TestCase
 from unittest.mock import patch
 
-from persisty.factory.default_store_factory import DefaultStoreFactory
-from persisty.finder.module_store_finder import ModuleStoreFinder
-from persisty.finder.store_finder_abc import find_stores, find_store_factories
+from persisty.finder.module_stored_finder import ModuleStoredFinder
+from persisty.finder.stored_finder_abc import find_stored
 
 
 class TestModuleStoreFinder(TestCase):
-    def test_find_stores(self):
-        finder = ModuleStoreFinder("tests.finder")
-        stores = list(finder.find_stores())
-        store_names = {s.get_meta().name for s in stores}
+    def test_find_stored(self):
+        finder = ModuleStoredFinder("tests.finder")
+        stores = list(finder.find_stored())
+        store_names = {s.name for s in stores}
         expected_store_names = {"message"}
         self.assertEqual(store_names, expected_store_names)
-
-    def test_find_store_factories(self):
-        finder = ModuleStoreFinder("tests.finder")
-        factories = list(finder.find_store_factories())
-        store_names = {s.get_meta().name for s in factories}
-        expected_store_names = {"message"}
-        self.assertEqual(store_names, expected_store_names)
-        factory = next(iter(factories))
-        self.assertTrue(isinstance(factory, DefaultStoreFactory))
 
     def test_globals(self):
         @dataclass
-        class MyModuleStoreFinder(ModuleStoreFinder):
+        class MyModuleStoredFinder(ModuleStoredFinder):
             root_module_name: str = "tests.finder"
 
         with patch(
-            "persisty.finder.store_finder_abc.get_impls",
-            return_value=[MyModuleStoreFinder],
+            "persisty.finder.stored_finder_abc.get_impls",
+            return_value=[MyModuleStoredFinder],
         ):
             expected_store_names = {"message"}
-            stores = list(find_stores())
-            factories = list(find_store_factories())
-            self.assertEqual({s.get_meta().name for s in stores}, expected_store_names)
-            self.assertEqual(
-                {s.get_meta().name for s in factories}, expected_store_names
-            )
+            store_meta = list(find_stored())
+            self.assertEqual({s.name for s in store_meta}, expected_store_names)

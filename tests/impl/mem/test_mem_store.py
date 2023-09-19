@@ -2,6 +2,7 @@ import dataclasses
 from unittest import TestCase
 
 from persisty.errors import PersistyError
+from persisty.factory.store_factory import StoreFactory
 from persisty.impl.mem.mem_store import MemStore
 from persisty.impl.mem.mem_store_factory import MemStoreFactory
 from persisty.search_filter.filter_factory import filter_factory
@@ -19,6 +20,10 @@ from tests.fixtures.super_bowl_results import (
 
 
 class TestMemStore(TestCase, StoreTstABC):
+
+    def setUp(self) -> None:
+        self.cache = {}
+
     def new_super_bowl_results_store(self) -> StoreABC:
         factory = MemStoreFactory(
             get_meta(SuperBowlResult),
@@ -114,6 +119,3 @@ class TestMemStore(TestCase, StoreTstABC):
         with self.assertRaises(PersistyError):
             store.update(NumberName(title="foobar"))
         self.assertEqual(0, store.count())
-
-    def test_foobar(self):
-        self.test_link_read()

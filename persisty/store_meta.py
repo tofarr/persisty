@@ -20,7 +20,7 @@ from persisty.util import to_camel_case
 from persisty.util.undefined import UNDEFINED
 
 T = TypeVar("T")
-_StoreFactoryABC = "persisty.factory.store_factory_abc.StoreFactoryABC"
+_StoreFactoryABC = "persisty.security.store_factory_abc.StoreFactoryABC"
 
 
 def _default_store_factory():

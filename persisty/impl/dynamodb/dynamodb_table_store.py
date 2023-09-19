@@ -119,14 +119,10 @@ class DynamodbTableStore(StoreABC[T]):
             item = self.read(self.meta.key_config.to_key_str(updates))
             if not search_filter.match(item, self.meta.attrs):
                 return None
-        updates = self._dump_update(updates)
+        updates_dict = self._dump_update(updates)
         key_dict = self.index.to_dict(updates)
         table = self._dynamodb_table()
-        updates = {**updates}
-        updates.pop(self.index.pk)
-        if self.index.sk:
-            updates.pop(self.index.sk)
-        update = _build_update(updates)
+        update = _build_update(updates_dict)
         response = table.update_item(
             Key=key_dict,
             ConditionExpression=self.index.to_condition_expression(key_dict),

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from itertools import islice
-from typing import Optional, List, Iterator, Dict, Generic, Type
+from typing import Optional, List, Iterator, Dict, Generic, Type, Iterable, Union
 
 from persisty.errors import PersistyError
 from persisty.batch_edit import BatchEdit
@@ -34,7 +34,7 @@ class StoreABC(Generic[T], ABC):
         items = [self.read(key) for key in keys]
         return items
 
-    def read_all(self, keys: Iterator[str]) -> Iterator[Optional[T]]:
+    def read_all(self, keys: Union[Iterator[str], Iterable[str]]) -> Iterator[Optional[T]]:
         keys = iter(keys)
         while True:
             batch_keys = list(islice(keys, self.get_meta().batch_size))
@@ -197,9 +197,7 @@ class StoreABC(Generic[T], ABC):
                 results.append(BatchEditResult(edit, False, "exception", str(e)))
         return results
 
-    def edit_all(
-        self, edits: Iterator[BatchEdit[T, T]]
-    ) -> Iterator[BatchEditResult[T, T]]:
+    def edit_all(self, edits: Union[Iterator[BatchEdit[T, T]], Iterable[BatchEdit[T, T]]]) -> Iterator[BatchEditResult[T, T]]:
         edits = iter(edits)
         while True:
             page = list(islice(edits, self.get_meta().batch_size))

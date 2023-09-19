@@ -4,14 +4,16 @@ from uuid import UUID
 
 from servey.security.authorization import Authorization
 
-from persisty.factory.default_store_factory import DefaultStoreFactory
-from persisty.factory.owned_store_factory import OwnedStoreFactory
 from persisty.impl.mem.mem_store import MemStore
+from persisty.security.owned_store import OwnedStore
+from persisty.security.owned_store_security import OwnedStoreSecurity
 from persisty.store_meta import get_meta
 from persisty.stored import stored
 
 
-@stored
+@stored(
+    store_security=OwnedStoreSecurity(subject_id_attr_name="owner")
+)
 class Message:
     id: UUID
     owner: str
@@ -21,21 +23,11 @@ class Message:
 class TestOwnedStoreFactory(TestCase):
     def test_getters(self):
         meta = get_meta(Message)
-        store = MemStore(meta)
-        meta = dataclasses.replace(
-            meta,
-            attrs=[
-                meta.attrs[0],
-                dataclasses.replace(meta.attrs[1], creatable=False, updatable=False),
-                meta.attrs[2],
-            ],
-        )
-        factory = OwnedStoreFactory(DefaultStoreFactory(store), "owner")
-        self.assertEqual(meta, factory.get_meta())
         subject_1 = Authorization("subject-1", frozenset(), None, None)
         subject_2 = Authorization("subject-2", frozenset(), None, None)
-        subject_1_store = factory.create(subject_1)
-        subject_2_store = factory.create(subject_2)
+        unsecured_store = MemStore(meta)
+        subject_1_store = meta.store_security.get_secured(unsecured_store, subject_1)
+        subject_2_store = meta.store_security.get_secured(unsecured_store, subject_2)
         msg_1 = subject_1_store.create(
             Message(id=UUID("f13dc535-9beb-488b-95d9-7f19f0d0a147"), text="Some test")
         )
@@ -53,9 +45,8 @@ class TestOwnedStoreFactory(TestCase):
 
     def test_create_actions(self):
         meta = get_meta(Message)
-        store = MemStore(meta)
-        factory = OwnedStoreFactory(DefaultStoreFactory(store), "owner")
-        actions = factory.create_actions()
+        unsecured_store = MemStore(meta)
+        actions = meta.action_factory.create_actions(unsecured_store)
         action_names = {a.name for a in actions}
         expected_action_names = {
             "message_count",
@@ -68,4 +59,4 @@ class TestOwnedStoreFactory(TestCase):
             "message_update",
         }
         self.assertEqual(expected_action_names, action_names)
-        self.assertEqual([], list(factory.create_routes()))
+        self.assertEqual([], list(meta.action_factory.create_routes(unsecured_store)))

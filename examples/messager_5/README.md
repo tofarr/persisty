@@ -28,6 +28,8 @@ npm install serverless
 npm install serverless-python-requirements
 npm install serverless-prune-plugin
 npm install serverless-appsync-plugin
+npm install serverless-s3-sync
+npm install serverless-dynamodb-seed
 ```
 
 ### Deploy the serverless project:

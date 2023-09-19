@@ -34,10 +34,10 @@ class PartitionSortIndex(IndexABC):
             condition_expression = DynAnd(condition_expression, sk)
         return condition_expression
 
-    def to_dict(self, item: ExternalItemType):
-        d = {self.pk: item[self.pk]}
+    def to_dict(self, item):
+        d = {self.pk: getattr(item, self.pk)}
         if self.sk:
-            d[self.sk] = item[self.sk]
+            d[self.sk] = getattr(item, self.sk)
         return d
 
     def key_config_from_attrs(self, attrs: Iterable[Attr]):
