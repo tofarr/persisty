@@ -18,11 +18,13 @@ from persisty.attr.generator.defaults import (
     get_default_generator_for_update,
 )
 from persisty.errors import PersistyError
+from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
-from persisty.store_access import StoreAccess, ALL_ACCESS
+from persisty.security.store_security_abc import StoreSecurityABC
+from persisty.servey.action_factory_abc import ActionFactoryABC
 from persisty.store_meta import StoreMeta
 from persisty.util import to_snake_case
 from persisty.util.undefined import UNDEFINED
@@ -32,13 +34,15 @@ def stored(
     cls=None,
     *,
     key_config: Optional[KeyConfigABC] = None,
-    store_access: StoreAccess = ALL_ACCESS,
+    store_security: Optional[StoreSecurityABC] = None,
     cache_control: Optional[CacheControlABC] = None,
     batch_size: int = 100,
     schema_context: Optional[SchemaContext] = None,
     indexes: Tuple[IndexABC, ...] = tuple(),
     label_attr_names: Optional[Tuple[str, ...]] = None,
     summary_attr_names: Optional[Tuple[str, ...]] = None,
+    store_factory: Optional[StoreFactoryABC] = None,
+    action_factory: Optional[ActionFactoryABC] = None,
 ):
     """Decorator inspired by dataclasses, containing stored meta."""
     if schema_context is None:
@@ -46,7 +50,7 @@ def stored(
 
     # pylint: disable=R0912,R0914
     def wrapper(cls_):
-        nonlocal key_config, cache_control, batch_size, indexes, label_attr_names, summary_attr_names
+        nonlocal key_config, cache_control, batch_size, indexes, label_attr_names, summary_attr_names, store_factory, action_factory
         links_by_name = {}
         attrs_by_name = {}
         key_config, cache_control, batch_size, indexes = _derive_args(
@@ -96,11 +100,15 @@ def stored(
         else:
             summary_attr_names = tuple(attrs_by_name.keys())
 
+        from persisty.factory.store_factory import StoreFactory
+        from persisty.servey.action_factory import ActionFactory
+        from persisty.security.store_security import UNSECURED
+
         store_meta = StoreMeta(
             name=to_snake_case(cls_.__name__),
             attrs=tuple(attrs_by_name.values()),
             key_config=key_config,
-            store_access=store_access,
+            store_security=store_security or UNSECURED,
             cache_control=cache_control,
             batch_size=batch_size,
             description=cls_.__doc__,
@@ -108,6 +116,8 @@ def stored(
             indexes=indexes,
             label_attr_names=label_attr_names,
             summary_attr_names=summary_attr_names,
+            store_factory=store_factory or StoreFactory(),
+            action_factory=action_factory or ActionFactory(),
         )
         result = store_meta.get_stored_dataclass()
         return result

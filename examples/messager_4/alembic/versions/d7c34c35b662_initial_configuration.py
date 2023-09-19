@@ -21,7 +21,7 @@ def upgrade() -> None:
     op.create_table(
         "message",
         sa.Column("id", sa.String(length=36), nullable=False),
-        sa.Column("text", sa.Text(), nullable=False),
+        sa.Column("message_text", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.Column("author_id", sa.String(length=36), nullable=False),

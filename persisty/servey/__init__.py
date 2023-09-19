@@ -1,16 +1,16 @@
-from typing import Dict
+from typing import Dict, Iterator
 
-from persisty.factory.store_factory_abc import StoreFactoryABC
-from persisty.servey import generated
-
-
-def add_actions_for_all_store_factories(target: Dict):
-    from persisty.finder.store_finder_abc import find_store_factories
-
-    for store_factory in find_store_factories():
-        add_actions_for_store_factory(store_factory, target)
+from servey.action.action import Action
 
 
-def add_actions_for_store_factory(store_factory: StoreFactoryABC, target: Dict):
-    for action_ in store_factory.create_actions():
+def create_actions_for_all_stores() -> Iterator[Action]:
+    from persisty.finder.stored_finder_abc import find_stored
+
+    for store_meta in find_stored():
+        store = store_meta.store_factory.create(store_meta)
+        yield from store_meta.action_factory.create_actions(store)
+
+
+def add_actions_for_all_stores(target: Dict):
+    for action_ in create_actions_for_all_stores():
         target[action_.name] = action_.fn

@@ -15,7 +15,7 @@ from persisty.index.attr_index import AttrIndex
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
-from persisty.store.restrict_access_store import restrict_access_store
+from persisty.security.restrict_access_store import restrict_access_store
 from persisty.store.schema_validating_store import SchemaValidatingStore
 from persisty.store.store_abc import StoreABC
 from persisty.store.unique_index_store import unique_index_store
@@ -47,7 +47,8 @@ class DynamodbStoreFactory:
             region_name=self.region_name,
         )
         store = SchemaValidatingStore(store)
-        store = restrict_access_store(store, self.meta.store_access)
+        store_access = self.meta.store_security.get_potential_access()
+        store = restrict_access_store(store, store_access)
         store = unique_index_store(store)
         return store
 

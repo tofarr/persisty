@@ -17,8 +17,8 @@ from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorA
 from persisty.attr.generator.default_value_generator import DefaultValueGenerator
 from persisty.attr.generator.timestamp_generator import TimestampGenerator
 from persisty.attr.generator.uuid_generator import UuidGenerator
-from persisty.finder.module_store_finder import ModuleStoreFinder
-from persisty.finder.store_finder_abc import StoreFactoryFinderABC
+from persisty.finder.module_stored_finder import ModuleStoredFinder
+from persisty.finder.stored_finder_abc import StoredFinderABC
 from persisty.index.attr_index import AttrIndex
 from persisty.index.index_abc import IndexABC
 from persisty.index.unique_index import UniqueIndex
@@ -128,7 +128,7 @@ def configure_sqlalchemy(context: MarshallerContext):
 
 
 def configure_finders(context: MarshallerContext):
-    register_impl(StoreFactoryFinderABC, ModuleStoreFinder, context)
+    register_impl(StoredFinderABC, ModuleStoredFinder, context)
 
 
 def configure_celery(context: MarshallerContext):

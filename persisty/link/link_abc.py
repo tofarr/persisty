@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Type, Union, ForwardRef
+from typing import Dict, Type, Union, ForwardRef, Generic, TypeVar
 
 from marshy.types import ExternalItemType
 
 from persisty.attr.attr import Attr
 
+T = TypeVar("T")
 
-class LinkABC(ABC):
+
+class LinkABC(ABC, Generic[T]):
     """
     A link represents something external to a stored item but related to it.
     """
@@ -32,3 +34,21 @@ class LinkABC(ABC):
         Update a schema with data from this link (Typically this is used as a custom extension to jsonschema to
         represent relational data.
         """
+
+    def before_create(self, item: T):
+        """Called before an item is created"""
+
+    def after_create(self, item: T):
+        """Called before an item is created"""
+
+    def before_update(self, item: T, updates: T):
+        """Called before an item is created"""
+
+    def after_update(self, oldItem: T, newItem: T):
+        """Called before an item is created"""
+
+    def before_delete(self, item: T):
+        """Called before an item is created"""
+
+    def after_delete(self, item: T):
+        """Called before an item is created"""

@@ -135,7 +135,7 @@
             element.className = 'message'
             element.getElementsByClassName("messageAuthor")[0].appendChild(document.createTextNode(message.author.username))
             element.getElementsByClassName("messageCreatedAt")[0].appendChild(document.createTextNode(new Date(message.createdAt).toLocaleString()))
-            element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.text))
+            element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.messageText))
             const messageContent= document.createElement('div')
             messageContent.className = 'messageContent'
             return element

@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from persisty.finder.store_finder_abc import find_stores
+from persisty.factory.store_factory import StoreFactory
+from persisty.finder.stored_finder_abc import find_stored
 from persisty.impl.default_store import DefaultStore
 from persisty.impl.sqlalchemy.sqlalchemy_context_factory_abc import get_default_context
 from persisty.io.seed import get_seed_data
@@ -10,21 +11,22 @@ def get_target_metadata():
     """
     Reference this in the alembic env.py
     """
-    for store in find_stores():
-        if isinstance(store, DefaultStore):
-            store.get_store()  # make sure tables are registered
+    for store_meta in find_stored():
+        if isinstance(store_meta.store_factory, StoreFactory):
+            store_meta.store_factory.create(
+                store_meta
+            )  # make sure tables are registered
     target_metadata = get_default_context().meta_data
     return target_metadata
 
 
 def add_seed_data(op):
     target_metadata = get_target_metadata()
-    for store in find_stores():
-        meta = store.get_meta()
-        seed_data = get_seed_data(meta.name)
+    for store_meta in find_stored():
+        seed_data = get_seed_data(store_meta.name)
         if not seed_data:
             continue
-        table = target_metadata.tables.get(meta.name)
+        table = target_metadata.tables.get(store_meta.name)
         cols = list(table.columns)
         items = []
         for item in seed_data:

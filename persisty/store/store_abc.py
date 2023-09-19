@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from itertools import islice
-from typing import Optional, List, Iterator, Dict, Generic
+from typing import Optional, List, Iterator, Dict, Generic, Type
 
 from persisty.errors import PersistyError
 from persisty.batch_edit import BatchEdit
@@ -9,7 +9,7 @@ from persisty.result_set import ResultSet
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
-from persisty.store_meta import StoreMeta, T
+from persisty.store_meta import StoreMeta, T, get_meta
 
 
 class StoreABC(Generic[T], ABC):
@@ -218,3 +218,9 @@ def skip_to_page(page_key: str, items, key_config):
             key = key_config.to_key_str(next_result)
             if key == page_key:
                 return
+
+
+def get_store(type_: Type):
+    meta = get_meta(type_)
+    store = meta.store_factory.create(meta)
+    return store

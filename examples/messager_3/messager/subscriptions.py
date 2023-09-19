@@ -1,6 +1,6 @@
 from servey.subscription.subscription import subscription
 
-from messager.models.message import Message
+from messager.store.message import Message
 
 
 on_create_message = subscription(

@@ -5,9 +5,9 @@ from typing import Optional, ForwardRef, Union, Type
 import typing_inspect
 from servey.security.authorization import Authorization
 
-from persisty.factory.store_factory_abc import StoreFactoryABC
-from persisty.finder.store_finder_abc import find_store_factories
+from persisty.finder.stored_finder_abc import find_stored
 from persisty.link.link_abc import LinkABC
+from persisty.store_meta import StoreMeta
 from persisty.util import to_snake_case
 
 
@@ -16,7 +16,7 @@ class LinkedStoreABC(LinkABC, ABC):
     linked_store_type: Union[Type, str, ForwardRef, None] = None
     name: Optional[str] = None  # Allows None so __set_name__ can exist
     linked_store_name: Optional[str] = None
-    linked_store_factory: Optional[StoreFactoryABC] = None
+    linked_meta: Optional[StoreMeta] = None
 
     def get_linked_store_name(self):
         linked_store_name = self.linked_store_name
@@ -29,17 +29,19 @@ class LinkedStoreABC(LinkABC, ABC):
             linked_store_name = to_snake_case(linked_type)
         return linked_store_name
 
-    def get_linked_store_factory(self):
-        linked_store_factory = self.linked_store_factory
-        if not linked_store_factory:
-            linked_store_factory = next(
-                f
-                for f in find_store_factories()
-                if f.get_meta().name == self.get_linked_store_name()
+    def get_linked_meta(self):
+        linked_meta = self.linked_meta
+        if not linked_meta:
+            linked_meta = next(
+                meta
+                for meta in find_stored()
+                if meta.name == self.get_linked_store_name()
             )
-            self.linked_store_factory = linked_store_factory
-        return linked_store_factory
+            self.linked_meta = linked_meta
+        return linked_meta
 
     def get_linked_store(self, authorization: Optional[Authorization] = None):
-        store = self.get_linked_store_factory().create(authorization)
+        meta = self.get_linked_meta()
+        store = meta.store_factory.create(meta)
+        store = meta.store_security.get_secured(store, authorization)
         return store

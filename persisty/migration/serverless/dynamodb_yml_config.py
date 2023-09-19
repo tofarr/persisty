@@ -5,7 +5,7 @@ from servey.servey_aws.serverless.yml_config.yml_config_abc import (
     create_yml_file,
 )
 
-from persisty.finder.store_finder_abc import find_stores
+from persisty.finder.stored_finder_abc import find_stored
 from persisty.impl.default_store import DefaultStore
 from persisty.impl.dynamodb.dynamodb_store_factory import DynamodbStoreFactory
 from persisty.impl.dynamodb.dynamodb_table_store import DynamodbTableStore
@@ -42,10 +42,9 @@ class DynamodbYmlConfig(YmlConfigABC):
 
     @staticmethod
     def get_dynamodb_store_factories():
-        stores = find_stores()
-        for store in stores:
-            if isinstance(store, (DynamodbTableStore, DefaultStore)):
-                factory = DynamodbStoreFactory(store.meta)
+        for store_meta in find_stored():
+            if isinstance(store_meta.store_factory, (DynamodbTableStore, DefaultStore)):
+                factory = DynamodbStoreFactory(store_meta)
                 factory.derive_from_meta()
                 yield factory
 

@@ -25,15 +25,9 @@ Javascript client side code (Which is handled in Part 3)
   the project.
 * We define 2 stored entity types. They auto generate ids and timestamps, with
   constraints on attributes and relations:
-  * [User](messager/models/user.py)
-  * [Message](messager/models/message.py)
-* We define 2 stores for these entities `user_store` and `message_store` in
-  [the stores module](messager/store/__init__.py). Persisty will find these automatically
-  in this location.
-* We define 2 store factories - these are used to provide external access to the stores:
-  * [user_store_factory](messager/store/user_store_factory.py)
-  * [message_store_factory](messager/store/message_store_factory.py)
-* `add_actions_for_all_store_factories` is called from [the actions module](messager/actions/__init__.py)
+  * [User](messager/store/user.py)
+  * [Message](messager/store/message.py)
+* `add_actions_for_all_stores` is called from [the actions module](messager/actions/__init__.py)
   These will be used to provide CRUD, search, and batch edit operations externally via
   REST / GraphQL.
 * We add some seed data for testing in seeds:

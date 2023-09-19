@@ -146,13 +146,12 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`,
-                    'x-api-key': sessionStorage.getItem('x-api-key')
+                    'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`
                 },
                 body: JSON.stringify({
                     query: `
                       query($pageKey: String) {
-                        messageSearch(searchFilter: {messageState_Eq: FEATURED}, pageKey: $pageKey, limit: 10) {
+                        messageSearch(pageKey: $pageKey, limit: 10, searchOrder: { attr:updated_at, desc: true}) {
                           nextPageKey
                         results{
                             id
@@ -191,12 +190,6 @@
             loadAndRenderMoreMessages(null)
         }
 
-        async function handleRetrieveApiKey(){
-            const response = await fetch('actions/get-appsync-api-key')
-            const api_key = await response.json()
-            sessionStorage.setItem('x-api-key', api_key)
-        }
-
         function handleLogin(){
             fetch('actions/login', {
                 method: 'POST',
@@ -207,7 +200,7 @@
             }).then(response => response.json()).then(body => {
                 if (body) {
                     sessionStorage.setItem('authorization', body)
-                    handleRetrieveApiKey().then(loadAndRenderMessages)
+                    loadAndRenderMessages()
                 } else {
                     alert('Uncorrect Username or Password')
                 }

@@ -1,8 +1,7 @@
 # Persisty Example App : Messager : Part 2
 
 In [the previous step](../messager_1), we added basic item schemas and constraints.
-This example, builds upon that to secure the storage. Storage secured separately to
-the resource definitions, as we consider it to be a separate process conceptually.
+This example, builds upon that to secure the storage.
 
 ## Running the Code
 
@@ -18,12 +17,12 @@ the resource definitions, as we consider it to be a separate process conceptuall
 
 ## What is Going On Here...
 
-* The store factories have been updated to constrain the available operations / attributes based upon
+* The store definitions have been updated to constrain the available operations / attributes based upon
   the user making the request:
-  * [user_store_factory.py](messager/store/user_store_factory.py): Most applications have a level of custom business
-    logic related to users, and this is no exception. The important thing here is not so much the logic, but that store
-    factories represent an insertion point at which you can add whatever logic you need.
-  * [message_store_factory.py](messager/store/message_store_factory.py): Ownership of messages is now enforced.
+  * [user.py](messager/store/user.py): Most applications have a level of custom business
+    logic related to users, and this is no exception. We don't want the password digest
+    to be exposed externally, and forbid non admins from editing anybody except themselves
+  * [message.py](messager/store/message.py): Ownership of messages is now enforced.
 * A custom [UserAuthenticator](messager/user_authenticator.py) was [registered](marshy_config_main/__init__.py) to
   control login using your user items.
 * Custom actions for [login and signup](messager/actions/auth.py) were added.

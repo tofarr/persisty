@@ -8,8 +8,7 @@ from typing import Type, List, Iterator
 import marshy
 from marshy.types import ExternalItemType
 
-from persisty.factory.store_factory_abc import StoreFactoryABC
-from persisty.finder.store_finder_abc import find_stores
+from persisty.finder.stored_finder_abc import find_stored
 from persisty.batch_edit import BatchEdit
 from persisty.impl.default_store import DefaultStore
 from persisty.store.store_abc import StoreABC
@@ -20,16 +19,15 @@ def export_all(directory: str):
     """
     Export all store to yml files
     """
-    for store in find_stores():
-        export_meta(directory, store)
-        export_content(directory, store)
+    for store_meta in find_stored():
+        export_meta(directory, store_meta)
+        export_content(directory, store_meta)
 
 
-def export_meta(directory: str, store: StoreABC):
+def export_meta(directory: str, store_meta: StoreMeta):
     """
     Export store to json files
     """
-    store_meta = store.get_meta()
     path = Path(directory, store_meta.name, "meta.json")
     path.parent.mkdir(exist_ok=True, parents=True)
     meta = marshy.dump(store_meta)
@@ -38,11 +36,11 @@ def export_meta(directory: str, store: StoreABC):
         json.dump(meta, f)
 
 
-def export_content(directory: str, store: StoreABC, page_size: int = 500):
+def export_content(directory: str, store_meta: StoreMeta, page_size: int = 500):
     """
     Export store content to json files
     """
-    store_meta = store.get_meta()
+    store = store_meta.store_factory.create()
     path = Path(directory, store_meta.name)
     path.mkdir(exist_ok=True, parents=True)
     results = store.search_all()
@@ -58,14 +56,12 @@ def export_content(directory: str, store: StoreABC, page_size: int = 500):
         index += 1
 
 
-def import_all(
-    directory: str, store_type: Type = DefaultStore
-) -> List[StoreFactoryABC]:
+def import_all(directory: str, store_type: Type = DefaultStore) -> List[StoreABC]:
     results = []
     for store_name in os.listdir(directory):
-        store_factory = import_store(directory, store_name, store_type)
-        results.append(store_factory)
-        import_content(directory, store_factory)
+        store = import_store(directory, store_name, store_type)
+        results.append(store)
+        import_content(directory, store)
     return results
 
 
@@ -73,10 +69,10 @@ def import_store(
     directory: str,
     store_name: str,
     store_type: Type = DefaultStore,
-) -> StoreFactoryABC:
+) -> StoreABC:
     store_meta = import_meta(directory, store_name)
-    factory = store_type(store_meta)
-    return factory
+    store = store_type(store_meta)
+    return store
 
 
 def import_meta(directory: str, store_name: str) -> StoreMeta:

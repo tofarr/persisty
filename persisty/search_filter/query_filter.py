@@ -12,12 +12,9 @@ if TYPE_CHECKING:
     from persisty.attr.attr import Attr
 
 
-@dataclass
+@dataclass(frozen=True)
 class QueryFilter(SearchFilterABC[T]):
     query: str
-
-    def __post_init__(self):
-        object.__setattr__(self, "query", self.query.lower())
 
     def lock_attrs(self, attrs: Tuple[Attr, ...]) -> SearchFilterABC:
         filters = []
@@ -30,9 +27,10 @@ class QueryFilter(SearchFilterABC[T]):
         for attr in attrs:
             if not attr.readable or attr.attr_type is not AttrType.STR:
                 continue
+            query = self.query.lower()
             attr_value = item.get(attr.name)
             if isinstance(attr_value, str):
-                if self.query in attr_value.lower():
+                if query in attr_value.lower():
                     return True
         return False
 

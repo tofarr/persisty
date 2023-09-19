@@ -9,20 +9,21 @@ from servey.security.authorization import Authorization
 from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
 from persisty.attr.attr_type import AttrType
 from persisty.attr.generator.default_value_generator import DefaultValueGenerator
-from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.link.on_delete import OnDelete
+from persisty.store_meta import StoreMeta
 
 T = TypeVar("T")
 
 
 class BelongsToCallable(Generic[T]):
-    def __init__(self, key: str, store_factory: StoreFactoryABC):
+    def __init__(self, key: str, meta: StoreMeta):
         self.key = key
-        self.store_factory = store_factory
+        self.meta = meta
 
     def __call__(self, authorization: Optional[Authorization] = None) -> Optional[T]:
-        store = self.store_factory.create(authorization)
+        store = self.meta.store_factory.create(self.meta)
+        store = self.meta.store_security.get_secured(store, authorization)
         item = store.read(self.key)
         return item
 
@@ -63,7 +64,7 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
     def __get__(self, obj, obj_type) -> BelongsToCallable[T]:
         return BelongsToCallable(
             key=getattr(obj, self.key_attr_name),
-            store_factory=self.get_linked_store_factory(),
+            meta=self.get_linked_meta(),
         )
 
     def update_attrs(self, attrs_by_name: Dict[str, Attr]):

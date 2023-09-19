@@ -1,5 +1,4 @@
-import dataclasses
-from dataclasses import dataclass
+from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable
 
@@ -14,12 +13,32 @@ from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import ATTR_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
-from persisty.store_access import StoreAccess, ALL_ACCESS
+from persisty.security.store_security_abc import StoreSecurityABC
+from persisty.servey.action_factory_abc import ActionFactoryABC
 
 from persisty.util import to_camel_case
 from persisty.util.undefined import UNDEFINED
 
 T = TypeVar("T")
+_StoreFactoryABC = "persisty.factory.store_factory_abc.StoreFactoryABC"
+
+
+def _default_store_factory():
+    from persisty.factory.store_factory import StoreFactory
+
+    return StoreFactory()
+
+
+def _default_action_factory():
+    from persisty.servey.action_factory import ActionFactory
+
+    return ActionFactory()
+
+
+def _default_store_security():
+    from persisty.security.store_security import UNSECURED
+
+    return UNSECURED
 
 
 # pylint: disable=R0902
@@ -32,7 +51,7 @@ class StoreMeta:
     name: str
     attrs: Tuple[Attr, ...]
     key_config: KeyConfigABC = ATTR_KEY_CONFIG
-    store_access: StoreAccess = ALL_ACCESS
+    store_security: StoreSecurityABC = field(default_factory=_default_store_security)
     cache_control: CacheControlABC = SecureHashCacheControl()
     batch_size: int = 100
     description: Optional[str] = None
@@ -40,6 +59,8 @@ class StoreMeta:
     indexes: Tuple[IndexABC, ...] = tuple()
     label_attr_names: Tuple[str, ...] = tuple()
     summary_attr_names: Tuple[str, ...] = tuple()
+    store_factory: _StoreFactoryABC = field(default_factory=_default_store_factory)
+    action_factory: ActionFactoryABC = (field(default_factory=_default_action_factory),)
 
     def get_stored_dataclass(self) -> Type:
         return self._get_dataclass(
@@ -196,24 +217,20 @@ def _schema_factory(
     schema = {
         "name": cls.__name__,
         "type": "object",
-        "properties": {
-            f.name: f.metadata.get("schemey").schema for f in dataclasses.fields(cls)
-        },
+        "properties": {f.name: f.metadata.get("schemey").schema for f in fields(cls)},
         "additionalProperties": False,
     }
-    required = [f.name for f in dataclasses.fields(cls) if f.default is not UNDEFINED]
+    required = [f.name for f in fields(cls) if f.default is not UNDEFINED]
     if required:
         schema["required"] = required
     if cls.__doc__:
         schema["description"] = cls.__doc__.strip()
     store_meta = get_meta(cls)
     schema["label_attr_names"] = [
-        f.name for f in dataclasses.fields(cls) if f.name in store_meta.label_attr_names
+        f.name for f in fields(cls) if f.name in store_meta.label_attr_names
     ]
     schema["summary_attr_names"] = [
-        f.name
-        for f in dataclasses.fields(cls)
-        if f.name in store_meta.summary_attr_names
+        f.name for f in fields(cls) if f.name in store_meta.summary_attr_names
     ]
     for link in store_meta.links:
         link.update_json_schema(schema)
