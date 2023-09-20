@@ -5,7 +5,6 @@ from persisty.store.store_abc import StoreABC
 from persisty.store_meta import StoreMeta
 
 
-@dataclass
 class StoreFactoryABC(ABC):
     """
     Factory for store objects which allows defining access control rules for store.

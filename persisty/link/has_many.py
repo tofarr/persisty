@@ -24,8 +24,7 @@ class HasManyCallable(Generic[T]):
     limit: Optional[int] = None
 
     def __call__(self, authorization: Optional[Authorization] = None) -> ResultSet[T]:
-        store = self.store_meta.store_factory.create(self.store_meta)
-        store = self.store_meta.store_security.get_secured(store, authorization)
+        store = self.store_meta.create_secured_store(authorization)
         result_set = store.search(
             search_filter=self.search_filter,
             search_order=self.search_order,

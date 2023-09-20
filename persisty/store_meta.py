@@ -7,6 +7,7 @@ from marshy.marshaller_context import MarshallerContext
 from schemey import SchemaContext, Schema
 from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
+from servey.security.authorization import Authorization
 
 from persisty.attr.attr import Attr
 from persisty.index.index_abc import IndexABC
@@ -21,7 +22,7 @@ from persisty.util.undefined import UNDEFINED
 
 T = TypeVar("T")
 _StoreFactoryABC = "persisty.security.store_factory_abc.StoreFactoryABC"
-
+_StoreABC = "persisty.security.store_abc.StoreABC"
 
 def _default_store_factory():
     from persisty.factory.store_factory import StoreFactory
@@ -179,6 +180,18 @@ class StoreMeta:
                 result = None
             setattr(self, attr_name, result)
         return result
+
+    def create_store(self) -> _StoreABC:
+        store = self.store_factory.create(self)
+        return store
+
+    def create_unsecured_store(self) -> _StoreABC:
+        store = self.store_security.get_unsecured(self.create_store())
+        return store
+
+    def create_secured_store(self, authorization: Optional[Authorization]) -> _StoreABC:
+        store = self.store_security.get_secured(self.create_store(), authorization)
+        return store
 
 
 def get_meta(type_: Type) -> Optional[StoreMeta]:

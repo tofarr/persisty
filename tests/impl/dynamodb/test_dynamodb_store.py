@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List
+from typing import List, Type
 from unittest import TestCase
 
 from marshy import dump
@@ -19,7 +19,7 @@ from persisty.search_filter.filter_factory import filter_factory
 
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC
-from persisty.store_meta import get_meta
+from persisty.store_meta import get_meta, StoreMeta
 from persisty.stored import stored
 from tests.fixtures.author import Author, AUTHOR_DICTS
 from tests.fixtures.book import Book, BOOK_DICTS
@@ -31,34 +31,34 @@ from tests.utils import mock_dynamodb_with_super
 
 @mock_dynamodb_with_super
 class TestDynamodbStore(TestCase, StoreTstABC):
-    def new_super_bowl_results_store(self) -> StoreABC:
-        store_factory = DynamodbStoreFactory(meta=get_meta(SuperBowlResult))
-        self.seed_table(store_factory, SUPER_BOWL_RESULT_DICTS)
-        store = store_factory.create()
+    def new_store(self, type_: Type, seed: List[ExternalItemType]):
+        store_factory = DynamodbStoreFactory()
+        store_meta = get_meta(type_)
+        store_factory.derive_from_meta(store_meta)
+        self.seed_table(store_meta, store_factory, seed)
+        store = store_factory.create(store_meta)
         return store
+
+    def new_super_bowl_results_store(self) -> StoreABC:
+        return self.new_store(SuperBowlResult, SUPER_BOWL_RESULT_DICTS)
 
     def new_number_name_store(self) -> StoreABC:
-        store_factory = DynamodbStoreFactory(meta=get_meta(NumberName))
-        self.seed_table(store_factory, NUMBER_NAMES_DICTS)
-        store = store_factory.create()
-        return store
+        return self.new_store(NumberName, NUMBER_NAMES_DICTS)
 
     def new_author_store(self) -> StoreABC:
-        store_factory = DynamodbStoreFactory(meta=get_meta(Author))
-        self.seed_table(store_factory, AUTHOR_DICTS)
-        store = store_factory.create()
-        return store
+        return self.new_store(Author, AUTHOR_DICTS)
 
     def new_book_store(self) -> StoreABC:
-        store_factory = DynamodbStoreFactory(meta=get_meta(Book))
-        self.seed_table(store_factory, BOOK_DICTS)
-        store = store_factory.create()
-        return store
+        return self.new_store(Book, BOOK_DICTS)
 
     @staticmethod
-    def seed_table(store_factory: DynamodbStoreFactory, items: List[ExternalItemType]):
-        store_factory.derive_from_meta()
-        store_factory.create_table_in_aws()
+    def seed_table(
+        store_meta: StoreMeta,
+        store_factory: DynamodbStoreFactory,
+        items: List[ExternalItemType],
+    ):
+        store_factory.derive_from_meta(store_meta)
+        store_factory.create_table_in_aws(store_meta)
         dynamodb = store_factory.get_session().resource("dynamodb")
         table = dynamodb.Table(store_factory.table_name)
         with table.batch_writer() as batch:
@@ -142,9 +142,7 @@ class TestDynamodbStore(TestCase, StoreTstABC):
         self.assertEqual(expected, converted)
 
     def new_tag_store(self) -> StoreABC:
-        store_meta = get_meta(Tag)
         store_factory = DynamodbStoreFactory(
-            meta=store_meta,
             index=PartitionSortIndex("pk", "sk"),
             global_secondary_indexes=dict(gix__sk__pk=PartitionSortIndex("sk", "pk")),
         )
@@ -160,8 +158,9 @@ class TestDynamodbStore(TestCase, StoreTstABC):
             )
             for i in range(1, 1001)
         )
-        self.seed_table(store_factory, tags)
-        store = store_factory.create()
+        store_meta = get_meta(Tag)
+        self.seed_table(store_meta, store_factory, tags)
+        store = store_factory.create(store_meta)
         return store
 
     def test_performance(self):

@@ -5,10 +5,9 @@ from servey.servey_aws.serverless.yml_config.yml_config_abc import (
     create_yml_file,
 )
 
-from build.lib.persisty.impl.default_store import DefaultStore
+from persisty.factory.store_factory import StoreFactory
 from persisty.finder.stored_finder_abc import find_stored
 from persisty.impl.dynamodb.dynamodb_store_factory import DynamodbStoreFactory
-from persisty.impl.dynamodb.dynamodb_table_store import DynamodbTableStore
 
 
 class DynamodbYmlConfig(YmlConfigABC):
@@ -41,21 +40,21 @@ class DynamodbYmlConfig(YmlConfigABC):
         )
 
     @staticmethod
-    def get_dynamodb_store_factories():
+    def get_dynamodb_store_meta():
         for store_meta in find_stored():
-            if isinstance(store_meta.store_factory, (DynamodbTableStore, DefaultStore)):
-                factory = DynamodbStoreFactory(store_meta)
-                factory.derive_from_meta()
-                yield factory
+            if isinstance(store_meta.store_factory, (DynamodbStoreFactory, StoreFactory)):
+                yield store_meta
 
     def build_dynamodb_resource_yml(self) -> ExternalItemType:
         resources = {}
-        for factory in self.get_dynamodb_store_factories():
+        for store_meta in self.get_dynamodb_store_meta():
+            factory = DynamodbStoreFactory()
+            factory.derive_from_meta(store_meta)
             resources[factory.table_name.title().replace("_", "")] = {
                 "Type": "AWS::DynamoDB::Table",
                 "Properties": {
                     "TableName": factory.table_name,
-                    "AttributeDefinitions": factory.get_attribute_definitions(),
+                    "AttributeDefinitions": factory.get_attribute_definitions(store_meta),
                     "KeySchema": factory.index.to_schema(),
                     "GlobalSecondaryIndexes": factory.get_global_secondary_indexes(),
                     "BillingMode": "PAY_PER_REQUEST",
@@ -65,7 +64,9 @@ class DynamodbYmlConfig(YmlConfigABC):
 
     def build_dynamodb_role_statement_yml(self) -> ExternalItemType:
         resources = []
-        for factory in self.get_dynamodb_store_factories():
+        for store_meta in self.get_dynamodb_store_meta():
+            factory = DynamodbStoreFactory()
+            factory.derive_from_meta(store_meta)
             resource_name = factory.table_name.title().replace("_", "")
             resources.append({"Fn::GetAtt": [resource_name, "Arn"]})
             for index_name in factory.global_secondary_indexes.keys():

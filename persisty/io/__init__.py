@@ -3,12 +3,13 @@ import os
 from itertools import islice
 from os.path import exists
 from pathlib import Path
-from typing import Type, List, Iterator
+from typing import List, Iterator
 
 import marshy
 from marshy.types import ExternalItemType
 
-from build.lib.persisty.impl.default_store import DefaultStore
+from persisty.factory.store_factory import StoreFactory
+from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.finder.stored_finder_abc import find_stored
 from persisty.batch_edit import BatchEdit
 from persisty.store.store_abc import StoreABC
@@ -56,10 +57,10 @@ def export_content(directory: str, store_meta: StoreMeta, page_size: int = 500):
         index += 1
 
 
-def import_all(directory: str, store_type: Type = DefaultStore) -> List[StoreABC]:
+def import_all(directory: str, store_factory: StoreFactoryABC = StoreFactory()) -> List[StoreABC]:
     results = []
     for store_name in os.listdir(directory):
-        store = import_store(directory, store_name, store_type)
+        store = import_store(directory, store_name, store_factory)
         results.append(store)
         import_content(directory, store)
     return results
@@ -68,10 +69,10 @@ def import_all(directory: str, store_type: Type = DefaultStore) -> List[StoreABC
 def import_store(
     directory: str,
     store_name: str,
-    store_type: Type = DefaultStore,
+    store_factory: StoreFactoryABC = StoreFactory(),
 ) -> StoreABC:
     store_meta = import_meta(directory, store_name)
-    store = store_type(store_meta)
+    store = store_factory.create(store_meta)
     return store
 
 

@@ -596,16 +596,13 @@ class StoreTstABC(ABC):
         # We forcibly inject the meta here...
         author_store.get_meta().links[0].linked_store_meta = book_store.get_meta()
         book_store.get_meta().links[0].linked_store_meta = author_store.get_meta()
-        author_store.get_meta().store_factory.cache['author'] = author_store
-        book_store.get_meta().store_factory.cache['book'] = book_store
+        author_store.get_meta().store_factory.cache["author"] = author_store
+        book_store.get_meta().store_factory.cache["book"] = book_store
         mary_shelley = author_store.read("2")
         assert mary_shelley is not None
         books = mary_shelley.books()
         expected_books = ResultSet([BOOKS[2]])
         self.assertEqual(expected_books, books)
-
-    def test_link_delete(self):
-        assert False
 
 
 @dataclass(frozen=True)

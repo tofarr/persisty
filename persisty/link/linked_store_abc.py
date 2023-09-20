@@ -1,11 +1,12 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Optional, ForwardRef, Union, Type
+from typing import Optional, ForwardRef, Union, Type, List
 
 import typing_inspect
 from servey.security.authorization import Authorization
 
 from persisty.finder.stored_finder_abc import find_stored
+from persisty.link.inbound_link import InboundLink
 from persisty.link.link_abc import LinkABC
 from persisty.store_meta import StoreMeta
 from persisty.util import to_snake_case
@@ -41,7 +42,9 @@ class LinkedStoreABC(LinkABC, ABC):
         return linked_store_meta
 
     def get_linked_store(self, authorization: Optional[Authorization] = None):
-        meta = self.get_linked_store_meta()
-        store = meta.store_factory.create(meta)
-        store = meta.store_security.get_secured(store, authorization)
+        store_meta = self.get_linked_store_meta()
+        store = store_meta.create_secured_store(authorization)
         return store
+
+    def get_inbound_links(self, store_meta: StoreMeta) -> List[InboundLink]:
+        return []

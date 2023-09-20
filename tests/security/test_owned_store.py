@@ -11,9 +11,7 @@ from persisty.store_meta import get_meta
 from persisty.stored import stored
 
 
-@stored(
-    store_security=OwnedStoreSecurity(subject_id_attr_name="owner")
-)
+@stored(store_security=OwnedStoreSecurity(subject_id_attr_name="owner"))
 class Message:
     id: UUID
     owner: str

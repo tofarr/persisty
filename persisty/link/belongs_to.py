@@ -9,6 +9,7 @@ from servey.security.authorization import Authorization
 from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
 from persisty.attr.attr_type import AttrType
 from persisty.attr.generator.default_value_generator import DefaultValueGenerator
+from persisty.link.inbound_link import InboundLink
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.link.on_delete import OnDelete
 from persisty.store_meta import StoreMeta
@@ -22,8 +23,7 @@ class BelongsToCallable(Generic[T]):
         self.store_meta = store_meta
 
     def __call__(self, authorization: Optional[Authorization] = None) -> Optional[T]:
-        store = self.store_meta.store_factory.create(self.store_meta)
-        store = self.store_meta.store_security.get_secured(store, authorization)
+        store = self.store_meta.create_secured_store(authorization)
         item = store.read(self.key)
         return item
 
@@ -33,7 +33,7 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
     name: Optional[str] = None
     key_attr_name: Optional[str] = None
     optional: Optional[bool] = None
-    on_delete: OnDelete = OnDelete.BLOCK
+    on_delete: OnDelete = OnDelete.IGNORE
 
     def get_name(self) -> str:
         return self.name
@@ -90,3 +90,10 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
             "linked_store_name": self.get_linked_store_name(),
             "on_delete": marshy.dump(self.on_delete),
         }
+
+    def get_inbound_links(self, store_meta: StoreMeta) -> List[InboundLink]:
+        return [
+            InboundLink(
+                store_meta, self.key_attr_name, self.on_delete
+            )
+        ]

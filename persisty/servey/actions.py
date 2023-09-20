@@ -36,7 +36,7 @@ def action_for_create(
     def create(
         item: create_input_type, authorization: Optional[Authorization] = None
     ) -> Optional[item_type]:
-        secured_store = store_meta.store_security.get_secured(store, authorization)
+        secured_store = store_meta.create_secured_store(authorization)
         created = secured_store.create(item)
         return created
 
@@ -60,7 +60,7 @@ def action_for_read(store: StoreABC, item_type: Type) -> Action:
     def read(
         key: str, authorization: Optional[Authorization] = None
     ) -> Optional[item_type]:
-        secured_store = store_meta.store_security.get_secured(store, authorization)
+        secured_store = store_meta.create_secured_store(authorization)
         result = secured_store.read(key)
         return result
 
@@ -92,7 +92,7 @@ def action_for_update(
         authorization: Optional[Authorization] = None,
     ) -> Optional[item_type]:
         store_meta.key_config.from_key_str(key, item)
-        secured_store = store_meta.store_security.get_secured(store, authorization)
+        secured_store = store_meta.create_secured_store(authorization)
         search_filter = _create_search_filter(search_filter_type, precondition)
         updated = secured_store.update(item, search_filter)
         return updated
@@ -114,7 +114,7 @@ def action_for_delete(store: StoreABC) -> Action:
         ),
     )
     def delete(key: str, authorization: Optional[Authorization] = None) -> bool:
-        secured_store = store_meta.store_security.get_secured(store, authorization)
+        secured_store = store_meta.create_secured_store(authorization)
         result = secured_store.delete(key)
         return result
 
@@ -149,7 +149,7 @@ def action_for_search(
         limit: Optional[int] = None,
         authorization: Optional[Authorization] = None,
     ) -> result_set_type:
-        secured_store = store_meta.store_security.get_secured(store, authorization)
+        secured_store = store_meta.create_secured_store(authorization)
         search_filter = _create_search_filter(search_filter_type, search_filter)
         if search_order:
             # noinspection PyArgumentList,PyDataclass
@@ -211,7 +211,7 @@ def action_for_count(
         search_filter: Optional[search_filter_type] = None,
         authorization: Optional[Authorization] = None,
     ) -> int:
-        secured_store = store_meta.store_security.get_secured(store, authorization)
+        secured_store = store_meta.create_secured_store(authorization)
         search_filter = _create_search_filter(search_filter_type, search_filter)
         result = secured_store.count(search_filter)
         return result
@@ -234,7 +234,7 @@ def action_for_read_batch(store: StoreABC, item_type: Type) -> Action:
     def read_batch(
         keys: List[str], authorization: Optional[Authorization] = None
     ) -> List[Optional[item_type]]:
-        secured_store = store_meta.store_security.get_secured(store, authorization)
+        secured_store = store_meta.create_secured_store(authorization)
         results = secured_store.read_batch(keys)
         return results
 
@@ -263,7 +263,7 @@ def action_for_edit_batch(
     def edit_batch(
         edits: List[batch_edit_type], authorization: Optional[Authorization] = None
     ) -> List[batch_edit_result_type]:
-        secured_store = store_meta.store_security.get_secured(store, authorization)
+        secured_store = store_meta.create_secured_store(authorization)
         results = secured_store.edit_batch(edits)
         results = [
             batch_edit_result_type(
