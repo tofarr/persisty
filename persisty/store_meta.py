@@ -14,6 +14,7 @@ from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import ATTR_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
+from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.security.store_access import ALL_ACCESS, StoreAccess
 from persisty.security.store_security_abc import StoreSecurityABC
 from persisty.servey.action_factory_abc import ActionFactoryABC
@@ -241,26 +242,17 @@ def _schema_factory(
     if cls.__doc__:
         schema["description"] = cls.__doc__.strip()
     store_meta = get_meta(cls)
-    schema["label_attr_names"] = [
-        f.name for f in fields(cls) if f.name in store_meta.label_attr_names
-    ]
-    schema["summary_attr_names"] = [
-        f.name for f in fields(cls) if f.name in store_meta.summary_attr_names
-    ]
+    schema["persistyStored"] = {
+        "creatable": store_meta.store_security.get_api_access().create_filter is not EXCLUDE_ALL,
+        "label_attr_names": [
+            f.name for f in fields(cls) if f.name in store_meta.label_attr_names
+        ],
+        "summary_attr_names": [
+            f.name for f in fields(cls) if f.name in store_meta.summary_attr_names
+        ]
+    }
     for link in store_meta.links:
         link.update_json_schema(schema)
-    missing_key_attr = next(
-        (
-            k
-            for k in store_meta.key_config.get_key_attrs()
-            if k not in schema["properties"]
-        ),
-        None,
-    )
-    if not missing_key_attr:
-        schema["key_config"] = context.marshaller_context.dump(
-            store_meta.key_config, KeyConfigABC
-        )
     schema = Schema(schema, cls)
     return schema
 
