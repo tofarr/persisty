@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from typing import Iterator
+from typing import Iterator, Optional
 
 from marshy.factory.impl_marshaller_factory import get_impls
 
@@ -20,3 +20,8 @@ def find_stored() -> Iterator[StoreMeta]:
             if name not in names:
                 names.add(name)
                 yield store_meta
+
+
+def find_stored_by_name(store_name: str) -> StoreMeta:
+    result = next(s for s in find_stored() if s.name == store_name)
+    return result

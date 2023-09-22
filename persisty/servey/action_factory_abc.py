@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Iterator, TypeVar, Generic
 
@@ -9,10 +9,12 @@ _StoreABC = "persisty.store.store_abc.StoreABC"
 T = TypeVar("T")
 
 
-@dataclass
 class ActionFactoryABC(Generic[T], ABC):
-    def create_actions(self, store: _StoreABC) -> Iterator[Action]:
-        """Create actions for this security"""
 
+    @abstractmethod
+    def create_actions(self, store: _StoreABC) -> Iterator[Action]:
+        """Create actions for this store"""
+
+    @abstractmethod
     def create_routes(self, store: _StoreABC) -> Iterator[ROUTE]:
-        """Create routes for this security"""
+        """Create routes for this store"""

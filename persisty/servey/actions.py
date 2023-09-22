@@ -10,6 +10,7 @@ from servey.trigger.web_trigger import WebTrigger, WebTriggerMethod
 from persisty.batch_edit import batch_edit_dataclass_for
 from persisty.batch_edit_result import batch_edit_result_dataclass_for
 from persisty.link.link_abc import LinkABC
+from persisty.result import to_result
 from persisty.result_set import result_set_dataclass_for
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_factory import SearchFilterFactoryABC
@@ -21,7 +22,7 @@ from persisty.store_meta import get_meta, StoreMeta
 
 def action_for_create(
     store: StoreABC,
-    item_type: Type,
+    result_type: Type,
     create_input_type: Type,
 ) -> Action:
     store_meta = store.get_meta()
@@ -35,15 +36,16 @@ def action_for_create(
     )
     def create(
         item: create_input_type, authorization: Optional[Authorization] = None
-    ) -> Optional[item_type]:
+    ) -> Optional[result_type]:
         secured_store = store_meta.create_secured_store(authorization)
         created = secured_store.create(item)
-        return created
+        result = to_result(created, secured_store.get_meta())
+        return result
 
     return get_action(create)
 
 
-def action_for_read(store: StoreABC, item_type: Type) -> Action:
+def action_for_read(store: StoreABC, result_type: Type) -> Action:
     store_meta = store.get_meta()
 
     @action(
@@ -59,9 +61,10 @@ def action_for_read(store: StoreABC, item_type: Type) -> Action:
     )
     def read(
         key: str, authorization: Optional[Authorization] = None
-    ) -> Optional[item_type]:
+    ) -> Optional[result_type]:
         secured_store = store_meta.create_secured_store(authorization)
-        result = secured_store.read(key)
+        item = secured_store.read(key)
+        result = to_result(item, secured_store.get_meta())
         return result
 
     return get_action(read)
@@ -69,7 +72,7 @@ def action_for_read(store: StoreABC, item_type: Type) -> Action:
 
 def action_for_update(
     store: StoreABC,
-    item_type: Type,
+    result_type: Type,
     update_input_type: Type,
     search_filter_type: Type[SearchFilterFactoryABC],
 ) -> Action:
@@ -90,12 +93,13 @@ def action_for_update(
         item: update_input_type,
         precondition: Optional[search_filter_type] = None,
         authorization: Optional[Authorization] = None,
-    ) -> Optional[item_type]:
+    ) -> Optional[result_type]:
         store_meta.key_config.from_key_str(key, item)
         secured_store = store_meta.create_secured_store(authorization)
         search_filter = _create_search_filter(search_filter_type, precondition)
         updated = secured_store.update(item, search_filter)
-        return updated
+        result = to_result(updated, secured_store.get_meta())
+        return result
 
     return get_action(update)
 
@@ -123,13 +127,13 @@ def action_for_delete(store: StoreABC) -> Action:
 
 def action_for_search(
     store: StoreABC,
-    item_type: Type,
+    result_type: Type,
     search_filter_type: Optional[Type[SearchFilterFactoryABC]],
     search_order_type: Type[SearchOrderFactoryABC],
 ) -> Action:
     store_meta = store.get_meta()
     # noinspection PyTypeChecker
-    result_set_type = result_set_dataclass_for(item_type)
+    result_set_type = result_set_dataclass_for(result_type)
     setattr(generated, result_set_type.__name__, result_set_type)
 
     @action(
@@ -164,7 +168,7 @@ def action_for_search(
 
         # noinspection PyArgumentList
         result_set = result_set_type(
-            results=result_set.results,
+            results=[to_result(item, secured_store.get_meta()) for item in result_set.results],
             next_page_key=result_set.next_page_key,
         )
         return result_set
@@ -219,7 +223,7 @@ def action_for_count(
     return get_action(count)
 
 
-def action_for_read_batch(store: StoreABC, item_type: Type) -> Action:
+def action_for_read_batch(store: StoreABC, result_type: Type) -> Action:
     store_meta = store.get_meta()
 
     @action(
@@ -233,9 +237,10 @@ def action_for_read_batch(store: StoreABC, item_type: Type) -> Action:
     )
     def read_batch(
         keys: List[str], authorization: Optional[Authorization] = None
-    ) -> List[Optional[item_type]]:
+    ) -> List[Optional[result_type]]:
         secured_store = store_meta.create_secured_store(authorization)
-        results = secured_store.read_batch(keys)
+        items = secured_store.read_batch(keys)
+        results = [to_result(item, secured_store.get_meta()) for item in items]
         return results
 
     return get_action(read_batch)

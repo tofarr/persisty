@@ -1,21 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Type, Optional
+from typing import Optional, Generic, TypeVar
 
 from servey.security.authorization import Authorization
 
 from persisty.security.store_access import StoreAccess
 
 _StoreABC = "persisty.store.store_abc.StoreABC"
+T = TypeVar("T")
 
 
-class StoreSecurityABC(ABC):
-    @abstractmethod
-    def get_potential_access(self) -> StoreAccess:
-        """Get the potential (max) access"""
-
-    def get_unsecured(self, store: _StoreABC) -> _StoreABC:
-        """Wrap a store if required to yield a version that conforms to unsecured mode"""
-        return store
+class StoreSecurityABC(ABC, Generic[T]):
+    """ Object which can be used to wrap a store to add security constraints """
 
     @abstractmethod
     def get_secured(
@@ -24,3 +19,7 @@ class StoreSecurityABC(ABC):
         """
         Get the access for a store given the authorization
         """
+
+    @abstractmethod
+    def get_api_access(self) -> StoreAccess:
+        """ Get the api access - the max potential access for this store for apis """

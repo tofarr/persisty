@@ -62,8 +62,8 @@ def stored(
             attrs_by_name,
             links_by_name,
         )
-        cls_dict = cls_.__dict__
-        annotations = cls_dict.get("__annotations__") or {}
+        cls_dict = _get_cls_dict_with_super(cls_)
+        annotations = _get_cls_annotations_with_super(cls_)
         attrs_by_name = _derive_attrs(annotations, cls_dict, schema_context)
 
         for name, value in cls_dict.items():
@@ -118,6 +118,7 @@ def stored(
             summary_attr_names=summary_attr_names,
             store_factory=store_factory or StoreFactory(),
             action_factory=action_factory or ActionFactory(),
+            class_functions=_get_class_functions(cls_dict),
         )
         result = store_meta.get_stored_dataclass()
         return result
@@ -244,3 +245,31 @@ def _derive_attrs(
         )
         attrs_by_name[name] = attr
     return attrs_by_name
+
+
+def _get_cls_dict_with_super(cls: Type):
+    result = {}
+    for c in reversed(cls.mro()[:-1]):
+        for k, v in c.__dict__.items():
+            if not k.startswith('__'):
+                result[k] = v
+    return result
+
+
+def _get_cls_annotations_with_super(cls: Type) -> Dict[str, Type]:
+    result = {}
+    for c in reversed(cls.mro()[:-1]):
+        annotations = c.__dict__.get('__annotations__') or {}
+        result.update(annotations)
+    return result
+
+
+def _get_class_functions(cls_dict: Dict):
+    results = []
+    for value in cls_dict.values():
+        if callable(value):
+            results.append(value)
+        if isinstance(value, property):
+            # I am doing this to prevent muddying the waters
+            raise PersistyError('stored_classes_do_not_support_properties')
+    return tuple(results)

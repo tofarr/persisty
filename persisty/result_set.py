@@ -21,5 +21,6 @@ def result_set_dataclass_for(type_: Type[T]) -> Type[ResultSet[T]]:
         "next_page_key": None,
     }
     type_name = f"{type_.__name__}ResultSet"
+    # noinspection PyTypeChecker
     type_ = dataclass(type(type_name, (ResultSet,), params))
     return type_

@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable
+from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable, Callable, Union, FrozenSet
 
 from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
 from marshy.marshaller_context import MarshallerContext
@@ -14,6 +14,7 @@ from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import ATTR_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
+from persisty.security.store_access import ALL_ACCESS, StoreAccess
 from persisty.security.store_security_abc import StoreSecurityABC
 from persisty.servey.action_factory_abc import ActionFactoryABC
 
@@ -52,6 +53,7 @@ class StoreMeta:
     name: str
     attrs: Tuple[Attr, ...]
     key_config: KeyConfigABC = ATTR_KEY_CONFIG
+    store_access: StoreAccess = ALL_ACCESS
     store_security: StoreSecurityABC = field(default_factory=_default_store_security)
     cache_control: CacheControlABC = SecureHashCacheControl()
     batch_size: int = 100
@@ -62,6 +64,7 @@ class StoreMeta:
     summary_attr_names: Tuple[str, ...] = tuple()
     store_factory: _StoreFactoryABC = field(default_factory=_default_store_factory)
     action_factory: ActionFactoryABC = (field(default_factory=_default_action_factory),)
+    class_functions: Tuple[Callable, ...] = tuple()
 
     def get_stored_dataclass(self) -> Type:
         return self._get_dataclass(
@@ -151,7 +154,7 @@ class StoreMeta:
         name: str,
         attrs: Iterable[Attr],
         links: Optional[Tuple[LinkABC, ...]] = None,
-        required_attr_names: Optional[Set[str]] = None,
+        required_attr_names: Union[type(None), Set[str], FrozenSet[str]] = None,
     ) -> Optional[Type]:
         result = getattr(self, attr_name, None)
         if result is None:
@@ -165,6 +168,8 @@ class StoreMeta:
                 if not required_attr_names or attr.name not in required_attr_names:
                     params[attr.name] = attr.to_field(False)
                     annotations[attr.name] = attr.schema.python_type
+            for class_function in self.class_functions:
+                params[getattr(class_function, '__name__', None)] = class_function
             if annotations:
                 if links:
                     for link in links:
@@ -175,6 +180,7 @@ class StoreMeta:
                 params["__schema_factory__"] = _schema_factory
                 params["__marshaller_factory__"] = _marshaller_factory
                 params["__eq__"] = _eq
+                # noinspection PyTypeChecker
                 result = dataclass(type(name, tuple(), params))
             else:
                 result = None
@@ -183,10 +189,6 @@ class StoreMeta:
 
     def create_store(self) -> _StoreABC:
         store = self.store_factory.create(self)
-        return store
-
-    def create_unsecured_store(self) -> _StoreABC:
-        store = self.store_security.get_unsecured(self.create_store())
         return store
 
     def create_secured_store(self, authorization: Optional[Authorization]) -> _StoreABC:

@@ -5,7 +5,6 @@ from uuid import UUID
 from servey.security.authorization import Authorization
 
 from persisty.impl.mem.mem_store import MemStore
-from persisty.security.owned_store import OwnedStore
 from persisty.security.owned_store_security import OwnedStoreSecurity
 from persisty.store_meta import get_meta
 from persisty.stored import stored

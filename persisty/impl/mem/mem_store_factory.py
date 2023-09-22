@@ -23,7 +23,6 @@ class MemStoreFactory(StoreFactoryABC):
         if not store:
             store = MemStore(store_meta, self.items)
             store = SchemaValidatingStore(store)
-            store = store_meta.store_security.get_unsecured(store)
             store = triggered_store(store)
             if self.referential_integrity:
                 store = ReferentialIntegrityStore(store)

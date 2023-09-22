@@ -46,8 +46,7 @@ class DynamodbStoreFactory(StoreFactoryABC):
             region_name=self.region_name,
         )
         store = SchemaValidatingStore(store)
-        store_access = store_meta.store_security.get_potential_access()
-        store = restrict_access_store(store, store_access)
+        store = restrict_access_store(store, store_meta.store_access)
         store = unique_index_store(store)
         if self.referential_integrity:
             store = ReferentialIntegrityStore(store)

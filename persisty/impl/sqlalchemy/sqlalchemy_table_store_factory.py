@@ -24,7 +24,6 @@ class SqlalchemyTableStoreFactory(StoreFactoryABC):
         table = self.context.get_table(store_meta)
         store = SqlalchemyTableStore(store_meta, table, self.context.engine)
         store = SchemaValidatingStore(store)
-        store = store_meta.store_security.get_unsecured(store)
         store = triggered_store(store)
         if self.referential_integrity:
             store = ReferentialIntegrityStore(store)

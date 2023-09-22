@@ -5,7 +5,7 @@ from servey.security.authorization import Authorization
 
 
 class UserStoreSecurity(StoreSecurityABC):
-    def get_potential_access(self) -> StoreAccess:
+    def get_store_access(self) -> StoreAccess:
         return ALL_ACCESS
 
     def get_secured(self, store: StoreABC, authorization: Authorization) -> StoreABC:

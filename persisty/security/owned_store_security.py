@@ -1,48 +1,56 @@
-import dataclasses
 from dataclasses import dataclass
+from typing import Optional
 
 from servey.security.authorization import Authorization
 
-from persisty.security.owned_store import OwnedStore, meta_with_non_editable_subject_id
+from persisty.attr.attr_filter import AttrFilter
+from persisty.attr.attr_filter_op import AttrFilterOp
+from persisty.attr.generator.fixed_value_generator import FixedValueGenerator
+from persisty.search_filter.exclude_all import EXCLUDE_ALL
+from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.security.restrict_access_store import RestrictAccessStore
 from persisty.security.store_access import StoreAccess
 from persisty.security.store_security import UNSECURED
-from persisty.security.store_security_abc import StoreSecurityABC
-from persisty.store.meta_override_store import MetaOverrideStore
+from persisty.security.store_security_abc import StoreSecurityABC, T
+from persisty.store.attr_override_store import AttrOverrideStore
 from persisty.store.store_abc import StoreABC
 
 
 @dataclass
-class OwnedStoreSecurity(StoreSecurityABC):
+class OwnedStoreSecurity(StoreSecurityABC[T]):
     store_security: StoreSecurityABC = UNSECURED
     subject_id_attr_name: str = "subject_id"
+    required_ownership_for_create: bool = True
     require_ownership_for_read: bool = False
     require_ownership_for_update: bool = True
     require_ownership_for_delete: bool = True
 
-    def get_unsecured(self, store: StoreABC) -> StoreABC:
-        store = self.store_security.get_unsecured(store)
-        store_meta = store.get_meta()
-        attrs = []
-        for attr in store_meta.attrs:
-            if attr.name == self.subject_id_attr_name:
-                attr = dataclasses.replace(attr, creatable=False, updatable=False)
-            attrs.append(attr)
-        store_meta = dataclasses.replace(
-            store_meta, attrs=tuple(attrs), store_security=self
-        )
-
-        return MetaOverrideStore(store, store_meta)
-
-    def get_secured(self, store: StoreABC, authorization: Authorization) -> StoreABC:
+    def get_secured(self, store: StoreABC, authorization: Optional[Authorization]) -> StoreABC:
         store = self.store_security.get_secured(store, authorization)
-        return OwnedStore(
+        store_access = self.get_store_access(authorization)
+        store_access &= store.get_meta().store_access
+        store = RestrictAccessStore(store, store_access)
+        store = AttrOverrideStore(
             store=store,
-            authorization=authorization,
-            subject_id_attr_name=self.subject_id_attr_name,
-            require_ownership_for_read=self.require_ownership_for_read,
-            require_ownership_for_update=self.require_ownership_for_update,
-            require_ownership_for_delete=self.require_ownership_for_delete,
+            attr_name=self.subject_id_attr_name,
+            create_generator=FixedValueGenerator(authorization.subject_id),
+            creatable=False,
+            updatable=False
         )
+        return store
 
-    def get_potential_access(self) -> StoreAccess:
-        return self.store_security.get_potential_access()
+    def get_store_access(self, authorization: Optional[Authorization]) -> StoreAccess:
+        if authorization:
+            search_filter = AttrFilter(self.subject_id_attr_name, AttrFilterOp.eq, authorization.subject_id)
+        else:
+            search_filter = EXCLUDE_ALL
+        store_access = StoreAccess(
+            create_filter=search_filter if self.required_ownership_for_create else INCLUDE_ALL,
+            read_filter=search_filter if self.require_ownership_for_read else INCLUDE_ALL,
+            update_filter = search_filter if self.require_ownership_for_update else INCLUDE_ALL,
+            delete_filter = search_filter if self.require_ownership_for_delete else INCLUDE_ALL,
+        )
+        return store_access
+
+    def get_api_access(self) -> StoreAccess:
+        return self.store_security.get_api_access()
