@@ -69,3 +69,9 @@ class WrapperStoreABC(StoreABC[T], ABC):
         self, edits: Union[Iterator[BatchEdit[T, T]], Iterable[BatchEdit[T, T]]]
     ) -> Iterator[BatchEditResult[T, T]]:
         return self.get_store().edit_all(edits)
+
+    def update_all(self, search_filter: SearchFilterABC[T], updates: T):
+        self.get_store().update_all(search_filter)
+
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        self.get_store().delete_all(search_filter)

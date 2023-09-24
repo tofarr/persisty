@@ -40,3 +40,6 @@ class FilteredStore(FilteredStoreABC[T]):
         self, search_filter: SearchFilterABC
     ) -> Tuple[SearchFilterABC, bool]:
         return search_filter & self.search_filter, True
+
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        return self.store.delete_all(search_filter & self.search_filter)

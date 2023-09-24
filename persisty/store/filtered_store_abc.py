@@ -219,3 +219,11 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
                 if result:
                     result.copy_from(filtered_result)
         return results
+
+    def update_all(self, search_filter: SearchFilterABC[T], updates: T):
+        # Given that we can't be sure of whether the updated values violate the filter, we must do a load.
+        return StoreABC.update_all(search_filter, updates)
+
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        # Given that we can't be sure of whether the updated values violate the filter, we must do a load.
+        return StoreABC.delete_all(search_filter)

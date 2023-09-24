@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from persisty.attr.generator.attr_value_generator_abc import AttrValueGeneratorABC
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.store.filtered_store_abc import FilteredStoreABC, T
 from persisty.store.store_abc import StoreABC
 
@@ -47,6 +48,8 @@ class AttrOverrideStore(FilteredStoreABC[T]):
             item = dataclasses.replace(item, **{self.attr_name: value})
         return item
 
+    def update_all(self, search_filter: SearchFilterABC[T], updates: T):
+        return self.store.update_all(search_filter, updates)
 
-
-
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        return self.store.delete_all(search_filter)

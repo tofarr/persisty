@@ -6,9 +6,11 @@ from marshy.marshaller.marshaller_abc import MarshallerABC
 from schemey import Schema, get_default_schema_context
 
 from persisty.errors import PersistyError
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.store.filtered_store_abc import FilteredStoreABC, T
 from persisty.store.store_abc import StoreABC
 from persisty.store_meta import StoreMeta
+from persisty.util import UNDEFINED
 
 
 @dataclass(frozen=True)
@@ -75,3 +77,14 @@ class SchemaValidatingStore(FilteredStoreABC[T]):
         if error:
             raise PersistyError(error)
         return updates
+
+    def update_all(self, search_filter: SearchFilterABC[T], updates: T):
+        # Validate, but raise errors only for defined values
+        updates_dict = self.marshaller_for_update.dump(updates)
+        errors = self.schema_for_update.iter_errors(updates_dict)
+        for error in errors:
+            attr_name = error.json_path.split('.')[1]
+            attr_value = getattr(updates, attr_name, UNDEFINED)
+            if attr_value is not UNDEFINED:
+                raise PersistyError(error)
+        super().update_all(search_filter, updates)

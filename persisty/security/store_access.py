@@ -65,5 +65,6 @@ class StoreAccess:
 
 
 NO_ACCESS = StoreAccess(create_filter=EXCLUDE_ALL, read_filter=EXCLUDE_ALL, update_filter=EXCLUDE_ALL, delete_filter=EXCLUDE_ALL, searchable=False)
-ALL_ACCESS = StoreAccess(create_filter=INCLUDE_ALL, read_filter=INCLUDE_ALL, update_filter=INCLUDE_ALL, delete_filter=INCLUDE_ALL, searchable=True)
-READ_ONLY = StoreAccess(create_filter=EXCLUDE_ALL, read_filter=INCLUDE_ALL, update_filter=EXCLUDE_ALL, delete_filter=EXCLUDE_ALL, searchable=True)
+ALL_ACCESS = StoreAccess(create_filter=INCLUDE_ALL, read_filter=INCLUDE_ALL, update_filter=INCLUDE_ALL, delete_filter=INCLUDE_ALL)
+READ_ONLY = StoreAccess(create_filter=EXCLUDE_ALL, read_filter=INCLUDE_ALL, update_filter=EXCLUDE_ALL, delete_filter=EXCLUDE_ALL)
+NO_UPDATES = StoreAccess(update_filter=EXCLUDE_ALL)

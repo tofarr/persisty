@@ -9,9 +9,9 @@ from persisty.finder.stored_finder_abc import find_stored
 from persisty.link.inbound_link import InboundLink
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.link.on_delete import OnDelete
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.store.filtered_store_abc import FilteredStoreABC, T
 from persisty.store.store_abc import StoreABC
-from persisty.store_meta import StoreMeta
 
 
 @dataclass
@@ -47,8 +47,6 @@ class ReferentialIntegrityStore(FilteredStoreABC[T], Generic[T]):
             self.nullify(key)
             self.cascade(key)
         return result
-
-
 
     def block_delete(self, key: str) -> bool:
         for inbound_link in self.get_blocking_links():
@@ -120,6 +118,12 @@ class ReferentialIntegrityStore(FilteredStoreABC[T], Generic[T]):
         self.cascading_links = [
             link for link in inbound_links if link.on_delete == OnDelete.CASCADE
         ]
+
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        if self.get_blocking_links() or self.get_cascading_links() or self.get_nullifying_links():
+            StoreABC.delete_all(self, search_filter)
+        else:
+            self.get_store().delete_all(search_filter)
 
 
 def get_inbound_links(store: StoreABC) -> List[InboundLink]:

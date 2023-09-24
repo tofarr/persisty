@@ -10,6 +10,7 @@ from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.store_meta import StoreMeta, T, get_meta
+from persisty.util import UNDEFINED
 
 
 class StoreABC(Generic[T], ABC):
@@ -45,9 +46,7 @@ class StoreABC(Generic[T], ABC):
             items = self.read_batch(batch_keys)
             yield from items
 
-    def update(
-        self, updates: T, precondition: SearchFilterABC = INCLUDE_ALL
-    ) -> Optional[T]:
+    def update(self, updates: T, precondition: SearchFilterABC = INCLUDE_ALL) -> Optional[T]:
         """
         Update (a partial set of values from) an item based upon its key and the constraint given. By convention
         any UNDEFINED value is ignored. Return the full new version of the item if an update occured. If the key
@@ -64,12 +63,7 @@ class StoreABC(Generic[T], ABC):
             return self._update(key, item, updates)
 
     @abstractmethod
-    def _update(
-        self,
-        key: str,
-        item: T,
-        updates: T,
-    ) -> Optional[T]:
+    def _update(self, key: str, item: T, updates: T) -> Optional[T]:
         """
         Update (a partial set of values from) an item based upon its key and the constraint given. By convention
         any UNDEFINED value is ignored. Return the full new version of the item if an update occured. If the key
@@ -209,6 +203,45 @@ class StoreABC(Generic[T], ABC):
                 break
             results = self.edit_batch(page)
             yield from results
+
+    def update_all(self, search_filter: SearchFilterABC[T], updates: T):
+        """
+        Update all items matching the filter given with the values given, Ignoring any attributes where
+        the value is UNDEFINED.
+        Some implmentations (like SQL) can do this without loading the data, while others (like dynamodb)
+        require the data to be loaded to delete it, and use the base implementation
+        """
+        edits = self._update_all_iterator(search_filter, updates)
+        self.edit_all(edits)
+
+    def _update_all_iterator(self, search_filter: SearchFilterABC[T], updates: T) -> Iterator[BatchEdit[T, T]]:
+        update_values = {}
+        for attr in self.get_meta().attrs:
+            name = attr.name
+            value = getattr(updates, name, UNDEFINED)
+            if value is not UNDEFINED:
+                update_values[name] = value
+        for item in self.search_all(search_filter):
+            for name, value in update_values.items():
+                setattr(item, name, value)
+            edit = BatchEdit(update_item=item)
+            yield edit
+
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        """
+        Delete all items matching the filter given.
+        Some implmentations (like SQL) can do this without loading the data, while others (like dynamodb)
+        require the data to be loaded to delete it, and use the base implementation
+        """
+        edits = self._delete_all_iterator(search_filter)
+        self.edit_all(edits)
+
+    def _delete_all_iterator(self, search_filter: SearchFilterABC[T]) -> Iterator[BatchEdit[T, T]]:
+        key_config = self.get_meta().key_config
+        for item in self.search_all(search_filter):
+            key = key_config.to_key_str(item)
+            edit = BatchEdit(delete_key=key)
+            yield edit
 
 
 def skip_to_page(page_key: str, items, key_config):

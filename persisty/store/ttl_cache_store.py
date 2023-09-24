@@ -157,3 +157,8 @@ class TtlCacheStore(StoreABC[T]):
             elif edit.delete_key:
                 self.cache.pop(edit.delete_key, None)
         return results
+
+    def update_all(self, search_filter: SearchFilterABC[T], updates: T):
+        self.store.update_all(search_filter, updates)
+        self.cache.clear()
+        self.cached_result_sets.clear()

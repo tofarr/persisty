@@ -77,6 +77,9 @@ class RestrictAccessStore(FilteredStoreABC[T]):
             return EXCLUDE_ALL
         return search_filter & self.store_access.read_filter, True
 
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        return self.store.delete_all(search_filter & self.store_access.delete_filter)
+
 
 def restrict_access_store(store: StoreABC, store_access: StoreAccess):
     if store_access == ALL_ACCESS:
