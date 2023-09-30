@@ -41,7 +41,7 @@ class StoreSecurity(StoreSecurityABC[T]):
             return store
         from persisty.security.restrict_access_store import RestrictAccessStore
 
-        return RestrictAccessStore(store, store_access)
+        return RestrictAccessStore(store, store_access & store.get_meta().store_access)
 
     def get_api_access(self) -> StoreAccess:
         return self.api_access
