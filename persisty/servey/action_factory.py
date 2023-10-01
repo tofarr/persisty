@@ -6,7 +6,7 @@ from persisty.result import result_dataclass_for
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_factory import search_filter_dataclass_for
 from persisty.search_order.search_order_factory import search_order_dataclass_for
-from persisty.servey.action_factory_abc import ActionFactoryABC, ROUTE, T
+from persisty.servey.action_factory_abc import ActionFactoryABC, T
 from persisty.store.store_abc import StoreABC
 
 
@@ -74,7 +74,3 @@ class ActionFactory(ActionFactoryABC[T]):
                 create_input_type,
                 update_input_type,
             )
-
-    # noinspection PyMethodMayBeStatic
-    def create_routes(self, store: StoreABC[T]) -> Iterator[ROUTE]:
-        return iter(tuple())

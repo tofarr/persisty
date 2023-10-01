@@ -39,7 +39,7 @@ def create_store_meta(on_delete: OnDelete):
 def _patch_it(on_delete: OnDelete):
     store_metas = create_store_meta(on_delete)
     return patch(
-        "persisty.store.referential_integrity_store.find_stored",
+        "persisty.store.referential_integrity_store.find_store_meta",
         lambda: iter(store_metas)
     )
 
@@ -47,7 +47,7 @@ def _patch_it(on_delete: OnDelete):
 class TestReferentialIntegrityStore(TestCase):
     def test_block(self):
         with _patch_it(OnDelete.BLOCK):
-            author_store_meta, book_store_meta = list(referential_integrity_store.find_stored())
+            author_store_meta, book_store_meta = list(referential_integrity_store.find_store_meta())
             author_store: StoreABC = author_store_meta.create_store()
             with self.assertRaises(PersistyError):
                 author_store.delete("1")
@@ -58,7 +58,7 @@ class TestReferentialIntegrityStore(TestCase):
 
     def test_nullify(self):
         with _patch_it(OnDelete.NULLIFY):
-            author_store_meta, book_store_meta = list(referential_integrity_store.find_stored())
+            author_store_meta, book_store_meta = list(referential_integrity_store.find_store_meta())
             author_store: StoreABC = author_store_meta.create_store()
             author_store.delete("1")
             book_store: StoreABC = book_store_meta.create_store()
@@ -68,7 +68,7 @@ class TestReferentialIntegrityStore(TestCase):
 
     def test_cascade(self):
         with _patch_it(OnDelete.CASCADE):
-            author_store_meta, book_store_meta = list(referential_integrity_store.find_stored())
+            author_store_meta, book_store_meta = list(referential_integrity_store.find_store_meta())
             author_store: StoreABC = author_store_meta.create_store()
             author_store.delete("1")
             book_store: StoreABC = book_store_meta.create_store()

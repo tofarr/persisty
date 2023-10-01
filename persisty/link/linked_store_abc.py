@@ -5,7 +5,7 @@ from typing import Optional, ForwardRef, Union, Type, List
 import typing_inspect
 from servey.security.authorization import Authorization
 
-from persisty.finder.stored_finder_abc import find_stored_by_name
+from persisty.finder.store_meta_finder_abc import find_store_meta_by_name
 from persisty.link.inbound_link import InboundLink
 from persisty.link.link_abc import LinkABC
 from persisty.store_meta import StoreMeta
@@ -33,7 +33,7 @@ class LinkedStoreABC(LinkABC, ABC):
     def get_linked_store_meta(self):
         linked_store_meta = self.linked_store_meta
         if not linked_store_meta:
-            linked_store_meta = find_stored_by_name(self.get_linked_store_name())
+            linked_store_meta = find_store_meta_by_name(self.get_linked_store_name())
             self.linked_store_meta = linked_store_meta
         return linked_store_meta
 

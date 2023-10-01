@@ -5,7 +5,7 @@ from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.attr_filter_op import AttrFilterOp
 from persisty.batch_edit import BatchEdit
 from persisty.errors import PersistyError
-from persisty.finder.stored_finder_abc import find_stored
+from persisty.finder.store_meta_finder_abc import find_store_meta
 from persisty.link.inbound_link import InboundLink
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.link.on_delete import OnDelete
@@ -129,7 +129,7 @@ class ReferentialIntegrityStore(FilteredStoreABC[T], Generic[T]):
 def get_inbound_links(store: StoreABC) -> List[InboundLink]:
     inbound_links = []
     name = store.get_meta().name
-    for store_meta in find_stored():
+    for store_meta in find_store_meta():
         for link in store_meta.links:
             if not isinstance(link, LinkedStoreABC):
                 continue

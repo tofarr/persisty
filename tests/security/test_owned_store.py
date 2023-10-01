@@ -56,4 +56,3 @@ class TestOwnedStoreFactory(TestCase):
             "message_update",
         }
         self.assertEqual(expected_action_names, action_names)
-        self.assertEqual([], list(meta.action_factory.create_routes(unsecured_store)))

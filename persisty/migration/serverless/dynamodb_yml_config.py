@@ -6,7 +6,7 @@ from servey.servey_aws.serverless.yml_config.yml_config_abc import (
 )
 
 from persisty.factory.store_factory import StoreFactory
-from persisty.finder.stored_finder_abc import find_stored
+from persisty.finder.store_meta_finder_abc import find_store_meta
 from persisty.impl.dynamodb.dynamodb_store_factory import DynamodbStoreFactory
 
 
@@ -41,7 +41,7 @@ class DynamodbYmlConfig(YmlConfigABC):
 
     @staticmethod
     def get_dynamodb_store_meta():
-        for store_meta in find_stored():
+        for store_meta in find_store_meta():
             if isinstance(store_meta.store_factory, (DynamodbStoreFactory, StoreFactory)):
                 yield store_meta
 

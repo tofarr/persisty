@@ -10,7 +10,7 @@ from marshy.types import ExternalItemType
 
 from persisty.factory.store_factory import StoreFactory
 from persisty.factory.store_factory_abc import StoreFactoryABC
-from persisty.finder.stored_finder_abc import find_stored
+from persisty.finder.store_meta_finder_abc import find_store_meta
 from persisty.batch_edit import BatchEdit
 from persisty.store.store_abc import StoreABC
 from persisty.store_meta import StoreMeta
@@ -20,7 +20,7 @@ def export_all(directory: str):
     """
     Export all store to yml files
     """
-    for store_meta in find_stored():
+    for store_meta in find_store_meta():
         export_meta(directory, store_meta)
         export_content(directory, store_meta)
 
