@@ -132,8 +132,10 @@ def action_for_search(
     search_order_type: Type[SearchOrderFactoryABC],
 ) -> Action:
     store_meta = store.get_meta()
+    item_name = store.get_meta().name.title().replace("_", "")
+    result_set_name = f"{item_name}ResultSet"
     # noinspection PyTypeChecker
-    result_set_type = result_set_dataclass_for(result_type)
+    result_set_type = result_set_dataclass_for(result_type, result_set_name)
     setattr(generated, result_set_type.__name__, result_set_type)
 
     @action(

@@ -18,7 +18,7 @@ def result_dataclass_for(type_: Type[T]) -> Type[Result[T]]:
     params = {
         "__annotations__": {
             "key": str,
-            "value": type_,
+            "item": type_,
             "updatable": bool,
             "deletable": bool,
         },

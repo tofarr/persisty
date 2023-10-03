@@ -6,6 +6,7 @@ from persisty.result import result_dataclass_for
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_factory import search_filter_dataclass_for
 from persisty.search_order.search_order_factory import search_order_dataclass_for
+from persisty.servey import generated
 from persisty.servey.action_factory_abc import ActionFactoryABC, T
 from persisty.store.store_abc import StoreABC
 
@@ -20,6 +21,7 @@ class ActionFactory(ActionFactoryABC[T]):
         api_access = store_meta.store_security.get_api_access()
         item_type = wrap_links_in_actions(store_meta.get_read_dataclass())
         result_type = result_dataclass_for(item_type)
+        setattr(generated, result_type.__name__, result_type)
         search_filter_type = search_filter_dataclass_for(store_meta)
         search_order_type = search_order_dataclass_for(store_meta)
         create_input_type = store_meta.get_create_dataclass()
