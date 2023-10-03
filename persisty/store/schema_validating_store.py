@@ -83,7 +83,7 @@ class SchemaValidatingStore(FilteredStoreABC[T]):
         updates_dict = self.marshaller_for_update.dump(updates)
         errors = self.schema_for_update.iter_errors(updates_dict)
         for error in errors:
-            attr_name = error.json_path.split('.')[1]
+            attr_name = error.json_path.split(".")[1]
             attr_value = getattr(updates, attr_name, UNDEFINED)
             if attr_value is not UNDEFINED:
                 raise PersistyError(error)

@@ -27,7 +27,7 @@ class AttrOverrideStore(FilteredStoreABC[T]):
                     creatable=self.creatable,
                     create_generator=self.create_generator or attr.create_generator,
                     updatable=self.updatable,
-                    update_generator=self.update_generator or attr.update_generator
+                    update_generator=self.update_generator or attr.update_generator,
                 )
             attrs.append(attr)
 

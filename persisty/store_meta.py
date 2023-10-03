@@ -1,6 +1,17 @@
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable, Callable, Union, FrozenSet
+from typing import (
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Dict,
+    Set,
+    Iterable,
+    Callable,
+    Union,
+    FrozenSet,
+)
 
 from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
 from marshy.marshaller_context import MarshallerContext
@@ -25,6 +36,7 @@ from persisty.util.undefined import UNDEFINED
 T = TypeVar("T")
 _StoreFactoryABC = "persisty.security.store_factory_abc.StoreFactoryABC"
 _StoreABC = "persisty.security.store_abc.StoreABC"
+
 
 def _default_store_factory():
     from persisty.factory.store_factory import StoreFactory
@@ -170,7 +182,7 @@ class StoreMeta:
                     params[attr.name] = attr.to_field(False)
                     annotations[attr.name] = attr.schema.python_type
             for class_function in self.class_functions:
-                params[getattr(class_function, '__name__', None)] = class_function
+                params[getattr(class_function, "__name__", None)] = class_function
             if annotations:
                 if links:
                     for link in links:
@@ -243,13 +255,14 @@ def _schema_factory(
         schema["description"] = cls.__doc__.strip()
     store_meta = get_meta(cls)
     schema["persistyStored"] = {
-        "creatable": store_meta.store_security.get_api_access().create_filter is not EXCLUDE_ALL,
+        "creatable": store_meta.store_security.get_api_access().create_filter
+        is not EXCLUDE_ALL,
         "label_attr_names": [
             f.name for f in fields(cls) if f.name in store_meta.label_attr_names
         ],
         "summary_attr_names": [
             f.name for f in fields(cls) if f.name in store_meta.summary_attr_names
-        ]
+        ],
     }
     for link in store_meta.links:
         link.update_json_schema(schema)

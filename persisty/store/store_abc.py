@@ -24,11 +24,11 @@ class StoreABC(Generic[T], ABC):
 
     @abstractmethod
     def create(self, item: T) -> Optional[T]:
-        """Create an stored in the data store"""
+        """Create an item in the data store"""
 
     @abstractmethod
     def read(self, key: str) -> Optional[T]:
-        """Read an stored from the data store"""
+        """Read an item from the data store"""
 
     def read_batch(self, keys: List[str]) -> List[Optional[T]]:
         assert len(keys) <= self.get_meta().batch_size
@@ -46,11 +46,13 @@ class StoreABC(Generic[T], ABC):
             items = self.read_batch(batch_keys)
             yield from items
 
-    def update(self, updates: T, precondition: SearchFilterABC = INCLUDE_ALL) -> Optional[T]:
+    def update(
+        self, updates: T, precondition: SearchFilterABC = INCLUDE_ALL
+    ) -> Optional[T]:
         """
         Update (a partial set of values from) an item based upon its key and the constraint given. By convention
-        any UNDEFINED value is ignored. Return the full new version of the item if an update occured. If the key
-        extracted from the updates did not match any existing item, return None. If any other error occurrecd, throw
+        any UNDEFINED value is ignored. Return the full new version of the item if an update occurred. If the key
+        extracted from the updates did not match any existing item, return None. If any other error occurred, throw
         a PersistyError
         """
         key = self.get_meta().key_config.to_key_str(updates)
@@ -66,13 +68,13 @@ class StoreABC(Generic[T], ABC):
     def _update(self, key: str, item: T, updates: T) -> Optional[T]:
         """
         Update (a partial set of values from) an item based upon its key and the constraint given. By convention
-        any UNDEFINED value is ignored. Return the full new version of the item if an update occured. If the key
-        extracted from the updates did not match any existing item, return None. If any other error occurrecd, throw
+        any UNDEFINED value is ignored. Return the full new version of the item if an update occurred. If the key
+        extracted from the updates did not match any existing item, return None. If any other error occurred, throw
         a PersistyError
         """
 
     def delete(self, key: str) -> bool:
-        """Delete an stored from the data store. Return true if an item was deleted, false otherwise"""
+        """Delete an item from the data store. Return true if an item was deleted, false otherwise"""
         key = str(key)
         item = self.read(key)
         if not item:
@@ -81,7 +83,7 @@ class StoreABC(Generic[T], ABC):
 
     @abstractmethod
     def _delete(self, key: str, item: T) -> bool:
-        """Delete an stored from the data store. Return true if an item was deleted, false otherwise"""
+        """Delete an item from the data store. Return true if an item was deleted, false otherwise"""
 
     def search(
         self,
@@ -116,7 +118,7 @@ class StoreABC(Generic[T], ABC):
 
     @abstractmethod
     def count(self, search_filter: SearchFilterABC[T] = INCLUDE_ALL) -> int:
-        """Create an stored in the data store"""
+        """Create an item in the data store"""
 
     def edit_batch(self, edits: List[BatchEdit[T, T]]) -> List[BatchEditResult[T, T]]:
         """
@@ -169,9 +171,9 @@ class StoreABC(Generic[T], ABC):
         self, edits: List[BatchEdit[T, T]], items_by_key: Dict[str, T]
     ) -> List[BatchEditResult[T, T]]:
         """
-        Simple non transactional implementation of batch functionality. Other implementations employ strategies to boost
-        performance such reducing the number of network round trips. Whether an edit is atomic is dependant on the
-        underlying mechanism, but should be reflected in the results.
+        Simple non-transactional implementation of batch functionality. Other implementations employ strategies
+        to boost performance such reducing the number of network round trips. Whether an edit is atomic is
+        dependent on the underlying mechanism, but should be reflected in the results.
         """
         results = []
         to_key_str = self.get_meta().key_config.to_key_str
@@ -208,13 +210,15 @@ class StoreABC(Generic[T], ABC):
         """
         Update all items matching the filter given with the values given, Ignoring any attributes where
         the value is UNDEFINED.
-        Some implmentations (like SQL) can do this without loading the data, while others (like dynamodb)
+        Some implementations (like SQL) can do this without loading the data, while others (like dynamodb)
         require the data to be loaded to delete it, and use the base implementation
         """
         edits = self._update_all_iterator(search_filter, updates)
         self.edit_all(edits)
 
-    def _update_all_iterator(self, search_filter: SearchFilterABC[T], updates: T) -> Iterator[BatchEdit[T, T]]:
+    def _update_all_iterator(
+        self, search_filter: SearchFilterABC[T], updates: T
+    ) -> Iterator[BatchEdit[T, T]]:
         update_values = {}
         for attr in self.get_meta().attrs:
             name = attr.name
@@ -230,13 +234,15 @@ class StoreABC(Generic[T], ABC):
     def delete_all(self, search_filter: SearchFilterABC[T]):
         """
         Delete all items matching the filter given.
-        Some implmentations (like SQL) can do this without loading the data, while others (like dynamodb)
+        Some implementations (like SQL) can do this without loading the data, while others (like dynamodb)
         require the data to be loaded to delete it, and use the base implementation
         """
         edits = self._delete_all_iterator(search_filter)
         self.edit_all(edits)
 
-    def _delete_all_iterator(self, search_filter: SearchFilterABC[T]) -> Iterator[BatchEdit[T, T]]:
+    def _delete_all_iterator(
+        self, search_filter: SearchFilterABC[T]
+    ) -> Iterator[BatchEdit[T, T]]:
         key_config = self.get_meta().key_config
         for item in self.search_all(search_filter):
             key = key_config.to_key_str(item)

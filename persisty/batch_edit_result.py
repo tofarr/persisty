@@ -33,5 +33,6 @@ def batch_edit_result_dataclass_for(batch_edit_type: Type) -> Type:
         "details": None,
     }
     type_name = f"{batch_edit_type.__name__}Result"
+    # noinspection PyTypeChecker
     type_ = dataclass(type(type_name, (), params))
     return type_

@@ -1,5 +1,4 @@
 from abc import abstractmethod, ABC
-from dataclasses import dataclass
 
 from persisty.store.store_abc import StoreABC
 from persisty.store_meta import StoreMeta

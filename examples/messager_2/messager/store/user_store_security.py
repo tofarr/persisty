@@ -17,7 +17,13 @@ class UserStoreSecurity(StoreSecurityABC[T]):
 
         return SecuredUserStore(store, authorization)
 
-    def is_item_updatable(self, store_meta: StoreMeta, item: T, updates: T, authorization: Optional[Authorization]) -> bool:
+    def is_item_updatable(
+        self,
+        store_meta: StoreMeta,
+        item: T,
+        updates: T,
+        authorization: Optional[Authorization],
+    ) -> bool:
         if authorization.has_scope("admin"):
             if item.id == authorization.subject_id and item.admin is False:
                 return False  # Can't remove admin permission from self
@@ -25,10 +31,9 @@ class UserStoreSecurity(StoreSecurityABC[T]):
             return False  # Can't edit others or add admin permission to self
         return True
 
-    def is_item_deletable(self, store_meta: StoreMeta, item: T, authorization: Optional[Authorization]) -> bool:
-        if (
-            not authorization.has_scope("admin")
-            or item.id == authorization.subject_id
-        ):
+    def is_item_deletable(
+        self, store_meta: StoreMeta, item: T, authorization: Optional[Authorization]
+    ) -> bool:
+        if not authorization.has_scope("admin") or item.id == authorization.subject_id:
             return False
         return True

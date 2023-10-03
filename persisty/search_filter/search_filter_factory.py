@@ -51,5 +51,6 @@ def search_filter_dataclass_for(
     params["__annotations__"] = annotations
     params["__doc__"] = f"Search Filter for {storage_meta.name}"
     name = f"{to_camel_case(storage_meta.name)}SearchFilter"
+    # noinspection PyTypeChecker
     type_ = dataclass(type(name, (SearchFilterFactoryABC,), params))
     return type_

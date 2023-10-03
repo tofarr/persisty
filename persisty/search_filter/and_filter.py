@@ -12,6 +12,7 @@ class And(SearchFilterABC[T]):
     search_filters: Tuple[SearchFilterABC, ...]
 
     # pylint: disable=W0221
+    # noinspection DuplicatedCode
     def __new__(cls, search_filters: Tuple[SearchFilterABC, ...]):
         """Strip out nested And logic"""
         if not search_filters:

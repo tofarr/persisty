@@ -26,7 +26,7 @@ class QueryFilterConverter(AndFilterConverter):
         if isinstance(search_filter, QueryFilter):
             sub_clauses = []
             for attr in store_meta.attrs:
-                if attr.type is AttrType.STR and attr.is_readable:
+                if attr.attr_type is AttrType.STR and attr.readable:
                     col = table.columns.get(attr.name)
                     sub_clauses.append(col.contains(search_filter.query))
             return or_(*sub_clauses), True

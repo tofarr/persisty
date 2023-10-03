@@ -50,7 +50,7 @@ class Attr:
 
     def sanitize_type(self, value):
         """
-        Sanitize the type of an attribute value - try and make sure the type is correct.
+        Try and make sure that the type is correct.
         """
         if value in (None, UNDEFINED):
             return value

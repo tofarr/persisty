@@ -92,8 +92,4 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
         }
 
     def get_inbound_links(self, store_meta: StoreMeta) -> List[InboundLink]:
-        return [
-            InboundLink(
-                store_meta, self.key_attr_name, self.on_delete
-            )
-        ]
+        return [InboundLink(store_meta, self.key_attr_name, self.on_delete)]

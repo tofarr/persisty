@@ -71,7 +71,7 @@ class WrapperStoreABC(StoreABC[T], ABC):
         return self.get_store().edit_all(edits)
 
     def update_all(self, search_filter: SearchFilterABC[T], updates: T):
-        self.get_store().update_all(search_filter)
+        self.get_store().update_all(search_filter, updates)
 
     def delete_all(self, search_filter: SearchFilterABC[T]):
         self.get_store().delete_all(search_filter)

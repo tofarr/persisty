@@ -334,7 +334,7 @@ class SqlalchemyTableStore(StoreABC):
         return existing_keys
 
     def _load_row(self, row):
-        # Row is a KeyedTuple - _asdict is to match the namedtuple API (it's not private!)
+        # Row is a KeyedTuple - as dict is to match the namedtuple API (it's not private!)
         # noinspection PyProtectedMember
         item = row._asdict()
         return self._load(item)

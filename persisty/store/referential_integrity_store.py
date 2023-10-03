@@ -32,7 +32,7 @@ class ReferentialIntegrityStore(FilteredStoreABC[T], Generic[T]):
 
     def delete(self, key: str) -> bool:
         if self.block_delete(key):
-            raise PersistyError('link_constraint_violated')
+            raise PersistyError("link_constraint_violated")
         result = self.get_store().delete(key)
         if result:
             self.nullify(key)
@@ -41,7 +41,7 @@ class ReferentialIntegrityStore(FilteredStoreABC[T], Generic[T]):
 
     def _delete(self, key: str, item: T) -> bool:
         if self.block_delete(key):
-            raise PersistyError('link_constraint_violated')
+            raise PersistyError("link_constraint_violated")
         result = self.get_store()._delete(key, item)
         if result:
             self.nullify(key)
@@ -120,7 +120,11 @@ class ReferentialIntegrityStore(FilteredStoreABC[T], Generic[T]):
         ]
 
     def delete_all(self, search_filter: SearchFilterABC[T]):
-        if self.get_blocking_links() or self.get_cascading_links() or self.get_nullifying_links():
+        if (
+            self.get_blocking_links()
+            or self.get_cascading_links()
+            or self.get_nullifying_links()
+        ):
             StoreABC.delete_all(self, search_filter)
         else:
             self.get_store().delete_all(search_filter)

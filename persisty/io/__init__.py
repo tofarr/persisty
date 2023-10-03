@@ -57,7 +57,9 @@ def export_content(directory: str, store_meta: StoreMeta, page_size: int = 500):
         index += 1
 
 
-def import_all(directory: str, store_factory: StoreFactoryABC = StoreFactory()) -> List[StoreABC]:
+def import_all(
+    directory: str, store_factory: StoreFactoryABC = StoreFactory()
+) -> List[StoreABC]:
     results = []
     for store_name in os.listdir(directory):
         store = import_store(directory, store_name, store_factory)

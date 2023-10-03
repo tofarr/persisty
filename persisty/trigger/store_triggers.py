@@ -15,8 +15,8 @@ from persisty.trigger.after_update_trigger import AfterUpdateTrigger
 @dataclass
 class StoreTriggers:
     """
-    Object for collecting / coordingating triggers to be run after edits to a store object.
-    The actual mechanism for running triggers may be asyncio, celery, or even a post processing
+    Object for collecting / coordinating triggers to be run after edits to a store object.
+    The actual mechanism for running triggers may be asyncio, celery, or even a post-processing
     lambda on a dynamodb table.
     """
 

@@ -10,7 +10,7 @@ T = TypeVar("T")
 
 
 class StoreSecurityABC(ABC, Generic[T]):
-    """ Object which can be used to wrap a store to add security constraints """
+    """Object which can be used to wrap a store to add security constraints"""
 
     @abstractmethod
     def get_secured(
@@ -22,4 +22,4 @@ class StoreSecurityABC(ABC, Generic[T]):
 
     @abstractmethod
     def get_api_access(self) -> StoreAccess:
-        """ Get the api access - the max potential access for this store for apis """
+        """Get the api access - the max potential access for this store for apis"""

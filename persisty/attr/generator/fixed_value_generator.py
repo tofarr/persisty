@@ -12,5 +12,5 @@ class FixedValueGenerator(AttrValueGeneratorABC):
 
     def transform(self, value, item):
         if value is not UNDEFINED and value != self.value:
-            raise PersistyError('value_mismatch')
+            raise PersistyError("value_mismatch")
         return self.value

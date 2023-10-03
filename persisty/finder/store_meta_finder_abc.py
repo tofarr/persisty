@@ -1,9 +1,9 @@
 from abc import abstractmethod, ABC
-from typing import Iterator, Optional
+from typing import Iterator
 
 from marshy.factory.impl_marshaller_factory import get_impls
 
-from persisty.store_meta import StoreMeta, get_meta
+from persisty.store_meta import StoreMeta
 
 
 class StoreMetaFinderABC(ABC):

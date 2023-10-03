@@ -168,7 +168,9 @@ def action_for_search(
 
         # noinspection PyArgumentList
         result_set = result_set_type(
-            results=[to_result(item, secured_store.get_meta()) for item in result_set.results],
+            results=[
+                to_result(item, secured_store.get_meta()) for item in result_set.results
+            ],
             next_page_key=result_set.next_page_key,
         )
         return result_set

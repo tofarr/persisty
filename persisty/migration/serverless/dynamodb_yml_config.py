@@ -42,7 +42,9 @@ class DynamodbYmlConfig(YmlConfigABC):
     @staticmethod
     def get_dynamodb_store_meta():
         for store_meta in find_store_meta():
-            if isinstance(store_meta.store_factory, (DynamodbStoreFactory, StoreFactory)):
+            if isinstance(
+                store_meta.store_factory, (DynamodbStoreFactory, StoreFactory)
+            ):
                 yield store_meta
 
     def build_dynamodb_resource_yml(self) -> ExternalItemType:
@@ -54,7 +56,9 @@ class DynamodbYmlConfig(YmlConfigABC):
                 "Type": "AWS::DynamoDB::Table",
                 "Properties": {
                     "TableName": factory.table_name,
-                    "AttributeDefinitions": factory.get_attribute_definitions(store_meta),
+                    "AttributeDefinitions": factory.get_attribute_definitions(
+                        store_meta
+                    ),
                     "KeySchema": factory.index.to_schema(),
                     "GlobalSecondaryIndexes": factory.get_global_secondary_indexes(),
                     "BillingMode": "PAY_PER_REQUEST",

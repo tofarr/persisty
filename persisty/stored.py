@@ -52,7 +52,8 @@ def stored(
 
     # pylint: disable=R0912,R0914
     def wrapper(cls_):
-        nonlocal key_config, cache_control, batch_size, indexes, label_attr_names, summary_attr_names, store_factory, action_factory
+        nonlocal key_config, cache_control, batch_size, indexes, label_attr_names
+        nonlocal summary_attr_names, store_factory, action_factory
         links_by_name = {}
         attrs_by_name = {}
         key_config, cache_control, batch_size, indexes = _derive_args(
@@ -106,6 +107,7 @@ def stored(
         from persisty.servey.action_factory import ActionFactory
         from persisty.security.store_security import UNSECURED
 
+        # noinspection PyTypeChecker
         store_meta = StoreMeta(
             name=to_snake_case(cls_.__name__),
             attrs=tuple(attrs_by_name.values()),
@@ -254,7 +256,7 @@ def _get_cls_dict_with_super(cls: Type):
     result = {}
     for c in reversed(cls.mro()[:-1]):
         for k, v in c.__dict__.items():
-            if not k.startswith('__'):
+            if not k.startswith("__"):
                 result[k] = v
     return result
 
@@ -262,7 +264,7 @@ def _get_cls_dict_with_super(cls: Type):
 def _get_cls_annotations_with_super(cls: Type) -> Dict[str, Type]:
     result = {}
     for c in reversed(cls.mro()[:-1]):
-        annotations = c.__dict__.get('__annotations__') or {}
+        annotations = c.__dict__.get("__annotations__") or {}
         result.update(annotations)
     return result
 
@@ -274,5 +276,5 @@ def _get_class_functions(cls_dict: Dict):
             results.append(value)
         if isinstance(value, property):
             # I am doing this to prevent muddying the waters
-            raise PersistyError('stored_classes_do_not_support_properties')
+            raise PersistyError("stored_classes_do_not_support_properties")
     return tuple(results)

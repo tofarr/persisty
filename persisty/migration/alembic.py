@@ -34,6 +34,7 @@ def add_seed_data(op):
                 if col.type.python_type == datetime:
                     value = filtered_item.get(col.name)
                     if value:
+                        # noinspection PyTypeChecker
                         filtered_item[col.name] = datetime.fromisoformat(value)
             items.append(filtered_item)
         op.bulk_insert(table, items)

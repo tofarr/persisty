@@ -96,7 +96,9 @@ class LinkedStore(WrapperStoreABC[T]):
                     link.before_delete(item)
 
     def update_all(self, search_filter: SearchFilterABC[T], updates: T):
-        StoreABC.update_all(self, search_filter, updates)  # Ensure data is loaded for checking
+        StoreABC.update_all(
+            self, search_filter, updates
+        )  # Ensure data is loaded for checking
 
     def delete_all(self, search_filter: SearchFilterABC[T]):
         StoreABC.delete_all(self, search_filter)  # Ensure data is loaded for checking

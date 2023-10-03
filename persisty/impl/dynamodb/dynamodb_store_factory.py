@@ -139,7 +139,8 @@ class DynamodbStoreFactory(StoreFactoryABC):
         if index.sk:
             attrs[index.sk] = self._attr(store_meta, index.sk)
 
-    def _attr(self, store_meta: StoreMeta, name: str):
+    @staticmethod
+    def _attr(store_meta: StoreMeta, name: str):
         attr = next(a for a in store_meta.attrs if a.name == name)
         return {
             "AttributeName": name,

@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional, List, Tuple
+from typing import Optional, Tuple
 
 import marshy
 from marshy.types import ExternalItemType

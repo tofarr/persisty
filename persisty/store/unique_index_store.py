@@ -73,7 +73,7 @@ class UniqueIndexStore(WrapperStoreABC[T]):
                 if value is UNDEFINED:
                     value = getattr(item, attr_name)
                 search_filters.append(AttrFilter(attr_name, AttrFilterOp.eq, value))
-            search_filter = And(search_filters)
+            search_filter = And(tuple(search_filters))
             results = (
                 item
                 for item in store.search_all(search_filter)

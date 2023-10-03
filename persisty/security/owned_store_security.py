@@ -25,7 +25,9 @@ class OwnedStoreSecurity(StoreSecurityABC[T]):
     require_ownership_for_update: bool = True
     require_ownership_for_delete: bool = True
 
-    def get_secured(self, store: StoreABC, authorization: Optional[Authorization]) -> StoreABC:
+    def get_secured(
+        self, store: StoreABC, authorization: Optional[Authorization]
+    ) -> StoreABC:
         store = self.store_security.get_secured(store, authorization)
         store_access = self.get_store_access(authorization)
         store_access &= store.get_meta().store_access
@@ -35,20 +37,30 @@ class OwnedStoreSecurity(StoreSecurityABC[T]):
             attr_name=self.subject_id_attr_name,
             create_generator=FixedValueGenerator(authorization.subject_id),
             creatable=False,
-            updatable=False
+            updatable=False,
         )
         return store
 
     def get_store_access(self, authorization: Optional[Authorization]) -> StoreAccess:
         if authorization:
-            search_filter = AttrFilter(self.subject_id_attr_name, AttrFilterOp.eq, authorization.subject_id)
+            search_filter = AttrFilter(
+                self.subject_id_attr_name, AttrFilterOp.eq, authorization.subject_id
+            )
         else:
             search_filter = EXCLUDE_ALL
         store_access = StoreAccess(
-            create_filter=search_filter if self.required_ownership_for_create else INCLUDE_ALL,
-            read_filter=search_filter if self.require_ownership_for_read else INCLUDE_ALL,
-            update_filter = search_filter if self.require_ownership_for_update else INCLUDE_ALL,
-            delete_filter = search_filter if self.require_ownership_for_delete else INCLUDE_ALL,
+            create_filter=search_filter
+            if self.required_ownership_for_create
+            else INCLUDE_ALL,
+            read_filter=search_filter
+            if self.require_ownership_for_read
+            else INCLUDE_ALL,
+            update_filter=search_filter
+            if self.require_ownership_for_update
+            else INCLUDE_ALL,
+            delete_filter=search_filter
+            if self.require_ownership_for_delete
+            else INCLUDE_ALL,
         )
         return store_access
 

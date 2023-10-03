@@ -279,7 +279,7 @@ class DynamodbTableStore(StoreABC[T]):
                 next_page_key = None
                 if len(results) > offset + limit:
                     next_page_key = key_config.to_key_str(results[offset + limit - 1])
-                results = results[offset : (offset + limit)]
+                results = results[offset: (offset + limit)]
                 return ResultSet(results, next_page_key)
             query_args["ExclusiveStartKey"] = last_evaluated_key
 
@@ -539,7 +539,7 @@ def _separate_index_filters(
 
 
 def _get_score_for_index(
-    index: PartitionSortIndex, eq_attrs: Set[str], sort_attrs: Set[str]
+    index: PartitionSortIndex, eq_attrs: List[str], sort_attrs: Set[str]
 ):
     if index.pk not in eq_attrs:
         return 0
@@ -563,7 +563,7 @@ def _separate_index_from_filter(
             index_filter = f
         else:
             filters.append(f)
-    filter_expression = And(filters) if filters else None
+    filter_expression = And(tuple(filters)) if filters else None
     return index_filter, filter_expression
 
 

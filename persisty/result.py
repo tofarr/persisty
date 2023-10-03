@@ -22,7 +22,7 @@ def result_dataclass_for(type_: Type[T]) -> Type[Result[T]]:
             "updatable": bool,
             "deletable": bool,
         },
-        "__doc__": f"Result of {type_.__name__}"
+        "__doc__": f"Result of {type_.__name__}",
     }
     type_name = f"{type_.__name__}Result"
     # noinspection PyTypeChecker
@@ -36,6 +36,6 @@ def to_result(item: Optional[T], store_meta: StoreMeta) -> Optional[Result[T]]:
     return Result(
         key=store_meta.key_config.to_key_str(item),
         item=item,
-        updatable=store_meta.store_access.update_filter.match(item),
-        deletable=store_meta.store_access.delete_filter.match(item),
+        updatable=store_meta.store_access.update_filter.match(item, store_meta.attrs),
+        deletable=store_meta.store_access.delete_filter.match(item, store_meta.attrs),
     )

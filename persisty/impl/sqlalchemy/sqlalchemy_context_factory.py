@@ -16,7 +16,7 @@ class SqlalchemyContextFactory(SqlalchemyContextFactoryABC):
     # pylint: disable=W1203
     def create(self) -> Optional[SqlalchemyContext]:
         sql_urn = os.environ.get("PERSISTY_SQL_URN")
-        # If we have not defined an sql urn, then we are in developer mode, where tables are created on the fly
+        # If we have not defined a sql urn, then we are in developer mode, where tables are created on the fly
         developer_mode = not sql_urn or os.environ.get("PERSISTY_DEVELOPER_MODE") == "1"
         if not sql_urn:
             sql_urn = "sqlite+pysqlite:///:memory:"
