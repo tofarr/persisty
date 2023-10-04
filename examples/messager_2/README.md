@@ -19,9 +19,10 @@ This example, builds upon that to secure the storage.
 
 * The store definitions have been updated to constrain the available operations / attributes based upon
   the user making the request:
-  * [user.py](messager/store/user.py): Most applications have a level of custom business
-    logic related to users, and this is no exception. We don't want the password digest
-    to be exposed externally, and forbid non admins from editing anybody except themselves
+  * [user.py](messager/store/user.py): Most applications have a level of custom business logic related
+    to users, and this is no exception - we use a custom [store_security](messager/store/user_store_security.py)
+    which provides different access rules for admins to regular users. It also makes sure that password
+    digests are not exported through the api.
   * [message.py](messager/store/message.py): Ownership of messages is now enforced.
 * A custom [UserAuthenticator](messager/user_authenticator.py) was [registered](marshy_config_main/__init__.py) to
   control login using your user items.
@@ -37,6 +38,9 @@ This example, builds upon that to secure the storage.
 * This time you will need to log in to create a message. Use the user defined in the seed data - 
   `admin` / `Password123!`![img.png](readme/login.png) You will get an error if you try to create a message
   without logging in!![input](readme/create_message_input.png) ![result](readme/create_message_result.png)
+
+* Most requests in GraphIQL now require that you set an authorization header: `{"Authorization": "Bearer ...`
+  You can get a value for this header by running the login mutation
   
 * You can view published websocket events in the browser. I use the [Browser Websocket Client Chrome Extension](https://chrome.google.com/webstore/detail/browser-websocket-client/mdmlhchldhfnfnkfmljgeinlffmdgkjo?hl=en)
   for this:

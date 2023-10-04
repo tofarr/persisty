@@ -43,8 +43,12 @@ class StoreSecurity(StoreSecurityABC[T]):
 
         return RestrictAccessStore(store, store_access & store.get_meta().store_access)
 
-    def get_api_access(self) -> StoreAccess:
-        return self.api_access
+    def get_api(self, store: StoreABC) -> StoreABC:
+        if self.api_access == ALL_ACCESS:
+            return store
+        from persisty.security.restrict_access_store import RestrictAccessStore
+
+        return RestrictAccessStore(store, self.api_access & store.get_meta().store_access)
 
 
 UNSECURED = StoreSecurity(ALL_ACCESS, tuple(), ALL_ACCESS)

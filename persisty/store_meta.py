@@ -204,6 +204,11 @@ class StoreMeta:
         store = self.store_factory.create(self)
         return store
 
+    def create_api_store(self) -> _StoreABC:
+        store = self.create_store()
+        store = self.store_security.get_api(store)
+        return store
+
     def create_secured_store(self, authorization: Optional[Authorization]) -> _StoreABC:
         store = self.store_security.get_secured(self.create_store(), authorization)
         return store
@@ -255,7 +260,8 @@ def _schema_factory(
         schema["description"] = cls.__doc__.strip()
     store_meta = get_meta(cls)
     schema["persistyStored"] = {
-        "creatable": store_meta.store_security.get_api_access().create_filter
+        "store_name": store_meta.name,
+        "creatable": store_meta.store_access.create_filter != EXCLUDE_ALL
         is not EXCLUDE_ALL,
         "label_attr_names": [
             f.name for f in fields(cls) if f.name in store_meta.label_attr_names

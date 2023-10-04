@@ -61,7 +61,7 @@ class StoreAccess:
         if not self.update_filter.match(item, attrs):
             return False
         new_item = dataclasses.replace(
-            item, **{k: v for k, v in dataclasses.asdict(updates) if v is not UNDEFINED}
+            item, **{k: v for k, v in dataclasses.asdict(updates).items() if v is not UNDEFINED}
         )
         return self.update_filter.match(new_item, attrs)
 

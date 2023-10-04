@@ -23,14 +23,10 @@ class RestrictAccessStore(FilteredStoreABC[T]):
     def get_meta(self) -> StoreMeta:
         store_meta = getattr(self, "_store_meta", None)
         if not store_meta:
-            from persisty.security.store_security import StoreSecurity
-
             store_meta = self.store.get_meta()
             store_meta = dataclasses.replace(
                 store_meta,
-                store_security=StoreSecurity(
-                    default_access=self.store_access, api_access=self.store_access
-                ),
+                store_access=self.store_access & store_meta.store_access,
             )
             setattr(self, "_store_meta", store_meta)
         return store_meta

@@ -47,17 +47,19 @@ actually persistant, and will reset after a server restart.
   ```
   query {
 	messageSearch{
-      results{
+    results{
+      item{
         id
-        text
+        messageText
         createdAt
         updatedAt
-		author{
+		    author{
           id
           emailAddress
         }
       }
-      nextPageKey
+    }
+    nextPageKey
     }
   }
   ```
@@ -65,5 +67,5 @@ actually persistant, and will reset after a server restart.
 ## Summary
 
 We have created 2 related entities with external access via REST and GraphQL, but there are no restrictions
-on access to them. In [the next step](../messager_2), we will add security constraints.
+on access to them. In [the next step](../messager_2), we will add security and integrity constraints.
 

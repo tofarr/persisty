@@ -3,11 +3,10 @@ from typing import Iterator, TypeVar, Generic
 
 from servey.action.action import Action
 
-_StoreABC = "persisty.store.store_abc.StoreABC"
-T = TypeVar("T")
+_StoreMeta = "persisty.store.store_meta.StoreMeta"
 
 
-class ActionFactoryABC(Generic[T], ABC):
+class ActionFactoryABC(ABC):
     @abstractmethod
-    def create_actions(self, store: _StoreABC) -> Iterator[Action]:
-        """Create actions for this store"""
+    def create_actions(self, store_meta: _StoreMeta) -> Iterator[Action]:
+        """Create actions for the store given """

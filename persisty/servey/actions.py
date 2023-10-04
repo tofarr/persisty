@@ -16,16 +16,14 @@ from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_factory import SearchFilterFactoryABC
 from persisty.search_order.search_order_factory import SearchOrderFactoryABC
 from persisty.servey import generated
-from persisty.store.store_abc import StoreABC
 from persisty.store_meta import get_meta, StoreMeta
 
 
 def action_for_create(
-    store: StoreABC,
+    store_meta: StoreMeta,
     result_type: Type,
     create_input_type: Type,
 ) -> Action:
-    store_meta = store.get_meta()
 
     @action(
         name=f"{store_meta.name}_create",
@@ -45,8 +43,7 @@ def action_for_create(
     return get_action(create)
 
 
-def action_for_read(store: StoreABC, result_type: Type) -> Action:
-    store_meta = store.get_meta()
+def action_for_read(store_meta: StoreMeta, result_type: Type) -> Action:
 
     @action(
         name=f"{store_meta.name}_read",
@@ -71,12 +68,11 @@ def action_for_read(store: StoreABC, result_type: Type) -> Action:
 
 
 def action_for_update(
-    store: StoreABC,
+    store_meta: StoreMeta,
     result_type: Type,
     update_input_type: Type,
     search_filter_type: Type[SearchFilterFactoryABC],
 ) -> Action:
-    store_meta = store.get_meta()
 
     @action(
         name=f"{store_meta.name}_update",
@@ -104,8 +100,7 @@ def action_for_update(
     return get_action(update)
 
 
-def action_for_delete(store: StoreABC) -> Action:
-    store_meta = store.get_meta()
+def action_for_delete(store_meta: StoreMeta) -> Action:
 
     @action(
         name=f"{store_meta.name}_delete",
@@ -126,13 +121,13 @@ def action_for_delete(store: StoreABC) -> Action:
 
 
 def action_for_search(
-    store: StoreABC,
+    store_meta: StoreMeta,
     result_type: Type,
     search_filter_type: Optional[Type[SearchFilterFactoryABC]],
     search_order_type: Type[SearchOrderFactoryABC],
 ) -> Action:
-    store_meta = store.get_meta()
-    item_name = store.get_meta().name.title().replace("_", "")
+
+    item_name = store_meta.name.title().replace("_", "")
     result_set_name = f"{item_name}ResultSet"
     # noinspection PyTypeChecker
     result_set_type = result_set_dataclass_for(result_type, result_set_name)
@@ -200,10 +195,9 @@ def action_for_search(
 
 
 def action_for_count(
-    store: StoreABC,
+    store_meta: StoreMeta,
     search_filter_type: Type[SearchFilterFactoryABC],
 ) -> Action:
-    store_meta = store.get_meta()
 
     @action(
         name=f"{store_meta.name}_count",
@@ -227,8 +221,7 @@ def action_for_count(
     return get_action(count)
 
 
-def action_for_read_batch(store: StoreABC, result_type: Type) -> Action:
-    store_meta = store.get_meta()
+def action_for_read_batch(store_meta: StoreMeta, result_type: Type) -> Action:
 
     @action(
         name=f"{store_meta.name}_read_batch",
@@ -251,11 +244,10 @@ def action_for_read_batch(store: StoreABC, result_type: Type) -> Action:
 
 
 def action_for_edit_batch(
-    store: StoreABC,
+    store_meta: StoreMeta,
     create_input_type: Type,
     update_input_type: Type,
 ) -> Action:
-    store_meta = store.get_meta()
     batch_edit_type = batch_edit_dataclass_for(
         store_meta.name.title() + "BatchEdit", create_input_type, update_input_type
     )

@@ -82,10 +82,9 @@ def stored(
                         f"unknown_label_attr:{label_attr_name}:{cls_.__name__}"
                     )
         else:
-            label_attr_names = tuple(
-                a.name for a in attrs_by_name.values() if a.attr_type == AttrType.STR
-            )
-            label_attr_names = label_attr_names[0:]
+            label_attr_name = next((a.name for a in attrs_by_name.values() if a.attr_type == AttrType.STR), None)
+            if label_attr_name:
+                label_attr_names = label_attr_name,
 
         # Make sure key attributes are not updatable...
         for attr_name in key_config.get_key_attrs():
@@ -101,7 +100,8 @@ def stored(
                         f"unknown_summary_attr:{summary_attr_name}:{cls_.__name__}"
                     )
         else:
-            summary_attr_names = tuple(attrs_by_name.keys())
+            # We prioritize the label attributes
+            summary_attr_names = label_attr_names
 
         from persisty.factory.store_factory import StoreFactory
         from persisty.servey.action_factory import ActionFactory

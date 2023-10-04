@@ -22,7 +22,7 @@ def result_dataclass_for(type_: Type[T]) -> Type[Result[T]]:
             "updatable": bool,
             "deletable": bool,
         },
-        "__doc__": f"Result of {type_.__name__}",
+        "__doc__": f"Result Object for {type_.__name__}",
     }
     type_name = f"{type_.__name__}Result"
     # noinspection PyTypeChecker
