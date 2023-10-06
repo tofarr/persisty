@@ -15,7 +15,7 @@ class AttrFilter(SearchFilterABC[T]):
     op: AttrFilterOp
     value: T
 
-    def lock_attrs(self, attrs: Tuple[Attr, ...]) -> SearchFilterABC:
+    def lock_attrs(self, attrs: Tuple[Attr, ...]):
         try:
             attr = next(attr for attr in attrs if attr.name == self.name)
             assert attr.readable and self.op in attr.permitted_filter_ops

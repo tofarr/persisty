@@ -69,9 +69,9 @@ class AttrFilterOp(Enum):
 
 FILTER_OPS = (
     AttrFilterOp.eq,
-    AttrFilterOp.exists,
+    #AttrFilterOp.exists,
     AttrFilterOp.ne,
-    AttrFilterOp.not_exists,
+    #AttrFilterOp.not_exists,
 )
 SORTABLE_FILTER_OPS = FILTER_OPS + (
     AttrFilterOp.gt,

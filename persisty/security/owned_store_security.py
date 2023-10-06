@@ -15,12 +15,14 @@ from persisty.security.store_security import UNSECURED
 from persisty.security.store_security_abc import StoreSecurityABC, T
 from persisty.store.attr_override_store import AttrOverrideStore
 from persisty.store.store_abc import StoreABC
+from persisty.util import UNDEFINED
 
 
 @dataclass
 class OwnedStoreSecurity(StoreSecurityABC[T]):
     store_security: StoreSecurityABC = UNSECURED
     subject_id_attr_name: str = "subject_id"
+    require_ownership_for_create: bool = True
     require_ownership_for_read: bool = False
     require_ownership_for_update: bool = True
     require_ownership_for_delete: bool = True
@@ -31,14 +33,31 @@ class OwnedStoreSecurity(StoreSecurityABC[T]):
         store = self.store_security.get_secured(store, authorization)
         store_access = self.get_store_access(store, authorization)
         store_access &= store.get_meta().store_access
+        if not authorization:
+            store_access &= StoreAccess(
+                create_filter=EXCLUDE_ALL if self.require_ownership_for_create else INCLUDE_ALL,
+                read_filter=EXCLUDE_ALL if self.require_ownership_for_read else INCLUDE_ALL,
+                update_filter=EXCLUDE_ALL if self.require_ownership_for_update else INCLUDE_ALL,
+                delete_filter=EXCLUDE_ALL if self.require_ownership_for_delete else INCLUDE_ALL,
+            )
         store = RestrictAccessStore(store, store_access)
+
+        if authorization:
+            attr = next(
+                attr for attr in store.get_meta().attrs
+                if attr.name == self.subject_id_attr_name
+            )
+            subject_id = attr.sanitize_type(authorization.subject_id)
+        else:
+            subject_id = UNDEFINED
+
         store = AttrOverrideStore(
             store=store,
             attr_name=self.subject_id_attr_name,
             creatable=False,
             updatable=False,
-            create_generator=DefaultValueGenerator(authorization.subject_id),
-            update_generator=DefaultValueGenerator(authorization.subject_id)
+            create_generator=DefaultValueGenerator(subject_id),
+            update_generator=DefaultValueGenerator(subject_id)
         )
         return store
 
