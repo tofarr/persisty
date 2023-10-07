@@ -4,6 +4,7 @@ from typing import Optional, Generic, TypeVar
 from servey.security.authorization import Authorization
 
 _StoreABC = "persisty.store.store_abc.StoreABC"
+_StoreMeta = "persisty.store_meta.StoreMeta"
 T = TypeVar("T")
 
 
@@ -19,9 +20,8 @@ class StoreSecurityABC(ABC, Generic[T]):
         """
 
     @abstractmethod
-    def get_api(self, store: _StoreABC) -> _StoreABC:
+    def get_api_meta(self, store_meta: _StoreMeta) -> _StoreMeta:
         """
         Get the api access - the max potential access for this store for apis.
         Used for generating actions and metadata.
         """
-

@@ -16,8 +16,7 @@ class ActionFactory(ActionFactoryABC):
     def create_actions(self, store_meta: StoreMeta) -> Iterator[Action]:
         from persisty.servey.actions import wrap_links_in_actions
 
-        api_store = store_meta.create_api_store()
-        store_meta = api_store.get_meta()
+        store_meta = store_meta.create_api_meta()
         access = store_meta.store_access
         item_type = wrap_links_in_actions(store_meta.get_read_dataclass())
         result_type = result_dataclass_for(item_type)

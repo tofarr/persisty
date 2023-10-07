@@ -24,7 +24,6 @@ def action_for_create(
     result_type: Type,
     create_input_type: Type,
 ) -> Action:
-
     @action(
         name=f"{store_meta.name}_create",
         description=f"Create and return an item in {store_meta.name}",
@@ -44,7 +43,6 @@ def action_for_create(
 
 
 def action_for_read(store_meta: StoreMeta, result_type: Type) -> Action:
-
     @action(
         name=f"{store_meta.name}_read",
         description=f"Read an item from {store_meta.name} given a key",
@@ -73,7 +71,6 @@ def action_for_update(
     update_input_type: Type,
     search_filter_type: Type[SearchFilterFactoryABC],
 ) -> Action:
-
     @action(
         name=f"{store_meta.name}_update",
         description=f"Update and return an item in {store_meta.name}",
@@ -101,7 +98,6 @@ def action_for_update(
 
 
 def action_for_delete(store_meta: StoreMeta) -> Action:
-
     @action(
         name=f"{store_meta.name}_delete",
         description=f"Delete an item in {store_meta.name}",
@@ -126,7 +122,6 @@ def action_for_search(
     search_filter_type: Optional[Type[SearchFilterFactoryABC]],
     search_order_type: Type[SearchOrderFactoryABC],
 ) -> Action:
-
     item_name = store_meta.name.title().replace("_", "")
     result_set_name = f"{item_name}ResultSet"
     # noinspection PyTypeChecker
@@ -198,7 +193,6 @@ def action_for_count(
     store_meta: StoreMeta,
     search_filter_type: Type[SearchFilterFactoryABC],
 ) -> Action:
-
     @action(
         name=f"{store_meta.name}_count",
         description=f"Get a count from {store_meta.name}",
@@ -222,7 +216,6 @@ def action_for_count(
 
 
 def action_for_read_batch(store_meta: StoreMeta, result_type: Type) -> Action:
-
     @action(
         name=f"{store_meta.name}_read_batch",
         description=f"Read a batch of items from {store_meta.name} given keys",

@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 from typing import Tuple, Optional
 
@@ -7,6 +8,7 @@ from persisty.security.named_permission import NamedPermission
 from persisty.security.store_access import StoreAccess, ALL_ACCESS, NO_ACCESS
 from persisty.security.store_security_abc import StoreSecurityABC, T
 from persisty.store.store_abc import StoreABC
+from persisty.store_meta import StoreMeta
 
 
 @dataclass(frozen=True)
@@ -43,12 +45,13 @@ class StoreSecurity(StoreSecurityABC[T]):
 
         return RestrictAccessStore(store, store_access & meta.store_access)
 
-    def get_api(self, store: StoreABC) -> StoreABC:
+    def get_api_meta(self, store_meta: StoreMeta) -> StoreMeta:
         if self.api_access == ALL_ACCESS:
-            return store
-        from persisty.security.restrict_access_store import RestrictAccessStore
-
-        return RestrictAccessStore(store, self.api_access & store.get_meta().store_access)
+            return store_meta
+        result = dataclasses.replace(
+            store_meta, store_access=self.api_access & store_meta.store_access
+        )
+        return result
 
 
 UNSECURED = StoreSecurity(ALL_ACCESS, tuple(), ALL_ACCESS)

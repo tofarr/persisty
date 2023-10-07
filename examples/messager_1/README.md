@@ -27,7 +27,8 @@ Javascript client side code (Which is handled in Part 3)
   constraints on attributes and relations:
   * [User](messager/store/user.py)
   * [Message](messager/store/message.py)
-* `add_actions_for_all_stores` is called from [the actions module](messager/actions/__init__.py)
+* Actions for these stores are added to servey automatically using the
+  [StoreActionFinder](persisty/finder/store_action_finder) which is registered using marshy.
   These will be used to provide CRUD, search, and batch edit operations externally via
   REST / GraphQL.
 * We add some seed data for testing in seeds:

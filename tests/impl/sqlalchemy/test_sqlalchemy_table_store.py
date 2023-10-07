@@ -28,7 +28,7 @@ class TestSqlalchemyTableStore(TestCase, StoreTstABC):
 
     def new_super_bowl_results_store(self) -> StoreABC:
         store_meta = get_meta(SuperBowlResult)
-        factory = SqlalchemyTableStoreFactory(self.context)
+        factory = SqlalchemyTableStoreFactory(self.context, triggers=False)
         store = factory.create(store_meta)
         number_names = (
             {**r.__dict__, "result_date": r.result_date} for r in SUPER_BOWL_RESULTS
@@ -38,7 +38,7 @@ class TestSqlalchemyTableStore(TestCase, StoreTstABC):
 
     def new_number_name_store(self) -> StoreABC:
         store_meta = get_meta(NumberName)
-        factory = SqlalchemyTableStoreFactory(self.context)
+        factory = SqlalchemyTableStoreFactory(self.context, triggers=False)
         store = factory.create(store_meta)
         number_names = (
             {
@@ -54,14 +54,14 @@ class TestSqlalchemyTableStore(TestCase, StoreTstABC):
 
     def new_author_store(self) -> StoreABC:
         store_meta = get_meta(Author)
-        factory = SqlalchemyTableStoreFactory(self.context)
+        factory = SqlalchemyTableStoreFactory(self.context, triggers=False)
         store = factory.create(store_meta)
         self.seed_table(store_meta, AUTHOR_DICTS)
         return store
 
     def new_book_store(self) -> StoreABC:
         store_meta = get_meta(Book)
-        factory = SqlalchemyTableStoreFactory(self.context)
+        factory = SqlalchemyTableStoreFactory(self.context, triggers=False)
         store = factory.create(store_meta)
         self.seed_table(store_meta, BOOK_DICTS)
         return store
