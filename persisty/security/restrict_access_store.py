@@ -1,6 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Iterator, Iterable, Union, List
 
 from persisty.errors import PersistyError
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
@@ -55,6 +55,22 @@ class RestrictAccessStore(FilteredStoreABC[T]):
     def filter_read(self, item: T) -> Optional[T]:
         if self.store_access.item_readable(item, self.get_meta().attrs):
             return item
+
+    def read_batch(self, keys: List[str]) -> List[Optional[T]]:
+        read_filter = self.store_access.read_filter
+        if read_filter is EXCLUDE_ALL:
+            return [None for _ in keys]
+        attrs = self.get_meta().attrs
+        results = self.store.read_batch(keys)
+        results = [r if read_filter.match(r, attrs) else None for r in results]
+        return results
+
+    def read_all(
+        self, keys: Union[Iterator[str], Iterable[str]]
+    ) -> Iterator[Optional[T]]:
+        if self.store_access.read_filter is EXCLUDE_ALL:
+            return (None for _ in keys)
+        return StoreABC.read_all(self, keys)
 
     # noinspection PyUnusedLocal
     def allow_delete(self, item: T) -> bool:
