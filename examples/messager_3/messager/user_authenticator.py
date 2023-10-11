@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional
 
 import bcrypt
-from persisty.store.store_abc import get_store
+from persisty.store_meta import get_meta
 
 from servey.security.authenticator.password_authenticator_abc import (
     PasswordAuthenticatorABC,
@@ -18,8 +18,8 @@ class UserAuthenticator(PasswordAuthenticatorABC):
 
     def authenticate(self, username: str, password: str) -> Optional[Authorization]:
         from messager.store.user import User
-
-        user_store = get_store(User)
+        user_meta = get_meta(User)
+        user_store = user_meta.create_store()
 
         for item in user_store.search_all(
             AttrFilter("username", AttrFilterOp.eq, username)
