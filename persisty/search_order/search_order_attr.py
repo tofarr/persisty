@@ -1,4 +1,4 @@
-from typing import Any, Tuple, Iterator, Generic, TypeVar
+from typing import Any, Tuple, Generic, TypeVar, List
 
 from dataclasses import dataclass
 
@@ -19,7 +19,7 @@ class SearchOrderAttr(Generic[T]):
                 return
         raise ValueError(f"search_order_invalid:{self.attr}")
 
-    def sort(self, items: Iterator[T]) -> Iterator[T]:
+    def sort(self, items: List[T]) -> List[T]:
         items = sorted(items, key=self.key, reverse=self.desc)
         return items
 

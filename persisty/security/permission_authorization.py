@@ -3,9 +3,9 @@ from typing import Optional, Tuple
 
 from servey.security.authorization import Authorization
 
-from persisty.security.permission import Permission
+from persisty.security.named_permission import NamedPermission
 
 
 @dataclass(frozen=True)
 class PermissionAuthorization(Authorization):
-    permissions: Optional[Tuple[Permission, ...]]
+    stores_permissions: Optional[Tuple[NamedPermission, ...]]

@@ -18,11 +18,14 @@ from persisty.attr.generator.defaults import (
     get_default_generator_for_update,
 )
 from persisty.errors import PersistyError
+from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
-from persisty.store_access import StoreAccess, ALL_ACCESS
+from persisty.security.store_access import ALL_ACCESS, StoreAccess
+from persisty.security.store_security_abc import StoreSecurityABC
+from persisty.servey.action_factory_abc import ActionFactoryABC
 from persisty.store_meta import StoreMeta
 from persisty.util import to_snake_case
 from persisty.util.undefined import UNDEFINED
@@ -32,13 +35,16 @@ def stored(
     cls=None,
     *,
     key_config: Optional[KeyConfigABC] = None,
-    store_access: StoreAccess = ALL_ACCESS,
+    store_access: Optional[StoreAccess] = ALL_ACCESS,
+    store_security: Optional[StoreSecurityABC] = None,
     cache_control: Optional[CacheControlABC] = None,
     batch_size: int = 100,
     schema_context: Optional[SchemaContext] = None,
     indexes: Tuple[IndexABC, ...] = tuple(),
     label_attr_names: Optional[Tuple[str, ...]] = None,
     summary_attr_names: Optional[Tuple[str, ...]] = None,
+    store_factory: Optional[StoreFactoryABC] = None,
+    action_factory: Optional[ActionFactoryABC] = None,
 ):
     """Decorator inspired by dataclasses, containing stored meta."""
     if schema_context is None:
@@ -46,7 +52,8 @@ def stored(
 
     # pylint: disable=R0912,R0914
     def wrapper(cls_):
-        nonlocal key_config, cache_control, batch_size, indexes, label_attr_names, summary_attr_names
+        nonlocal key_config, cache_control, batch_size, indexes, label_attr_names
+        nonlocal summary_attr_names, store_factory, action_factory
         links_by_name = {}
         attrs_by_name = {}
         key_config, cache_control, batch_size, indexes = _derive_args(
@@ -58,8 +65,8 @@ def stored(
             attrs_by_name,
             links_by_name,
         )
-        cls_dict = cls_.__dict__
-        annotations = cls_dict.get("__annotations__") or {}
+        cls_dict = _get_cls_dict_with_super(cls_)
+        annotations = _get_cls_annotations_with_super(cls_)
         attrs_by_name = _derive_attrs(annotations, cls_dict, schema_context)
 
         for name, value in cls_dict.items():
@@ -75,10 +82,12 @@ def stored(
                         f"unknown_label_attr:{label_attr_name}:{cls_.__name__}"
                     )
         else:
-            label_attr_names = tuple(
-                a.name for a in attrs_by_name.values() if a.attr_type == AttrType.STR
+            label_attr_name = next(
+                (a.name for a in attrs_by_name.values() if a.attr_type == AttrType.STR),
+                None,
             )
-            label_attr_names = label_attr_names[0:]
+            if label_attr_name:
+                label_attr_names = (label_attr_name,)
 
         # Make sure key attributes are not updatable...
         for attr_name in key_config.get_key_attrs():
@@ -94,13 +103,20 @@ def stored(
                         f"unknown_summary_attr:{summary_attr_name}:{cls_.__name__}"
                     )
         else:
-            summary_attr_names = tuple(attrs_by_name.keys())
+            # We prioritize the label attributes
+            summary_attr_names = label_attr_names
 
+        from persisty.factory.store_factory import StoreFactory
+        from persisty.servey.action_factory import ActionFactory
+        from persisty.security.store_security import UNSECURED
+
+        # noinspection PyTypeChecker
         store_meta = StoreMeta(
             name=to_snake_case(cls_.__name__),
             attrs=tuple(attrs_by_name.values()),
             key_config=key_config,
             store_access=store_access,
+            store_security=store_security or UNSECURED,
             cache_control=cache_control,
             batch_size=batch_size,
             description=cls_.__doc__,
@@ -108,6 +124,9 @@ def stored(
             indexes=indexes,
             label_attr_names=label_attr_names,
             summary_attr_names=summary_attr_names,
+            store_factory=store_factory or StoreFactory(),
+            action_factory=action_factory or ActionFactory(),
+            class_functions=_get_class_functions(cls_dict),
         )
         result = store_meta.get_stored_dataclass()
         return result
@@ -234,3 +253,31 @@ def _derive_attrs(
         )
         attrs_by_name[name] = attr
     return attrs_by_name
+
+
+def _get_cls_dict_with_super(cls: Type):
+    result = {}
+    for c in reversed(cls.mro()[:-1]):
+        for k, v in c.__dict__.items():
+            if not k.startswith("__"):
+                result[k] = v
+    return result
+
+
+def _get_cls_annotations_with_super(cls: Type) -> Dict[str, Type]:
+    result = {}
+    for c in reversed(cls.mro()[:-1]):
+        annotations = c.__dict__.get("__annotations__") or {}
+        result.update(annotations)
+    return result
+
+
+def _get_class_functions(cls_dict: Dict):
+    results = []
+    for value in cls_dict.values():
+        if callable(value):
+            results.append(value)
+        if isinstance(value, property):
+            # I am doing this to prevent muddying the waters
+            raise PersistyError("stored_classes_do_not_support_properties")
+    return tuple(results)

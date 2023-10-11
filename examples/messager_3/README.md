@@ -27,6 +27,11 @@ many client side frameworks.
 * Login with `admin` / `Password123!` ![Login](readme/login.png)
 * The Main UI should allow viewing and posting messages ![Main UI](readme/main_ui.png)
 
+## Alternatives
+
+The [`Ewey`](https://github.com/tofarr/ewey) project provides a way of auto generating a UI
+based on an OpenApi Schema
+
 ## Summary
 
 We now have an API with a UI which may be viewed in browsers. It still doesn't actually

@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Type
 
 from boto3.dynamodb.types import TypeDeserializer
-from marshy import ExternalType, get_default_context
+from marshy import get_default_context
 from marshy.marshaller.marshaller_abc import MarshallerABC
 from marshy.marshaller_context import MarshallerContext
 from marshy.types import ExternalItemType
@@ -36,7 +36,7 @@ class DynamodbPostProcessEventHandler(EventHandlerABC):
         except Exception:
             return False
 
-    def handle(self, event: ExternalItemType, context) -> ExternalType:
+    def handle(self, event: ExternalItemType, context):
         deserializer = TypeDeserializer()
         for record in event["Records"]:
             # noinspection PyTypeChecker

@@ -4,7 +4,7 @@ from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 
 from persisty.attr.attr import Attr
-from persisty.index import Index
+from persisty.index.unique_index import UniqueIndex
 from persisty.key_config.attr_key_config import ATTR_KEY_CONFIG, AttrKeyConfig
 from persisty.store_meta import StoreMeta
 from persisty.stored import stored

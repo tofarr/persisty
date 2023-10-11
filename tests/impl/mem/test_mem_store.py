@@ -19,34 +19,33 @@ from tests.fixtures.super_bowl_results import (
 
 
 class TestMemStore(TestCase, StoreTstABC):
+    def setUp(self) -> None:
+        self.cache = {}
+
     def new_super_bowl_results_store(self) -> StoreABC:
         factory = MemStoreFactory(
-            get_meta(SuperBowlResult),
             {r.code: dataclasses.replace(r) for r in SUPER_BOWL_RESULTS},
         )
-        return factory.create()
+        return factory.create(get_meta(SuperBowlResult))
 
     def new_number_name_store(self) -> StoreABC:
         # noinspection PyTypeChecker
         factory = MemStoreFactory(
-            get_meta(NumberName),
             {str(r.id): dataclasses.replace(r) for r in NUMBER_NAMES},
         )
-        return factory.create()
+        return factory.create(get_meta(NumberName))
 
     def new_author_store(self) -> StoreABC:
         factory = MemStoreFactory(
-            get_meta(Author),
             {str(r.id): dataclasses.replace(r) for r in AUTHORS},
         )
-        return factory.create()
+        return factory.create(get_meta(Author))
 
     def new_book_store(self) -> StoreABC:
         factory = MemStoreFactory(
-            get_meta(Book),
             {str(r.id): dataclasses.replace(r) for r in BOOKS},
         )
-        return factory.create()
+        return factory.create(get_meta(Book))
 
     def test_search_all_sorted(self):
         store = self.new_super_bowl_results_store()
@@ -66,7 +65,7 @@ class TestMemStore(TestCase, StoreTstABC):
         )
 
     def test_mem_store_no_dict(self):
-        store = MemStoreFactory(get_meta(NumberName)).create()
+        store = MemStoreFactory().create(get_meta(NumberName))
         created = store.create(NumberName(num_value=1, title="One"))
         loaded = store.read(str(created.id))
         self.assertEqual(loaded, created)
@@ -114,6 +113,3 @@ class TestMemStore(TestCase, StoreTstABC):
         with self.assertRaises(PersistyError):
             store.update(NumberName(title="foobar"))
         self.assertEqual(0, store.count())
-
-    def test_foobar(self):
-        self.test_link_read()

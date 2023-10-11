@@ -18,9 +18,7 @@ class AttrKeyConfig(KeyConfigABC[T]):
 
     def to_key_str(self, item: T) -> str:
         value = getattr(item, self.attr_name)
-        if not isinstance(value, str):
-            if value in (None, UNDEFINED):
-                raise PersistyError("invalid_key")
+        if not isinstance(value, str) and value not in (None, UNDEFINED):
             value = str(value)
         return value
 

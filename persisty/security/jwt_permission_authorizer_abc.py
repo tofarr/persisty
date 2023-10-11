@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Optional, List
+from typing import Optional, Tuple
 
 import marshy
 from marshy.types import ExternalItemType
@@ -9,7 +9,7 @@ from servey.security.authorizer.jwt_authorizer_abc import (
     date_from_jwt,
 )
 
-from persisty.security.permission import Permission
+from persisty.security.named_permission import NamedPermission
 from persisty.security.permission_authorization import PermissionAuthorization
 
 
@@ -25,15 +25,15 @@ class JwtPermissionAuthorizerABC(JwtAuthorizerABC, ABC):
             not_before=date_from_jwt(decoded, "nbf"),
             expire_at=date_from_jwt(decoded, "exp"),
             scopes=frozenset(scopes),
-            permissions=marshy.load(
-                Optional[List[Permission]], decoded.get("permissions")
+            stores_permissions=marshy.load(
+                Optional[Tuple[NamedPermission, ...]], decoded.get("permissions")
             ),
         )
         return authorization
 
     @staticmethod
     def payload_from_authorization(authorization: Authorization, iss: str, aud: str):
-        payload = super().payload_from_authorization(authorization, iss, aud)
+        payload = JwtAuthorizerABC.payload_from_authorization(authorization, iss, aud)
         permissions = getattr(authorization, "permissions", None)
         if permissions:
             payload["permissions"] = marshy.dump(permissions)

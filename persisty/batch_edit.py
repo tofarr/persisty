@@ -41,5 +41,6 @@ def batch_edit_dataclass_for(
         "update_item": None,
         "delete_key": None,
     }
+    # noinspection PyTypeChecker
     type_ = dataclass(type(type_name, (), params))
     return type_

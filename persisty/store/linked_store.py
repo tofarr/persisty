@@ -5,6 +5,7 @@ from servey.security.authorization import Authorization
 
 from persisty.batch_edit import BatchEdit
 from persisty.batch_edit_result import BatchEditResult
+from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.store.store_abc import StoreABC
 from persisty.store.wrapper_store_abc import WrapperStoreABC, T
 
@@ -93,3 +94,11 @@ class LinkedStore(WrapperStoreABC[T]):
                 item = items_by_key[edit.delete_key]
                 for link in self.get_meta().links:
                     link.before_delete(item)
+
+    def update_all(self, search_filter: SearchFilterABC[T], updates: T):
+        StoreABC.update_all(
+            self, search_filter, updates
+        )  # Ensure data is loaded for checking
+
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        StoreABC.delete_all(self, search_filter)  # Ensure data is loaded for checking

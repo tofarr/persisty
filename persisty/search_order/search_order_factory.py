@@ -38,5 +38,6 @@ def search_order_dataclass_for(
         "desc": False,
     }
     name = f"{to_camel_case(store_meta.name)}SearchOrder"
+    # noinspection PyTypeChecker
     type_ = dataclass(type(name, (SearchOrderFactoryABC,), params))
     return type_

@@ -14,7 +14,6 @@ from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.attr_filter_op import AttrFilterOp
 from persisty.batch_edit import BatchEdit
 from persisty.errors import PersistyError
-from persisty.factory.default_store_factory import DefaultStoreFactory
 from persisty.result_set import ResultSet
 from persisty.search_filter.filter_factory import filter_factory
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
@@ -22,7 +21,6 @@ from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
 from persisty.search_order.search_order_attr import SearchOrderAttr
 from persisty.store.store_abc import StoreABC, T
-from persisty.util.undefined import UNDEFINED
 from tests.fixtures.super_bowl_results import SUPER_BOWL_RESULTS, SuperBowlResult
 from tests.fixtures.number_name import NumberName, NUMBER_NAMES
 from tests.fixtures.book import BOOKS
@@ -331,7 +329,7 @@ class StoreTstABC(ABC):
         self.assertEqual(1, num)
 
     def test_count_custom_filter(self):
-        @dataclass
+        @dataclass(frozen=True)
         class StrLenFilter(SearchFilterABC[T]):
             attr_name: str
             required_length: int
@@ -595,23 +593,19 @@ class StoreTstABC(ABC):
     def test_link_read(self):
         author_store = self.new_author_store()
         book_store = self.new_book_store()
-        author_store.get_meta().links[0].linked_store_factory = DefaultStoreFactory(
-            book_store
-        )
-        book_store.get_meta().links[0].linked_store_factory = DefaultStoreFactory(
-            author_store
-        )
+        # We forcibly inject the meta here...
+        author_store.get_meta().links[0].linked_store_meta = book_store.get_meta()
+        book_store.get_meta().links[0].linked_store_meta = author_store.get_meta()
+        author_store.get_meta().store_factory.cache["author"] = author_store
+        book_store.get_meta().store_factory.cache["book"] = book_store
         mary_shelley = author_store.read("2")
         assert mary_shelley is not None
         books = mary_shelley.books()
         expected_books = ResultSet([BOOKS[2]])
         self.assertEqual(expected_books, books)
 
-    def test_link_delete(self):
-        assert False
 
-
-@dataclass
+@dataclass(frozen=True)
 class ValueLessThanFilter(SearchFilterABC[T]):
     """
     Custom filter for testing - in reality you would use a AttrFilter

@@ -5,20 +5,20 @@ from servey.security.authorization import Authorization
 
 from persisty.attr.attr_filter import AttrFilter, AttrFilterOp
 from persisty.errors import PersistyError
-from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
+from persisty.store_meta import StoreMeta
 from persisty.util import to_snake_case, UNDEFINED
 
 
 @dataclass
 class HasCountCallable:
-    store_factory: StoreFactoryABC
+    store_meta: StoreMeta
     search_filter: SearchFilterABC
 
     def __call__(self, authorization: Optional[Authorization] = None) -> int:
-        store = self.store_factory.create(authorization)
+        store = self.store_meta.create_secured_store(authorization)
         count = store.count(search_filter=self.search_filter)
         return count
 
@@ -35,7 +35,7 @@ class HasCount(LinkedStoreABC):
         else:
             search_filter = AttrFilter(self.remote_key_attr_name, AttrFilterOp.eq, key)
         return HasCountCallable(
-            store_factory=self.get_linked_store_factory(),
+            store_meta=self.get_linked_store_meta(),
             search_filter=search_filter,
         )
 

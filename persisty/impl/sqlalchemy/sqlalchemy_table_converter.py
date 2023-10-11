@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import os
 from dataclasses import dataclass, field
 from typing import Dict, Iterator, List, Tuple
 
@@ -18,13 +19,18 @@ from persisty.store_meta import StoreMeta
 from persisty.util import secure_hash
 
 
+def is_using_sql_native_constraints():
+    return os.environ.get("PERSISTY_SQL_NATIVE_CONSTRAINTS") != "0"
+
+
 @dataclass
 class SqlalchemyTableConverter:
-    """Converter for storemeta to / from sqlalchemy tables"""
+    """Converter for store meta to / from sqlalchemy tables"""
 
     engine: Engine
     metadata: MetaData
     schema: Dict[str, StoreMeta] = field(default_factory=dict)
+    native_constraints: bool = field(default_factory=is_using_sql_native_constraints)
 
     # pylint: disable=R0914
     def to_sqlalchemy_table_and_indexes(
@@ -62,8 +68,9 @@ class SqlalchemyTableConverter:
             index_obj = Index(name, *index_cols, unique=unique)
             indexes.append(index_obj)
 
-        constraint_factory = SqlalchemyConstraintConverter(self.schema)
-        args.extend(constraint_factory.get_foreign_key_constraints(store_meta))
+        if self.native_constraints:
+            constraint_factory = SqlalchemyConstraintConverter(self.schema)
+            args.extend(constraint_factory.get_foreign_key_constraints(store_meta))
         table = Table(*args)
         return table, indexes
 

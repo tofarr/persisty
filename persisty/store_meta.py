@@ -1,25 +1,59 @@
-import dataclasses
-from dataclasses import dataclass
+from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Optional, Tuple, Type, TypeVar, Dict, Set, Iterable
+from typing import (
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Dict,
+    Set,
+    Iterable,
+    Callable,
+    Union,
+    FrozenSet,
+)
 
 from marshy.factory.dataclass_marshaller_factory import dataclass_marshaller
 from marshy.marshaller_context import MarshallerContext
 from schemey import SchemaContext, Schema
 from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
+from servey.security.authorization import Authorization
 
 from persisty.attr.attr import Attr
 from persisty.index.index_abc import IndexABC
 from persisty.key_config.attr_key_config import ATTR_KEY_CONFIG
 from persisty.key_config.key_config_abc import KeyConfigABC
 from persisty.link.link_abc import LinkABC
-from persisty.store_access import StoreAccess, ALL_ACCESS
+from persisty.search_filter.exclude_all import EXCLUDE_ALL
+from persisty.security.store_access import ALL_ACCESS, StoreAccess
+from persisty.security.store_security_abc import StoreSecurityABC
+from persisty.servey.action_factory_abc import ActionFactoryABC
 
 from persisty.util import to_camel_case
 from persisty.util.undefined import UNDEFINED
 
 T = TypeVar("T")
+_StoreFactoryABC = "persisty.security.store_factory_abc.StoreFactoryABC"
+_StoreABC = "persisty.security.store_abc.StoreABC"
+
+
+def _default_store_factory():
+    from persisty.factory.store_factory import StoreFactory
+
+    return StoreFactory()
+
+
+def _default_action_factory():
+    from persisty.servey.action_factory import ActionFactory
+
+    return ActionFactory()
+
+
+def _default_store_security():
+    from persisty.security.store_security import UNSECURED
+
+    return UNSECURED
 
 
 # pylint: disable=R0902
@@ -33,6 +67,7 @@ class StoreMeta:
     attrs: Tuple[Attr, ...]
     key_config: KeyConfigABC = ATTR_KEY_CONFIG
     store_access: StoreAccess = ALL_ACCESS
+    store_security: StoreSecurityABC = field(default_factory=_default_store_security)
     cache_control: CacheControlABC = SecureHashCacheControl()
     batch_size: int = 100
     description: Optional[str] = None
@@ -40,6 +75,9 @@ class StoreMeta:
     indexes: Tuple[IndexABC, ...] = tuple()
     label_attr_names: Tuple[str, ...] = tuple()
     summary_attr_names: Tuple[str, ...] = tuple()
+    store_factory: _StoreFactoryABC = field(default_factory=_default_store_factory)
+    action_factory: ActionFactoryABC = (field(default_factory=_default_action_factory),)
+    class_functions: Tuple[Callable, ...] = tuple()
 
     def get_stored_dataclass(self) -> Type:
         return self._get_dataclass(
@@ -129,7 +167,7 @@ class StoreMeta:
         name: str,
         attrs: Iterable[Attr],
         links: Optional[Tuple[LinkABC, ...]] = None,
-        required_attr_names: Optional[Set[str]] = None,
+        required_attr_names: Union[type(None), Set[str], FrozenSet[str]] = None,
     ) -> Optional[Type]:
         result = getattr(self, attr_name, None)
         if result is None:
@@ -143,6 +181,8 @@ class StoreMeta:
                 if not required_attr_names or attr.name not in required_attr_names:
                     params[attr.name] = attr.to_field(False)
                     annotations[attr.name] = attr.schema.python_type
+            for class_function in self.class_functions:
+                params[getattr(class_function, "__name__", None)] = class_function
             if annotations:
                 if links:
                     for link in links:
@@ -153,11 +193,25 @@ class StoreMeta:
                 params["__schema_factory__"] = _schema_factory
                 params["__marshaller_factory__"] = _marshaller_factory
                 params["__eq__"] = _eq
+                # noinspection PyTypeChecker
                 result = dataclass(type(name, tuple(), params))
             else:
                 result = None
             setattr(self, attr_name, result)
         return result
+
+    def create_store(self) -> _StoreABC:
+        store = self.store_factory.create(self)
+        return store
+
+    def create_api_store(self) -> _StoreABC:
+        store = self.create_store()
+        store = self.store_security.get_api(store)
+        return store
+
+    def create_secured_store(self, authorization: Optional[Authorization]) -> _StoreABC:
+        store = self.store_security.get_secured(self.create_store(), authorization)
+        return store
 
 
 def get_meta(type_: Type) -> Optional[StoreMeta]:
@@ -196,39 +250,27 @@ def _schema_factory(
     schema = {
         "name": cls.__name__,
         "type": "object",
-        "properties": {
-            f.name: f.metadata.get("schemey").schema for f in dataclasses.fields(cls)
-        },
+        "properties": {f.name: f.metadata.get("schemey").schema for f in fields(cls)},
         "additionalProperties": False,
     }
-    required = [f.name for f in dataclasses.fields(cls) if f.default is not UNDEFINED]
+    required = [f.name for f in fields(cls) if f.default is not UNDEFINED]
     if required:
         schema["required"] = required
     if cls.__doc__:
         schema["description"] = cls.__doc__.strip()
     store_meta = get_meta(cls)
-    schema["label_attr_names"] = [
-        f.name for f in dataclasses.fields(cls) if f.name in store_meta.label_attr_names
-    ]
-    schema["summary_attr_names"] = [
-        f.name
-        for f in dataclasses.fields(cls)
-        if f.name in store_meta.summary_attr_names
-    ]
+    schema["persistyStored"] = {
+        "store_name": store_meta.name,
+        "creatable": store_meta.store_access.create_filter is not EXCLUDE_ALL,
+        "label_attr_names": [
+            f.name for f in fields(cls) if f.name in store_meta.label_attr_names
+        ],
+        "summary_attr_names": [
+            f.name for f in fields(cls) if f.name in store_meta.summary_attr_names
+        ],
+    }
     for link in store_meta.links:
         link.update_json_schema(schema)
-    missing_key_attr = next(
-        (
-            k
-            for k in store_meta.key_config.get_key_attrs()
-            if k not in schema["properties"]
-        ),
-        None,
-    )
-    if not missing_key_attr:
-        schema["key_config"] = context.marshaller_context.dump(
-            store_meta.key_config, KeyConfigABC
-        )
     schema = Schema(schema, cls)
     return schema
 

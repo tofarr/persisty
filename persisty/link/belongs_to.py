@@ -9,20 +9,21 @@ from servey.security.authorization import Authorization
 from persisty.attr.attr import Attr, DEFAULT_PERMITTED_FILTER_OPS
 from persisty.attr.attr_type import AttrType
 from persisty.attr.generator.default_value_generator import DefaultValueGenerator
-from persisty.factory.store_factory_abc import StoreFactoryABC
+from persisty.link.inbound_link import InboundLink
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.link.on_delete import OnDelete
+from persisty.store_meta import StoreMeta
 
 T = TypeVar("T")
 
 
 class BelongsToCallable(Generic[T]):
-    def __init__(self, key: str, store_factory: StoreFactoryABC):
+    def __init__(self, key: str, store_meta: StoreMeta):
         self.key = key
-        self.store_factory = store_factory
+        self.store_meta = store_meta
 
     def __call__(self, authorization: Optional[Authorization] = None) -> Optional[T]:
-        store = self.store_factory.create(authorization)
+        store = self.store_meta.create_secured_store(authorization)
         item = store.read(self.key)
         return item
 
@@ -32,7 +33,7 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
     name: Optional[str] = None
     key_attr_name: Optional[str] = None
     optional: Optional[bool] = None
-    on_delete: OnDelete = OnDelete.BLOCK
+    on_delete: OnDelete = OnDelete.IGNORE
 
     def get_name(self) -> str:
         return self.name
@@ -63,7 +64,7 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
     def __get__(self, obj, obj_type) -> BelongsToCallable[T]:
         return BelongsToCallable(
             key=getattr(obj, self.key_attr_name),
-            store_factory=self.get_linked_store_factory(),
+            store_meta=self.get_linked_store_meta(),
         )
 
     def update_attrs(self, attrs_by_name: Dict[str, Attr]):
@@ -89,3 +90,6 @@ class BelongsTo(LinkedStoreABC, Generic[T]):
             "linked_store_name": self.get_linked_store_name(),
             "on_delete": marshy.dump(self.on_delete),
         }
+
+    def get_inbound_links(self, store_meta: StoreMeta) -> List[InboundLink]:
+        return [InboundLink(store_meta, self.key_attr_name, self.on_delete)]

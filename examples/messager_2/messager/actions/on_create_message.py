@@ -2,7 +2,7 @@ from servey.action.action import action
 
 from persisty.trigger.after_create_trigger import AfterCreateTrigger
 
-from messager.models.message import Message
+from messager.store.message import Message
 
 
 # noinspection PyUnresolvedReferences

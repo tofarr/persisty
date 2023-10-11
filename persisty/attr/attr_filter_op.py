@@ -18,15 +18,15 @@ def _lte(a, b):
 
 
 def _contains(a, b):
-    return str(b) in str(a)
+    return str(b).lower() in str(a).lower()
 
 
 def _startswith(a, b):
-    return str(a).startswith(str(b))
+    return str(a).lower().startswith(str(b).lower())
 
 
 def _endswith(a, b):
-    return str(a).endswith(str(b))
+    return str(a).lower().endswith(str(b).lower())
 
 
 def _oneof(a, b):
@@ -69,9 +69,9 @@ class AttrFilterOp(Enum):
 
 FILTER_OPS = (
     AttrFilterOp.eq,
-    AttrFilterOp.exists,
+    # AttrFilterOp.exists,
     AttrFilterOp.ne,
-    AttrFilterOp.not_exists,
+    # AttrFilterOp.not_exists,
 )
 SORTABLE_FILTER_OPS = FILTER_OPS + (
     AttrFilterOp.gt,

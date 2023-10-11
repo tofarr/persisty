@@ -1,13 +1,14 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Optional, ForwardRef, Union, Type
+from typing import Optional, ForwardRef, Union, Type, List
 
 import typing_inspect
 from servey.security.authorization import Authorization
 
-from persisty.factory.store_factory_abc import StoreFactoryABC
-from persisty.finder.store_finder_abc import find_store_factories
+from persisty.finder.store_meta_finder_abc import find_store_meta_by_name
+from persisty.link.inbound_link import InboundLink
 from persisty.link.link_abc import LinkABC
+from persisty.store_meta import StoreMeta
 from persisty.util import to_snake_case
 
 
@@ -16,7 +17,7 @@ class LinkedStoreABC(LinkABC, ABC):
     linked_store_type: Union[Type, str, ForwardRef, None] = None
     name: Optional[str] = None  # Allows None so __set_name__ can exist
     linked_store_name: Optional[str] = None
-    linked_store_factory: Optional[StoreFactoryABC] = None
+    linked_store_meta: Optional[StoreMeta] = None
 
     def get_linked_store_name(self):
         linked_store_name = self.linked_store_name
@@ -29,17 +30,18 @@ class LinkedStoreABC(LinkABC, ABC):
             linked_store_name = to_snake_case(linked_type)
         return linked_store_name
 
-    def get_linked_store_factory(self):
-        linked_store_factory = self.linked_store_factory
-        if not linked_store_factory:
-            linked_store_factory = next(
-                f
-                for f in find_store_factories()
-                if f.get_meta().name == self.get_linked_store_name()
-            )
-            self.linked_store_factory = linked_store_factory
-        return linked_store_factory
+    def get_linked_store_meta(self):
+        linked_store_meta = self.linked_store_meta
+        if not linked_store_meta:
+            linked_store_meta = find_store_meta_by_name(self.get_linked_store_name())
+            self.linked_store_meta = linked_store_meta
+        return linked_store_meta
 
     def get_linked_store(self, authorization: Optional[Authorization] = None):
-        store = self.get_linked_store_factory().create(authorization)
+        store_meta = self.get_linked_store_meta()
+        store = store_meta.create_secured_store(authorization)
         return store
+
+    # pylint: disable=W0613
+    def get_inbound_links(self, store_meta: StoreMeta) -> List[InboundLink]:
+        return []

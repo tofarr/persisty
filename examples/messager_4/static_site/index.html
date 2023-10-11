@@ -125,7 +125,8 @@
     </style>
     <script type="text/javascript">
 
-        function renderMessage(message){
+        function renderMessage(result){
+            const message = result.item
             const element = document.createElement('div')
             element.innerHTML = `
                 <div class="messageAuthor"></div>
@@ -135,7 +136,7 @@
             element.className = 'message'
             element.getElementsByClassName("messageAuthor")[0].appendChild(document.createTextNode(message.author.username))
             element.getElementsByClassName("messageCreatedAt")[0].appendChild(document.createTextNode(new Date(message.createdAt).toLocaleString()))
-            element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.text))
+            element.getElementsByClassName("messageBody")[0].appendChild(document.createTextNode(message.messageText))
             const messageContent= document.createElement('div')
             messageContent.className = 'messageContent'
             return element
@@ -153,13 +154,15 @@
                       query($pageKey: String) {
                         messageSearch(pageKey: $pageKey, limit: 10, searchOrder: { attr:updated_at, desc: true}) {
                           nextPageKey
-                        results{
-                            id
-                            messageText
-                            createdAt
-                            author{
+                          results{
+                            item{
                               id
-                              username
+                              messageText
+                              createdAt
+                              author{
+                                id
+                                username
+                              }
                             }
                           }
                         }

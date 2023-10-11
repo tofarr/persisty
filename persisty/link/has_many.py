@@ -6,11 +6,11 @@ from servey.security.authorization import Authorization
 
 from persisty.attr.attr_filter import AttrFilter, AttrFilterOp
 from persisty.errors import PersistyError
-from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.link.linked_store_abc import LinkedStoreABC
 from persisty.result_set import ResultSet
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.search_order.search_order import SearchOrder
+from persisty.store_meta import StoreMeta
 from persisty.util import to_snake_case
 
 T = TypeVar("T")
@@ -18,13 +18,13 @@ T = TypeVar("T")
 
 @dataclass
 class HasManyCallable(Generic[T]):
-    store_factory: StoreFactoryABC
+    store_meta: StoreMeta
     search_filter: SearchFilterABC
     search_order: Optional[SearchOrder] = None
     limit: Optional[int] = None
 
     def __call__(self, authorization: Optional[Authorization] = None) -> ResultSet[T]:
-        store = self.store_factory.create(authorization)
+        store = self.store_meta.create_secured_store(authorization)
         result_set = store.search(
             search_filter=self.search_filter,
             search_order=self.search_order,
@@ -66,7 +66,7 @@ class HasMany(LinkedStoreABC, Generic[T]):
     def __get__(self, obj, obj_type) -> HasManyCallable[T]:
         key = getattr(obj, self.local_key_attr_name)
         return HasManyCallable(
-            store_factory=self.get_linked_store_factory(),
+            store_meta=self.get_linked_store_meta(),
             search_filter=AttrFilter(self.remote_key_attr_name, AttrFilterOp.eq, key),
             search_order=self.search_order,
         )

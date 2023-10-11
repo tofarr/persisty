@@ -53,19 +53,9 @@ Search operations can have [SearchFilters](persisty/search_filter/search_filter_
 These can be natively supported (Converted to SQL or dynamodb query / scan criteria)
 or run locally in python.
 
-## Extras
+## Auto User Interfaces
 
-We have optional extra projects to accommodate certain common usage patterns
-
-### Persisty Data
-
-A binary data plugin for persisty, accommondating file uploads and downloads. (Delegating
-to services like S3)
-
-### Persisty Dynamic
-
-A dynamic data plugin for persisty, accommodating the case where users can define
-metadata on the fly, and upload data that conforms to it.
+Since this is built on top of OpenAPI, user interface options supplied by [Ewey](https://github.com/tofar/ewey)
 
 ## Examples
 
@@ -75,14 +65,16 @@ application with security and business logic.
 
 ## Future Ideas
 
-* REDIS Store
+* REDIS Storage
+* Elastic Search Storage
+* Remote HTTP Storage
 * A user app with support for OIDC, SAML and SCIM
 * A Rate Limiting app / Rate Limit Access Control
-* An AutoUI project in NPM
 * An Event Bridge Project (Backed by AWS Event bridge in AWS, or celery in other environments)
-* A Remote HTTP Store
+
 * A Distributed Lock
 * An explicit custom index (Spatial RTree)
+* A Z order index
 
 
 ## Installing local development dependencies

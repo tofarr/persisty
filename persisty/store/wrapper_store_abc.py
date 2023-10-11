@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator, List, Optional, Dict
+from typing import Iterator, List, Optional, Dict, Union, Iterable
 
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
@@ -66,6 +66,12 @@ class WrapperStoreABC(StoreABC[T], ABC):
         return self.get_store()._edit_batch(edits, items_by_key)
 
     def edit_all(
-        self, edits: Iterator[BatchEdit[T, T]]
+        self, edits: Union[Iterator[BatchEdit[T, T]], Iterable[BatchEdit[T, T]]]
     ) -> Iterator[BatchEditResult[T, T]]:
         return self.get_store().edit_all(edits)
+
+    def update_all(self, search_filter: SearchFilterABC[T], updates: T):
+        self.get_store().update_all(search_filter, updates)
+
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        self.get_store().delete_all(search_filter)

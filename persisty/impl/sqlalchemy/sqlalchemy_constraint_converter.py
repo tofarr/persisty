@@ -18,6 +18,8 @@ class SqlalchemyConstraintConverter:
     ) -> Iterator[ForeignKeyConstraint]:
         for link in store_meta.links:
             if isinstance(link, BelongsTo):
+                if not link.on_delete == OnDelete.IGNORE:
+                    continue
                 linked_store = self.schema.get(link.linked_store_name)
                 if linked_store and isinstance(linked_store.key_config, AttrKeyConfig):
                     kwargs = {}

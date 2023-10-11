@@ -1,4 +1,4 @@
-from typing import Tuple, Iterator, Generic
+from typing import Tuple, Generic, List
 
 from dataclasses import dataclass
 
@@ -14,7 +14,7 @@ class SearchOrder(Generic[T]):
         for order in self.orders:
             order.validate_for_attrs(attrs)
 
-    def sort(self, items: Iterator[T]) -> Iterator[T]:
+    def sort(self, items: List[T]) -> List[T]:
         for order in reversed(self.orders):
             items = order.sort(items)
         return items

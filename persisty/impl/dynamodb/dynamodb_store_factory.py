@@ -9,13 +9,15 @@ from persisty.attr.attr import Attr
 from persisty.attr.attr_filter_op import TYPE_FILTER_OPS
 from persisty.attr.attr_type import attr_type, AttrType
 from persisty.errors import PersistyError
+from persisty.factory.store_factory_abc import StoreFactoryABC
 from persisty.impl.dynamodb.partition_sort_index import PartitionSortIndex, from_schema
 from persisty.impl.dynamodb.dynamodb_table_store import DynamodbTableStore
 from persisty.index.attr_index import AttrIndex
 from persisty.key_config.attr_key_config import AttrKeyConfig
 from persisty.key_config.composite_key_config import CompositeKeyConfig
 from persisty.key_config.key_config_abc import KeyConfigABC
-from persisty.store.restrict_access_store import restrict_access_store
+from persisty.security.restrict_access_store import restrict_access_store
+from persisty.store.referential_integrity_store import ReferentialIntegrityStore
 from persisty.store.schema_validating_store import SchemaValidatingStore
 from persisty.store.store_abc import StoreABC
 from persisty.store.unique_index_store import unique_index_store
@@ -24,8 +26,7 @@ from persisty.util import filter_none
 
 
 @dataclass
-class DynamodbStoreFactory:
-    meta: Optional[StoreMeta] = None
+class DynamodbStoreFactory(StoreFactoryABC):
     aws_profile_name: Optional[str] = None
     region_name: Optional[str] = field(
         default_factory=lambda: os.environ.get("AWS_REGION")
@@ -33,13 +34,11 @@ class DynamodbStoreFactory:
     table_name: Optional[str] = None
     index: Optional[PartitionSortIndex] = None
     global_secondary_indexes: Optional[Dict[str, PartitionSortIndex]] = None
+    referential_integrity: bool = False
 
-    def get_meta(self) -> StoreMeta:
-        return self.meta
-
-    def create(self) -> Optional[StoreABC]:
+    def create(self, store_meta: StoreMeta) -> StoreABC:
         store = DynamodbTableStore(
-            meta=self.meta,
+            meta=store_meta,
             table_name=self.table_name,
             index=self.index,
             global_secondary_indexes=self.global_secondary_indexes or {},
@@ -47,21 +46,22 @@ class DynamodbStoreFactory:
             region_name=self.region_name,
         )
         store = SchemaValidatingStore(store)
-        store = restrict_access_store(store, self.meta.store_access)
+        store = restrict_access_store(store, store_meta.store_access)
         store = unique_index_store(store)
+        if self.referential_integrity:
+            store = ReferentialIntegrityStore(store)
         return store
 
-    def derive_from_meta(self):
-        meta = self.meta
+    def derive_from_meta(self, store_meta: StoreMeta):
         if self.table_name is None:
-            self.table_name = meta.name
+            self.table_name = store_meta.name
         if self.index is None:
-            key_config = meta.key_config
+            key_config = store_meta.key_config
             key_config_attrs = list(_get_attrs_from_key(key_config))
             self.index = PartitionSortIndex(*key_config_attrs)
         if self.global_secondary_indexes is None:
             self.global_secondary_indexes = {}
-            for index in meta.indexes:
+            for index in store_meta.indexes:
                 if isinstance(index, AttrIndex):
                     self.global_secondary_indexes[
                         f"gix__{index.attr_name}"
@@ -81,7 +81,7 @@ class DynamodbStoreFactory:
         session = boto3.Session(**kwargs)
         return session
 
-    def load_from_aws(self):
+    def load_from_aws(self) -> StoreMeta:
         dynamodb = self.get_session().client("dynamodb")
         table_meta = dynamodb.describe_table(TableName=self.table_name)
         table = table_meta["Table"]
@@ -96,16 +96,17 @@ class DynamodbStoreFactory:
             _dynamo_attr_to_attr(a) for a in (table.get("AttributeDefinitions") or [])
         )
         key_config = self.index.key_config_from_attrs(attrs)
-        self.meta = StoreMeta(
+        store_meta = StoreMeta(
             name=self.table_name,
             attrs=attrs,
             key_config=key_config,
         )
+        return store_meta
 
-    def create_table_in_aws(self):
+    def create_table_in_aws(self, store_meta: StoreMeta):
         dynamodb = self.get_session().client("dynamodb")
         kwargs = {
-            "AttributeDefinitions": self.get_attribute_definitions(),
+            "AttributeDefinitions": self.get_attribute_definitions(store_meta),
             "TableName": self.table_name,
             "KeySchema": self.index.to_schema(),
             "BillingMode": "PAY_PER_REQUEST",  # Ops teams will want to look at these values
@@ -115,12 +116,12 @@ class DynamodbStoreFactory:
         response = dynamodb.create_table(**kwargs)
         return response
 
-    def get_attribute_definitions(self) -> List[Dict]:
+    def get_attribute_definitions(self, store_meta: StoreMeta) -> List[Dict]:
         attrs = {}
-        self._attrs(self.index, attrs)
+        self._attrs(store_meta, self.index, attrs)
         if self.global_secondary_indexes:
             for index in self.global_secondary_indexes.values():
-                self._attrs(index, attrs)
+                self._attrs(store_meta, index, attrs)
         return list(attrs.values())
 
     def get_global_secondary_indexes(self):
@@ -133,13 +134,14 @@ class DynamodbStoreFactory:
             for k, i in (self.global_secondary_indexes or {}).items()
         ]
 
-    def _attrs(self, index: PartitionSortIndex, attrs: Dict):
-        attrs[index.pk] = self._attr(index.pk)
+    def _attrs(self, store_meta: StoreMeta, index: PartitionSortIndex, attrs: Dict):
+        attrs[index.pk] = self._attr(store_meta, index.pk)
         if index.sk:
-            attrs[index.sk] = self._attr(index.sk)
+            attrs[index.sk] = self._attr(store_meta, index.sk)
 
-    def _attr(self, name: str):
-        attr = next(a for a in self.meta.attrs if a.name == name)
+    @staticmethod
+    def _attr(store_meta: StoreMeta, name: str):
+        attr = next(a for a in store_meta.attrs if a.name == name)
         return {
             "AttributeName": name,
             "AttributeType": _FIELD_TYPE_2_DYNAMODB[attr.attr_type],

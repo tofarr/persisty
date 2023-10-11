@@ -1,6 +1,5 @@
+import dataclasses
 from typing import Optional, Tuple
-
-from dataclasses import dataclass
 
 from persisty.errors import PersistyError
 from persisty.search_filter.search_filter_abc import SearchFilterABC
@@ -8,7 +7,7 @@ from persisty.store.filtered_store_abc import FilteredStoreABC, T
 from persisty.store.store_abc import StoreABC
 
 
-@dataclass(frozen=True)
+@dataclasses.dataclass(frozen=True)
 class FilteredStore(FilteredStoreABC[T]):
     store: StoreABC[T]
     search_filter: SearchFilterABC[T]
@@ -24,7 +23,7 @@ class FilteredStore(FilteredStoreABC[T]):
     # noinspection PyUnusedLocal
     def filter_update(self, item: T, updates: T) -> T:
         # old_item has already been checked in read operation
-        item = {**item, **updates}
+        item = dataclasses.replace(item, **dataclasses.asdict(updates))
         if not self.search_filter.match(item, self.get_meta().attrs):
             raise PersistyError("update_forbidden")
         return updates
@@ -41,3 +40,6 @@ class FilteredStore(FilteredStoreABC[T]):
         self, search_filter: SearchFilterABC
     ) -> Tuple[SearchFilterABC, bool]:
         return search_filter & self.search_filter, True
+
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        return self.store.delete_all(search_filter & self.search_filter)

@@ -16,6 +16,7 @@ extras_require = {
     "server": ["servey[server]~=2.8"],
     "serverless": ["servey[serverless]~=2.8", "opensearch-py~=2.2"],
     "sql": ["SQLAlchemy~=1.4"],
+    "sqldev": ["alembic~=1.12"],
     "scheduler": ["servey[scheduler]~=2.8"],
 }
 extras_require["all"] = list(

@@ -29,23 +29,23 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
         return self.get_store().get_meta()
 
     def filter_create(self, item: T) -> Optional[T]:
-        """search_filter an stored before create"""
+        """Filter an item before create"""
         return item
 
     # pylint: disable=W0613
     # noinspection PyUnusedLocal
     def filter_update(self, item: T, updates: T) -> T:
-        """search_filter an stored before create"""
+        """Filter an item before create"""
         return updates
 
     def filter_read(self, item: T) -> Optional[T]:
-        """search_filter an stored after read"""
+        """Filter an item after read"""
         return item
 
     # pylint: disable=W0613
     # noinspection PyUnusedLocal
     def allow_delete(self, item: T) -> bool:
-        """Filter a delete of an stored"""
+        """Filter a delete of an item"""
         return True
 
     def filter_search_filter(
@@ -182,7 +182,7 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
                 if edit.create_item:
                     item = self.filter_create(edit.create_item)
                     if not item:
-                        result.code = "fitered_edit"
+                        result.code = "filtered_edit"
                         continue
                     filtered_edits.append(BatchEdit[T, T](create_item=item, id=edit.id))
                 elif edit.update_item:
@@ -219,3 +219,11 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
                 if result:
                     result.copy_from(filtered_result)
         return results
+
+    def update_all(self, search_filter: SearchFilterABC[T], updates: T):
+        # Given that we can't be sure of whether the updated values violate the filter, we must do a load.
+        return StoreABC.update_all(self, search_filter, updates)
+
+    def delete_all(self, search_filter: SearchFilterABC[T]):
+        # Given that we can't be sure of whether the updated values violate the filter, we must do a load.
+        return StoreABC.delete_all(self, search_filter)

@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Type, Union, ForwardRef
+from typing import Dict, Type, Union, ForwardRef, Generic, TypeVar
 
 from marshy.types import ExternalItemType
 
 from persisty.attr.attr import Attr
 
+T = TypeVar("T")
 
-class LinkABC(ABC):
+
+class LinkABC(ABC, Generic[T]):
     """
     A link represents something external to a stored item but related to it.
     """
@@ -20,7 +22,7 @@ class LinkABC(ABC):
         """Get the name of this link"""
 
     def get_linked_type(self, forward_ref_ns: str) -> Union[ForwardRef, Type]:
-        """Get the type for the linked object (May be an int, Optional[T], ResultSet[T], or something else"""
+        """Get the type for the linked object (This may be an int, Optional[T], ResultSet[T], or something else)"""
 
     def update_attrs(self, attrs_by_name: Dict[str, Attr]):
         """
@@ -29,6 +31,24 @@ class LinkABC(ABC):
 
     def update_json_schema(self, json_schema: ExternalItemType):
         """
-        Update a schema with data from this link (Typically this is used as a custom extension to jsonschema to
-        represent relational data.
+        Update a schema with data from this link. (Typically this is used as a custom extension
+        to jsonschema to represent relational data)
         """
+
+    def before_create(self, item: T):
+        """Called before an item is created"""
+
+    def after_create(self, item: T):
+        """Called before an item is created"""
+
+    def before_update(self, item: T, updates: T):
+        """Called before an item is created"""
+
+    def after_update(self, old_item: T, new_item: T):
+        """Called before an item is created"""
+
+    def before_delete(self, item: T):
+        """Called before an item is created"""
+
+    def after_delete(self, item: T):
+        """Called before an item is created"""

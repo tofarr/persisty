@@ -18,6 +18,7 @@ def get_seed_items(store_meta: StoreMeta) -> Iterable[T]:
         item_dataclass = store_meta.get_stored_dataclass()
         seed_items = []
         for data in seed_data:
+            # noinspection PyTypeChecker
             item = marshy.load(item_dataclass, data)
             for attr in store_meta.attrs:
                 if attr.create_generator and getattr(item, attr.name) is UNDEFINED:

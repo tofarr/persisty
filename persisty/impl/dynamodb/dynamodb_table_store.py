@@ -119,14 +119,10 @@ class DynamodbTableStore(StoreABC[T]):
             item = self.read(self.meta.key_config.to_key_str(updates))
             if not search_filter.match(item, self.meta.attrs):
                 return None
-        updates = self._dump_update(updates)
+        updates_dict = self._dump_update(updates)
         key_dict = self.index.to_dict(updates)
         table = self._dynamodb_table()
-        updates = {**updates}
-        updates.pop(self.index.pk)
-        if self.index.sk:
-            updates.pop(self.index.sk)
-        update = _build_update(updates)
+        update = _build_update(updates_dict)
         response = table.update_item(
             Key=key_dict,
             ConditionExpression=self.index.to_condition_expression(key_dict),
@@ -543,7 +539,7 @@ def _separate_index_filters(
 
 
 def _get_score_for_index(
-    index: PartitionSortIndex, eq_attrs: Set[str], sort_attrs: Set[str]
+    index: PartitionSortIndex, eq_attrs: List[str], sort_attrs: Set[str]
 ):
     if index.pk not in eq_attrs:
         return 0
@@ -567,7 +563,7 @@ def _separate_index_from_filter(
             index_filter = f
         else:
             filters.append(f)
-    filter_expression = And(filters) if filters else None
+    filter_expression = And(tuple(filters)) if filters else None
     return index_filter, filter_expression
 
 

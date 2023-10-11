@@ -125,7 +125,8 @@
     </style>
     <script type="text/javascript">
 
-        function renderMessage(message){
+        function renderMessage(result){
+            const message = result.item
             const element = document.createElement('div')
             element.innerHTML = `
                 <div class="messageAuthor"></div>
@@ -152,15 +153,17 @@
                 body: JSON.stringify({
                     query: `
                       query($pageKey: String) {
-                        messageSearch(searchFilter: {messageState_Eq: FEATURED}, pageKey: $pageKey, limit: 10) {
+                        messageSearch(pageKey: $pageKey, limit: 10, searchOrder: { attr:updated_at, desc: true}) {
                           nextPageKey
-                        results{
-                            id
-                            messageText
-                            createdAt
-                            author{
+                          results{
+                            item{
                               id
-                              username
+                              messageText
+                              createdAt
+                              author{
+                                id
+                                username
+                              }
                             }
                           }
                         }
