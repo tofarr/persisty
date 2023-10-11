@@ -42,8 +42,7 @@ class TestOwnedStoreFactory(TestCase):
 
     def test_create_actions(self):
         meta = get_meta(Message)
-        unsecured_store = MemStore(meta)
-        actions = meta.action_factory.create_actions(unsecured_store)
+        actions = meta.action_factory.create_actions(meta)
         action_names = {a.name for a in actions}
         expected_action_names = {
             "message_count",

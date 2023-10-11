@@ -10,5 +10,5 @@ class StoreFactoryABC(ABC):
     """
 
     @abstractmethod
-    def create(self, meta: StoreMeta) -> StoreABC:
+    def create(self, store_meta: StoreMeta) -> StoreABC:
         """Create a store"""

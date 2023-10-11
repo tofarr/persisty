@@ -261,9 +261,7 @@ def _schema_factory(
     store_meta = get_meta(cls)
     schema["persistyStored"] = {
         "store_name": store_meta.name,
-        "creatable": store_meta.store_access.create_filter
-        != EXCLUDE_ALL
-        is not EXCLUDE_ALL,
+        "creatable": store_meta.store_access.create_filter is not EXCLUDE_ALL,
         "label_attr_names": [
             f.name for f in fields(cls) if f.name in store_meta.label_attr_names
         ],

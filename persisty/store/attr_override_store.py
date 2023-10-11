@@ -53,7 +53,7 @@ class AttrOverrideStore(FilteredStoreABC[T]):
             value = getattr(item, self.attr_name, UNDEFINED)
             value = self.create_generator.transform(value, item)
             kwargs[self.attr_name] = value
-        result = self.store.get_meta().get_create_dataclass()(**kwargs)
+        result = self.store.get_meta().get_stored_dataclass()(**kwargs)
         return result
 
     def filter_update(self, item: T, updates: T) -> T:
@@ -64,7 +64,7 @@ class AttrOverrideStore(FilteredStoreABC[T]):
                 value = getattr(item, self.attr_name, UNDEFINED)
             value = self.update_generator.transform(value, item)
             kwargs[self.attr_name] = value
-        result = self.store.get_meta().get_update_dataclass()(**kwargs)
+        result = self.store.get_meta().get_stored_dataclass()(**kwargs)
         return result
 
     def update_all(self, search_filter: SearchFilterABC[T], updates: T):

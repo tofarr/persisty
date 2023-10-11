@@ -42,6 +42,7 @@ class ReferentialIntegrityStore(FilteredStoreABC[T], Generic[T]):
     def _delete(self, key: str, item: T) -> bool:
         if self.block_delete(key):
             raise PersistyError("link_constraint_violated")
+        # pylint: disable=W0212
         result = self.get_store()._delete(key, item)
         if result:
             self.nullify(key)
