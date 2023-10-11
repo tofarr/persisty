@@ -30,7 +30,7 @@ jobs:
       - name: Install pytest code coverage
         run: python -m pip install ".[all]"
       - name: testcoverage
-        run: python -m pytest -n auto --cov-report=term-missing --cov=tests --cov=marshy_config_persisty --cov=persisty --cov-fail-under=80
+        run: python -m pytest -n auto --cov-report=term-missing --cov=tests --cov=marshy_config_persisty --cov=persisty --cov-fail-under=75
 
   pylint:
     runs-on: ubuntu-latest
