@@ -24,11 +24,16 @@ class ModuleStoreMetaFinder(StoreMetaFinderABC):
 
 def find_in_module(module) -> Iterator[StoreMeta]:
     yield from get_from_module(module)
-    module_infos = list(pkgutil.walk_packages(path=module.__path__))
+    if not hasattr(module, "__path__"):
+        return  # Module was not a package...
+    paths = []
+    paths.extend(module.__path__)
+    module_infos = list(pkgutil.walk_packages(paths))
     for module_info in module_infos:
         sub_module_name = module.__name__ + "." + module_info.name
         sub_module = importlib.import_module(sub_module_name)
-        yield from get_from_module(sub_module)
+        # noinspection PyTypeChecker
+        yield from find_in_module(sub_module)
 
 
 def get_from_module(module) -> Iterator[StoreMeta]:
