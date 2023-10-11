@@ -9,4 +9,4 @@ _StoreMeta = "persisty.store.store_meta.StoreMeta"
 class ActionFactoryABC(ABC):
     @abstractmethod
     def create_actions(self, store_meta: _StoreMeta) -> Iterator[Action]:
-        """Create actions for the store given """
+        """Create actions for the store given"""

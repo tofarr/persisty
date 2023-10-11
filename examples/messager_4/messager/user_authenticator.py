@@ -18,6 +18,7 @@ class UserAuthenticator(PasswordAuthenticatorABC):
 
     def authenticate(self, username: str, password: str) -> Optional[Authorization]:
         from messager.store.user import User
+
         user_meta = get_meta(User)
         user_store = user_meta.create_store()
 

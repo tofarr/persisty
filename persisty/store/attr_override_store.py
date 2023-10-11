@@ -33,14 +33,16 @@ class AttrOverrideStore(FilteredStoreABC[T]):
                     create_generator=self.create_generator or attr.create_generator,
                     update_generator=self.update_generator or attr.update_generator,
                     sortable=attr.sortable and self.readable,
-                    permitted_filter_ops=attr.permitted_filter_ops if self.readable else tuple()
+                    permitted_filter_ops=attr.permitted_filter_ops
+                    if self.readable
+                    else tuple(),
                 )
             attrs.append(attr)
         meta = dataclasses.replace(meta, attrs=tuple(attrs))
-        object.__setattr__(self, '_meta', meta)
+        object.__setattr__(self, "_meta", meta)
 
     def get_meta(self) -> StoreMeta:
-        return getattr(self, '_meta')
+        return getattr(self, "_meta")
 
     def get_store(self) -> StoreABC:
         return self.store

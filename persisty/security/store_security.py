@@ -48,7 +48,9 @@ class StoreSecurity(StoreSecurityABC[T]):
             return store
         from persisty.security.restrict_access_store import RestrictAccessStore
 
-        return RestrictAccessStore(store, self.api_access & store.get_meta().store_access)
+        return RestrictAccessStore(
+            store, self.api_access & store.get_meta().store_access
+        )
 
 
 UNSECURED = StoreSecurity(ALL_ACCESS, tuple(), ALL_ACCESS)

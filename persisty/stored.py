@@ -82,9 +82,12 @@ def stored(
                         f"unknown_label_attr:{label_attr_name}:{cls_.__name__}"
                     )
         else:
-            label_attr_name = next((a.name for a in attrs_by_name.values() if a.attr_type == AttrType.STR), None)
+            label_attr_name = next(
+                (a.name for a in attrs_by_name.values() if a.attr_type == AttrType.STR),
+                None,
+            )
             if label_attr_name:
-                label_attr_names = label_attr_name,
+                label_attr_names = (label_attr_name,)
 
         # Make sure key attributes are not updatable...
         for attr_name in key_config.get_key_attrs():

@@ -35,16 +35,25 @@ class OwnedStoreSecurity(StoreSecurityABC[T]):
         store_access &= store.get_meta().store_access
         if not authorization:
             store_access &= StoreAccess(
-                create_filter=EXCLUDE_ALL if self.require_ownership_for_create else INCLUDE_ALL,
-                read_filter=EXCLUDE_ALL if self.require_ownership_for_read else INCLUDE_ALL,
-                update_filter=EXCLUDE_ALL if self.require_ownership_for_update else INCLUDE_ALL,
-                delete_filter=EXCLUDE_ALL if self.require_ownership_for_delete else INCLUDE_ALL,
+                create_filter=EXCLUDE_ALL
+                if self.require_ownership_for_create
+                else INCLUDE_ALL,
+                read_filter=EXCLUDE_ALL
+                if self.require_ownership_for_read
+                else INCLUDE_ALL,
+                update_filter=EXCLUDE_ALL
+                if self.require_ownership_for_update
+                else INCLUDE_ALL,
+                delete_filter=EXCLUDE_ALL
+                if self.require_ownership_for_delete
+                else INCLUDE_ALL,
             )
         store = RestrictAccessStore(store, store_access)
 
         if authorization:
             attr = next(
-                attr for attr in store.get_meta().attrs
+                attr
+                for attr in store.get_meta().attrs
                 if attr.name == self.subject_id_attr_name
             )
             subject_id = attr.sanitize_type(authorization.subject_id)
@@ -57,11 +66,13 @@ class OwnedStoreSecurity(StoreSecurityABC[T]):
             creatable=False,
             updatable=False,
             create_generator=DefaultValueGenerator(subject_id),
-            update_generator=DefaultValueGenerator(subject_id)
+            update_generator=DefaultValueGenerator(subject_id),
         )
         return store
 
-    def get_store_access(self, store: StoreABC, authorization: Optional[Authorization]) -> StoreAccess:
+    def get_store_access(
+        self, store: StoreABC, authorization: Optional[Authorization]
+    ) -> StoreAccess:
         if authorization:
             search_filter = AttrFilter(
                 self.subject_id_attr_name, AttrFilterOp.eq, authorization.subject_id

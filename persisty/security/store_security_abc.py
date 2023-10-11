@@ -24,4 +24,3 @@ class StoreSecurityABC(ABC, Generic[T]):
         Get the api access - the max potential access for this store for apis.
         Used for generating actions and metadata.
         """
-
