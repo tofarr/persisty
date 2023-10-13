@@ -26,11 +26,11 @@ class Vector3D(Vector2D):
 class TestFunctionsOnStored(TestCase):
     def test_function_on_stored(self):
         vector = Vector2D(x=3, y=4)
-        self.assertEquals(vector.get_magnitude(), 5.0)
+        self.assertEqual(vector.get_magnitude(), 5.0)
 
     def test_inheritance_on_stored(self):
         vector = Vector3D(x=3, y=4, z=5)
-        self.assertEquals(vector.get_magnitude(), math.sqrt(3 * 3 + 4 * 4 + 5 * 5))
+        self.assertEqual(vector.get_magnitude(), math.sqrt(3 * 3 + 4 * 4 + 5 * 5))
 
     def test_property_on_stored(self):
         with self.assertRaises(PersistyError):

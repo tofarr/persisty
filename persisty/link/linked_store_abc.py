@@ -42,5 +42,6 @@ class LinkedStoreABC(LinkABC, ABC):
         store = store_meta.create_secured_store(authorization)
         return store
 
+    # pylint: disable=W0613
     def get_inbound_links(self, store_meta: StoreMeta) -> List[InboundLink]:
         return []

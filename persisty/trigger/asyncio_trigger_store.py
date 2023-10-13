@@ -40,6 +40,7 @@ class AsyncioTriggerStore(WrapperStoreABC[T]):
         return StoreABC.update(self, updates, precondition)
 
     def _update(self, key: str, item: T, updates: T) -> Optional[T]:
+        # pylint: disable=W0212
         new_item = self.store._update(key, item, updates)
         if new_item:
             coro = self.store_triggers.async_after_update(item, new_item)
@@ -52,6 +53,7 @@ class AsyncioTriggerStore(WrapperStoreABC[T]):
         return StoreABC.delete(self, key)
 
     def _delete(self, key: str, item: T) -> bool:
+        # pylint: disable=W0212
         result = self.store._delete(key, item)
         if result:
             coro = self.store_triggers.async_after_delete(item)

@@ -7,7 +7,6 @@ from servey.security.authorization import Authorization
 from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.attr_filter_op import AttrFilterOp
 from persisty.attr.generator.default_value_generator import DefaultValueGenerator
-from persisty.attr.generator.fixed_value_generator import FixedValueGenerator
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.security.restrict_access_store import RestrictAccessStore

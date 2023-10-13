@@ -115,7 +115,7 @@ class SqlalchemyTableStore(StoreABC):
         search_filter: SearchFilterABC = INCLUDE_ALL,
     ) -> Optional[T]:
         with self.engine.begin() as connection:
-            stmt = self.table.update(self._key_where_clause_from_item(updates))
+            stmt = self.table.update().where(self._key_where_clause_from_item(updates))
             updates = self._dump(updates, True)
             connection.execute(stmt, updates)
             key_dict = self.meta.key_config.to_key_dict(key)
@@ -127,7 +127,7 @@ class SqlalchemyTableStore(StoreABC):
     def delete(self, key: str) -> bool:
         with self.engine.begin() as connection:
             key = self.meta.key_config.to_key_dict(key)
-            stmt = self.table.delete(whereclause=self._key_where_clause())
+            stmt = self.table.delete().where(self._key_where_clause())
             result = connection.execute(stmt, key)
             connection.commit()
             return bool(result.rowcount)
@@ -144,7 +144,8 @@ class SqlalchemyTableStore(StoreABC):
         if not handled:
             count = sum(1 for _ in self.search_all(search_filter))
             return count
-        stmt = select([func.count()]).select_from(self.table)
+        stmt = func.count().select()
+        stmt = stmt.select_from(self.table)
         if where_clause is not None:
             stmt = stmt.where(where_clause)
         with self.engine.begin() as connection:
@@ -261,7 +262,7 @@ class SqlalchemyTableStore(StoreABC):
         edits: List[BatchEdit],
         results_by_id: Dict[UUID, BatchEditResult],
     ):
-        stmt = self.table.insert(bind=connection)
+        stmt = self.table.insert()  # bind=connection)
         items_to_create = [self._dump(e.create_item, False) for e in edits]
         connection.execute(stmt, items_to_create)
         for insert in edits:
@@ -307,7 +308,7 @@ class SqlalchemyTableStore(StoreABC):
                 if value is not UNDEFINED:
                     setattr(item, attr.name, _transform_type(value))
             item_updates = self._dump(item, True)
-            stmt = self.table.update(self._key_where_clause_from_item(item))
+            stmt = self.table.update().where(self._key_where_clause_from_item(item))
             connection.execute(stmt, item_updates)
             results_by_id[edit.id].success = True
 
@@ -321,7 +322,7 @@ class SqlalchemyTableStore(StoreABC):
         delete_keys = [key_config.to_key_dict(d.delete_key) for d in edits]
         existing_keys = self._get_existing_keys(connection, delete_keys)
         where_clause = self._key_where_clause_from_dicts(delete_keys)
-        stmt = self.table.delete(whereclause=where_clause)
+        stmt = self.table.delete().where(where_clause)
         connection.execute(stmt)
         deleted_keys = {key_config.to_key_str(k) for k in existing_keys}
         for delete in edits:

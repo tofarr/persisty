@@ -53,3 +53,7 @@ class AttrFilter(SearchFilterABC[T]):
         if self.op == AttrFilterOp.not_exists:
             return attr.not_exists(), True
         return None, False
+
+
+def attr_eq(name: str, value: T):
+    return AttrFilter(name, AttrFilterOp.eq, value)

@@ -165,9 +165,6 @@ def configure_aws(context: MarshallerContext):
         from persisty.security.kms_permission_authorizer_factory import (
             KmsPermissionAuthorizerFactory,
         )
-        from servey.security.authorizer.authorizer_factory_abc import (
-            AuthorizerFactoryABC,
-        )
 
         register_impl(AuthorizerFactoryABC, KmsPermissionAuthorizerFactory, context)
     except ModuleNotFoundError as e:

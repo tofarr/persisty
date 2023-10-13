@@ -19,6 +19,7 @@ class ActionFactory(ActionFactoryABC):
         store_meta = store_meta.create_api_meta()
         access = store_meta.store_access
         item_type = wrap_links_in_actions(store_meta.get_read_dataclass())
+        setattr(generated, item_type.__name__, item_type)
         result_type = result_dataclass_for(item_type)
         setattr(generated, result_type.__name__, result_type)
         search_filter_type = search_filter_dataclass_for(store_meta)

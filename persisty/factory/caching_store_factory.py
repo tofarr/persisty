@@ -11,9 +11,9 @@ class CachingStoreFactory(StoreFactoryABC):
     factory: StoreFactoryABC
     cache: Dict[str, StoreABC] = field(default_factory=dict)
 
-    def create(self, meta: StoreMeta) -> StoreABC:
-        store = self.cache.get(meta.name)
+    def create(self, store_meta: StoreMeta) -> StoreABC:
+        store = self.cache.get(store_meta.name)
         if not store:
-            store = self.factory.create(meta)
-            self.cache[meta.name] = store
+            store = self.factory.create(store_meta)
+            self.cache[store_meta.name] = store
         return store

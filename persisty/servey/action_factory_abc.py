@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator, TypeVar, Generic
+from typing import Iterator
 
 from servey.action.action import Action
 

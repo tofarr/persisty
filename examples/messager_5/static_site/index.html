@@ -125,7 +125,8 @@
     </style>
     <script type="text/javascript">
 
-        function renderMessage(message){
+        function renderMessage(result){
+            const message = result.item
             const element = document.createElement('div')
             element.innerHTML = `
                 <div class="messageAuthor"></div>
@@ -146,20 +147,23 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`
+                    'Authorization': `Bearer ${sessionStorage.getItem('authorization')}`,
+                    'x-api-key': sessionStorage.getItem('x-api-key')
                 },
                 body: JSON.stringify({
                     query: `
                       query($pageKey: String) {
                         messageSearch(pageKey: $pageKey, limit: 10, searchOrder: { attr:updated_at, desc: true}) {
                           nextPageKey
-                        results{
-                            id
-                            messageText
-                            createdAt
-                            author{
+                          results{
+                            item{
                               id
-                              username
+                              messageText
+                              createdAt
+                              author{
+                                id
+                                username
+                              }
                             }
                           }
                         }
@@ -190,6 +194,12 @@
             loadAndRenderMoreMessages(null)
         }
 
+        async function handleRetrieveApiKey(){
+            const response = await fetch('actions/get-appsync-api-key')
+            const api_key = await response.json()
+            sessionStorage.setItem('x-api-key', api_key)
+        }
+
         function handleLogin(){
             fetch('actions/login', {
                 method: 'POST',
@@ -200,7 +210,7 @@
             }).then(response => response.json()).then(body => {
                 if (body) {
                     sessionStorage.setItem('authorization', body)
-                    loadAndRenderMessages()
+                    handleRetrieveApiKey().then(loadAndRenderMessages)
                 } else {
                     alert('Uncorrect Username or Password')
                 }
