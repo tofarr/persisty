@@ -59,7 +59,7 @@ Since this is built on top of OpenAPI, user interface options supplied by [Ewey]
 
 ## Examples
 
-[The Messager Example App](examples/messager_1) demonstrates a step by step build of an
+[The messenger Example App](examples/messenger_1) demonstrates a step by step build of an
 application with security and business logic.
 
 

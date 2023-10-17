@@ -147,4 +147,4 @@ cython_debug/
 *package-lock.json
 *node_modules
 *.serverless
-*messager.db
+*messenger.db
