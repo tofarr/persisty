@@ -16,16 +16,16 @@ class ActionFactory(ActionFactoryABC):
     def create_actions(self, store_meta: StoreMeta) -> Iterator[Action]:
         from persisty.servey.actions import wrap_links_in_actions
 
-        store_meta = store_meta.create_api_meta()
-        access = store_meta.store_access
-        item_type = wrap_links_in_actions(store_meta.get_read_dataclass())
+        api_store_meta = store_meta.create_api_meta()
+        access = api_store_meta.store_access
+        item_type = wrap_links_in_actions(api_store_meta.get_read_dataclass())
         setattr(generated, item_type.__name__, item_type)
         result_type = result_dataclass_for(item_type)
         setattr(generated, result_type.__name__, result_type)
-        search_filter_type = search_filter_dataclass_for(store_meta)
-        search_order_type = search_order_dataclass_for(store_meta)
-        create_input_type = store_meta.get_create_dataclass()
-        update_input_type = store_meta.get_update_dataclass()
+        search_filter_type = search_filter_dataclass_for(api_store_meta)
+        search_order_type = search_order_dataclass_for(api_store_meta)
+        create_input_type = api_store_meta.get_create_dataclass()
+        update_input_type = api_store_meta.get_update_dataclass()
 
         if access.create_filter is not EXCLUDE_ALL:
             from persisty.servey.actions import action_for_create
