@@ -50,13 +50,15 @@ class SqlalchemyTableConverter:
             args.append(column)
         for index in store_meta.indexes:
             if isinstance(index, AttrIndex):
-                name = f"idx_{store_meta.name}_{index.attr_name}"
+                name = f"idx__{store_meta.name}__{index.attr_name}"
                 if len(name) > 60:
                     name = f"idx_{secure_hash(name).replace('+', '').replace('=', '')}"
                 index_cols = [columns_by_name[index.attr_name]]
                 unique = False
             elif isinstance(index, UniqueIndex):
-                name = f"idx_{'__'.join(index.attr_names)}"
+                name = f"idx__{store_meta.name}__{'__'.join(index.attr_names)}"
+                if len(name) > 60:
+                    name = f"idx_{secure_hash(name).replace('+', '').replace('=', '')}"
                 index_cols = [columns_by_name[a] for a in index.attr_names]
                 unique = True
             else:

@@ -21,27 +21,14 @@ def export_all(directory: str):
     Export all store to yml files
     """
     for store_meta in find_store_meta():
-        export_meta(directory, store_meta)
         export_content(directory, store_meta)
-
-
-def export_meta(directory: str, store_meta: StoreMeta):
-    """
-    Export store to json files
-    """
-    path = Path(directory, store_meta.name, "meta.json")
-    path.parent.mkdir(exist_ok=True, parents=True)
-    meta = marshy.dump(store_meta)
-    # pylint: disable=W1514
-    with open(path, "w") as f:
-        json.dump(meta, f)
 
 
 def export_content(directory: str, store_meta: StoreMeta, page_size: int = 500):
     """
     Export store content to json files
     """
-    store = store_meta.store_factory.create()
+    store = store_meta.create_store()
     path = Path(directory, store_meta.name)
     path.mkdir(exist_ok=True, parents=True)
     results = store.search_all()
@@ -53,7 +40,7 @@ def export_content(directory: str, store_meta: StoreMeta, page_size: int = 500):
         path = Path(directory, store_meta.name, str(index) + ".json")
         # pylint: disable=W1514
         with open(path, "w") as f:
-            json.dump(batch, f)
+            json.dump(marshy.dump(batch, List[store_meta.get_read_dataclass()]), f)
         index += 1
 
 
