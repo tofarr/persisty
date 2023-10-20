@@ -12,6 +12,7 @@ from persisty.batch_edit_result import batch_edit_result_dataclass_for
 from persisty.link.link_abc import LinkABC
 from persisty.result import to_result
 from persisty.result_set import result_set_dataclass_for
+from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.search_filter_factory import SearchFilterFactoryABC
 from persisty.search_order.search_order_factory import SearchOrderFactoryABC
@@ -158,12 +159,14 @@ def action_for_search(
             search_order = search_order.to_search_order()
         result_set = secured_store.search(search_filter, search_order, page_key, limit)
 
+        secured_meta = secured_store.get_meta()
         # noinspection PyArgumentList
         result_set = result_set_type(
             results=[
-                to_result(item, secured_store.get_meta()) for item in result_set.results
+                to_result(item, secured_meta) for item in result_set.results
             ],
             next_page_key=result_set.next_page_key,
+            creatable=secured_meta.store_access.create_filter is not EXCLUDE_ALL
         )
         return result_set
 

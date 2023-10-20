@@ -19,7 +19,7 @@ class SqlalchemyTableStoreFactory(StoreFactoryABC):
     context: SqlalchemyContext = field(default_factory=get_default_context)
     triggers: bool = True
     # Lack of referential integrity may be acceptable, or this may be handled by the db engine
-    referential_integrity: bool = True
+    referential_integrity: bool = False
 
     def create(self, store_meta: StoreMeta) -> Optional[StoreABC]:
         table = self.context.get_table(store_meta)

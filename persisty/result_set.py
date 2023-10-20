@@ -18,9 +18,11 @@ def result_set_dataclass_for(
         "__annotations__": {
             "results": List[type_],
             "next_page_key": Optional[str],
+            "creatable": bool,
         },
         "__doc__": f"Result Set of {type_.__name__}",
         "next_page_key": None,
+        "creatable": False,
     }
     if not type_name:
         type_name = f"{type_.__name__}ResultSet"
