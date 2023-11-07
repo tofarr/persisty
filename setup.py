@@ -9,15 +9,15 @@ extras_require = {
         "pytest~=7.2",
         "pytest-cov~=4.0",
         "pytest-xdist~=3.2",
-        "pylint~=2.17",
+        "pylint~=3.0",
         "boto3~=1.26",
         "moto~=3.1",
     ],
-    "server": ["servey[server]~=2.8"],
-    "serverless": ["servey[serverless]~=2.8", "opensearch-py~=2.2"],
+    "server": ["servey[server]~=3.0"],
+    "serverless": ["servey[serverless]~=3.0", "opensearch-py~=2.2"],
     "sql": ["SQLAlchemy~=1.4"],
     "sqldev": ["alembic~=1.12"],
-    "scheduler": ["servey[scheduler]~=2.8"],
+    "scheduler": ["servey[scheduler]~=3.0"],
 }
 extras_require["all"] = list(
     {
@@ -38,7 +38,7 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=("tests*",)),
     install_requires=[
         "pyaes~=1.6",
-        "servey~=2.8",
+        "servey~=3.0",
     ],
     extras_require=extras_require,
     setup_requires=["setuptools-git-versioning"],

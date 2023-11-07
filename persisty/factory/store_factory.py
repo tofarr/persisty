@@ -13,6 +13,9 @@ from persisty.store_meta import StoreMeta
 @dataclass(frozen=True)
 class StoreFactory(StoreFactoryABC):
     cache: Dict[str, StoreABC] = field(default_factory=dict)
+    referential_integrity: bool = field(
+        default_factory=lambda: os.environ.get("PERSISTY_REFERENTIAL_INTEGRITY") == "1"
+    )
 
     def create(self, store_meta: StoreMeta) -> StoreABC:
         store = self.cache.get(store_meta.name)
@@ -23,13 +26,17 @@ class StoreFactory(StoreFactoryABC):
                 SqlalchemyTableStoreFactory,
             )
 
-            factory = SqlalchemyTableStoreFactory()
+            factory = SqlalchemyTableStoreFactory(
+                referential_integrity=self.referential_integrity
+            )
         elif is_lambda_env():
             from persisty.impl.dynamodb.dynamodb_store_factory import (
                 DynamodbStoreFactory,
             )
 
-            factory = DynamodbStoreFactory()
+            factory = DynamodbStoreFactory(
+                referential_integrity=self.referential_integrity
+            )
             factory.derive_from_meta(store_meta)
         else:
             from persisty.io.seed import get_seed_items
@@ -37,7 +44,9 @@ class StoreFactory(StoreFactoryABC):
             seed_items = get_seed_items(store_meta)
             key_config = store_meta.key_config
             seed_data = {key_config.to_key_str(i): i for i in seed_items}
-            factory = MemStoreFactory(seed_data)
+            factory = MemStoreFactory(
+                seed_data, referential_integrity=self.referential_integrity
+            )
         store = factory.create(store_meta)
         self.cache[store_meta.name] = store
         return store

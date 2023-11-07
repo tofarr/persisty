@@ -34,7 +34,7 @@ class FilteredStoreABC(WrapperStoreABC[T], ABC):
 
     # pylint: disable=W0613
     # noinspection PyUnusedLocal
-    def filter_update(self, item: T, updates: T) -> T:
+    def filter_update(self, item: T, updates: T) -> Optional[T]:
         """Filter an item before create"""
         return updates
 

@@ -1,4 +1,4 @@
-from dataclasses import field
+from dataclasses import dataclass, field
 from typing import Dict
 
 from marshy.types import ExternalItemType
@@ -13,6 +13,7 @@ from persisty.trigger.after_delete_trigger import AfterDeleteTrigger
 from persisty.trigger.after_update_trigger import AfterUpdateTrigger
 
 
+@dataclass
 class ServerlessTriggerHandler(TriggerHandlerABC):
     unmanaged_table_arns_by_store_name: Dict[str, str] = field(default_factory=dict)
 

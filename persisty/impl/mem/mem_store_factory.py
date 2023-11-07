@@ -15,6 +15,7 @@ from persisty.trigger.wrapper import triggered_store
 @dataclass
 class MemStoreFactory(StoreFactoryABC):
     items: ExternalItemType = field(default_factory=dict)
+    triggers: bool = True
     referential_integrity: bool = False
     _cached_store: Optional[StoreABC] = None
 
@@ -23,7 +24,8 @@ class MemStoreFactory(StoreFactoryABC):
         if not store:
             store = MemStore(store_meta, self.items)
             store = SchemaValidatingStore(store)
-            store = triggered_store(store)
+            if self.triggers:
+                store = triggered_store(store)
             if self.referential_integrity:
                 store = ReferentialIntegrityStore(store)
             self._cached_store = store

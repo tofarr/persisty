@@ -10,6 +10,7 @@ from servey.cache_control.cache_control_abc import CacheControlABC
 from servey.cache_control.secure_hash_cache_control import SecureHashCacheControl
 from servey.cache_control.timestamp_cache_control import TimestampCacheControl
 from servey.cache_control.ttl_cache_control import TtlCacheControl
+from servey.finder.action_finder_abc import ActionFinderABC
 from servey.security.authorizer.authorizer_factory_abc import AuthorizerFactoryABC
 
 from persisty.attr.attr_filter import AttrFilter
@@ -18,6 +19,7 @@ from persisty.attr.generator.default_value_generator import DefaultValueGenerato
 from persisty.attr.generator.timestamp_generator import TimestampGenerator
 from persisty.attr.generator.uuid_generator import UuidGenerator
 from persisty.finder.module_store_meta_finder import ModuleStoreMetaFinder
+from persisty.finder.store_action_finder import StoreActionFinder
 from persisty.finder.store_meta_finder_abc import StoreMetaFinderABC
 from persisty.index.attr_index import AttrIndex
 from persisty.index.index_abc import IndexABC
@@ -129,6 +131,7 @@ def configure_sqlalchemy(context: MarshallerContext):
 
 def configure_finders(context: MarshallerContext):
     register_impl(StoreMetaFinderABC, ModuleStoreMetaFinder, context)
+    register_impl(ActionFinderABC, StoreActionFinder, context)
 
 
 def configure_celery(context: MarshallerContext):

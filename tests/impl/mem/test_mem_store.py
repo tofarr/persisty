@@ -25,6 +25,7 @@ class TestMemStore(TestCase, StoreTstABC):
     def new_super_bowl_results_store(self) -> StoreABC:
         factory = MemStoreFactory(
             {r.code: dataclasses.replace(r) for r in SUPER_BOWL_RESULTS},
+            triggers=False,  # Not accessing other actions for test
         )
         return factory.create(get_meta(SuperBowlResult))
 
@@ -32,18 +33,21 @@ class TestMemStore(TestCase, StoreTstABC):
         # noinspection PyTypeChecker
         factory = MemStoreFactory(
             {str(r.id): dataclasses.replace(r) for r in NUMBER_NAMES},
+            triggers=False,  # Not accessing other actions for test
         )
         return factory.create(get_meta(NumberName))
 
     def new_author_store(self) -> StoreABC:
         factory = MemStoreFactory(
             {str(r.id): dataclasses.replace(r) for r in AUTHORS},
+            triggers=False,  # Not accessing other actions for test
         )
         return factory.create(get_meta(Author))
 
     def new_book_store(self) -> StoreABC:
         factory = MemStoreFactory(
             {str(r.id): dataclasses.replace(r) for r in BOOKS},
+            triggers=False,  # Not accessing other actions for test
         )
         return factory.create(get_meta(Book))
 

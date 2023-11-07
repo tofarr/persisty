@@ -20,14 +20,14 @@ def create_store_meta(on_delete: OnDelete):
     author_store_meta = dataclasses.replace(
         author_store_meta,
         store_factory=MemStoreFactory(
-            {str(a.id): dataclasses.replace(a) for a in AUTHORS}, True
+            {str(a.id): dataclasses.replace(a) for a in AUTHORS}, False, True
         ),
     )
     # noinspection PyDataclass
     book_store_meta = dataclasses.replace(
         book_store_meta,
         store_factory=MemStoreFactory(
-            {str(b.id): dataclasses.replace(b) for b in BOOKS}, True
+            {str(b.id): dataclasses.replace(b) for b in BOOKS}, False, True
         ),
         links=(
             dataclasses.replace(

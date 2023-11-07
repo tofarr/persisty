@@ -27,6 +27,7 @@ from sqlalchemy.dialects.mysql import JSON as MysqlJson
 from sqlalchemy.dialects.mssql import JSON as MssqlJson
 
 from persisty.attr.attr import Attr
+from persisty.attr.generator.default_value_generator import DefaultValueGenerator
 from persisty.key_config.key_config_abc import KeyConfigABC
 
 POSTGRES = "postgres"
@@ -47,6 +48,13 @@ class SqlalchemyColumnConverter:
         }
         if attr.name in self.key_config.get_key_attrs():
             kwargs["primary_key"] = True
+        if isinstance(attr.create_generator, DefaultValueGenerator):
+            default_value = attr.create_generator.default_value
+            if default_value is None:
+                kwargs["server_default"] = "NULL"
+            elif isinstance(default_value, (str, int, float, bool)):
+                kwargs["server_default"] = str(default_value)
+
         column = Column(*args, **kwargs)
         return column
 

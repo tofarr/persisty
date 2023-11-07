@@ -1,3 +1,4 @@
+import dataclasses
 from dataclasses import dataclass
 from typing import Optional
 
@@ -14,6 +15,7 @@ from persisty.security.store_security import UNSECURED
 from persisty.security.store_security_abc import StoreSecurityABC, T
 from persisty.store.attr_override_store import AttrOverrideStore
 from persisty.store.store_abc import StoreABC
+from persisty.store_meta import StoreMeta
 from persisty.util import UNDEFINED
 
 
@@ -92,12 +94,16 @@ class OwnedStoreSecurity(StoreSecurityABC[T]):
         )
         return store_access
 
-    def get_api(self, store: StoreABC) -> StoreABC:
-        # subject_id attribute is not externally editable
-        store = AttrOverrideStore(
-            store=store,
-            attr_name=self.subject_id_attr_name,
-            creatable=False,
-            updatable=False,
+    def get_api_meta(self, store_meta: StoreMeta) -> StoreMeta:
+        attrs = tuple(
+            dataclasses.replace(
+                attr,
+                creatable=False,
+                updatable=False,
+            )
+            if attr.name == self.subject_id_attr_name
+            else attr
+            for attr in store_meta.attrs
         )
-        return store
+        result = dataclasses.replace(store_meta, attrs=attrs)
+        return result

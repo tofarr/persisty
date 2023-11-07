@@ -75,7 +75,9 @@ class StoreMeta:
     indexes: Tuple[IndexABC, ...] = tuple()
     label_attr_names: Tuple[str, ...] = tuple()
     summary_attr_names: Tuple[str, ...] = tuple()
+    # pylint: disable=E3701
     store_factory: _StoreFactoryABC = field(default_factory=_default_store_factory)
+    # pylint: disable=E3701
     action_factory: ActionFactoryABC = (field(default_factory=_default_action_factory),)
     class_functions: Tuple[Callable, ...] = tuple()
 
@@ -204,10 +206,9 @@ class StoreMeta:
         store = self.store_factory.create(self)
         return store
 
-    def create_api_store(self) -> _StoreABC:
-        store = self.create_store()
-        store = self.store_security.get_api(store)
-        return store
+    def create_api_meta(self) -> _StoreABC:
+        result = self.store_security.get_api_meta(self)
+        return result
 
     def create_secured_store(self, authorization: Optional[Authorization]) -> _StoreABC:
         store = self.store_security.get_secured(self.create_store(), authorization)
@@ -262,12 +263,8 @@ def _schema_factory(
     schema["persistyStored"] = {
         "store_name": store_meta.name,
         "creatable": store_meta.store_access.create_filter is not EXCLUDE_ALL,
-        "label_attr_names": [
-            f.name for f in fields(cls) if f.name in store_meta.label_attr_names
-        ],
-        "summary_attr_names": [
-            f.name for f in fields(cls) if f.name in store_meta.summary_attr_names
-        ],
+        "label_attr_names": list(store_meta.label_attr_names),
+        "summary_attr_names": list(store_meta.summary_attr_names),
     }
     for link in store_meta.links:
         link.update_json_schema(schema)

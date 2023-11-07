@@ -29,7 +29,7 @@ from persisty.util import filter_none
 class DynamodbStoreFactory(StoreFactoryABC):
     aws_profile_name: Optional[str] = None
     region_name: Optional[str] = field(
-        default_factory=lambda: os.environ.get("AWS_REGION")
+        default_factory=lambda: os.environ.get("AWS_REGION") or "us-east-1"
     )
     table_name: Optional[str] = None
     index: Optional[PartitionSortIndex] = None

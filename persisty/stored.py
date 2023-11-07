@@ -31,6 +31,7 @@ from persisty.util import to_snake_case
 from persisty.util.undefined import UNDEFINED
 
 
+# pylint: disable=R0913
 def stored(
     cls=None,
     *,

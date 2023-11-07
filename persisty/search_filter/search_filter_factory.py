@@ -3,7 +3,8 @@ from typing import Type, Optional
 
 from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.attr_type import AttrType
-from persisty.search_filter.include_all import INCLUDE_ALL
+from persisty.search_filter.and_filter import And
+from persisty.search_filter.or_filter import Or
 from persisty.search_filter.query_filter import QueryFilter
 from persisty.search_filter.search_filter_abc import SearchFilterABC
 from persisty.store_meta import StoreMeta
@@ -18,17 +19,18 @@ class SearchFilterFactoryABC:
     __persisty_store_meta__: StoreMeta
 
     def to_search_filter(self) -> SearchFilterABC:
-        search_filter = INCLUDE_ALL
+        constructor = Or if getattr(self, "filter_mode", None) == "or" else And
+        filters = []
         query = getattr(self, "query", None)
         if query:
-            search_filter = QueryFilter(query)
+            filters.append(QueryFilter(query))
         for attr in self.__persisty_store_meta__.attrs:
             for op in attr.permitted_filter_ops:
                 filter_name = f"{attr.name}__{op.name}"
                 value = getattr(self, filter_name, None)
                 if value is not None:
-                    search_filter &= AttrFilter(attr.name, op, value)
-        return search_filter
+                    filters.append(AttrFilter(attr.name, op, value))
+        return constructor(tuple(filters))
 
 
 def search_filter_dataclass_for(
