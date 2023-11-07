@@ -9,7 +9,7 @@ extras_require = {
         "pytest~=7.2",
         "pytest-cov~=4.0",
         "pytest-xdist~=3.2",
-        "pylint~=2.17",
+        "pylint~=3.0",
         "boto3~=1.26",
         "moto~=3.1",
     ],
