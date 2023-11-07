@@ -75,7 +75,9 @@ class StoreMeta:
     indexes: Tuple[IndexABC, ...] = tuple()
     label_attr_names: Tuple[str, ...] = tuple()
     summary_attr_names: Tuple[str, ...] = tuple()
+    # pylint: disable=E3701
     store_factory: _StoreFactoryABC = field(default_factory=_default_store_factory)
+    # pylint: disable=E3701
     action_factory: ActionFactoryABC = (field(default_factory=_default_action_factory),)
     class_functions: Tuple[Callable, ...] = tuple()
 

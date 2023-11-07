@@ -14,7 +14,7 @@ from sqlalchemy import (
     DateTime,
     Boolean,
     Enum as SqlalchemyEnum,
-    LargeBinary, ColumnDefault,
+    LargeBinary,
 )
 
 # noinspection PyPep8Naming

@@ -4,7 +4,6 @@ from typing import Type, Optional
 from persisty.attr.attr_filter import AttrFilter
 from persisty.attr.attr_type import AttrType
 from persisty.search_filter.and_filter import And
-from persisty.search_filter.include_all import INCLUDE_ALL
 from persisty.search_filter.or_filter import Or
 from persisty.search_filter.query_filter import QueryFilter
 from persisty.search_filter.search_filter_abc import SearchFilterABC

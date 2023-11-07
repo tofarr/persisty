@@ -40,6 +40,7 @@ class Attr:
             )
 
     def to_field(self, is_required: bool) -> Field:
+        # pylint: disable=E3701
         result = field(
             default=MISSING if is_required else UNDEFINED,
             metadata={"schemey": self.schema, "persisty": self},

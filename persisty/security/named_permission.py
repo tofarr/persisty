@@ -1,14 +1,12 @@
 import json
-from dataclasses import dataclass, field
-from typing import Optional, Type
+from dataclasses import dataclass
+from typing import Optional
 
 import marshy
 from marshy.marshaller_context import MarshallerContext
-from marshy.types import ExternalItemType
 
 from persisty.search_filter.exclude_all import EXCLUDE_ALL
 from persisty.search_filter.search_filter_abc import SearchFilterABC
-from persisty.search_filter.search_filter_factory import SearchFilterFactoryABC
 from persisty.security.store_access import StoreAccess
 from persisty.store_meta import StoreMeta
 
