@@ -51,9 +51,9 @@ class SqlalchemyColumnConverter:
         if isinstance(attr.create_generator, DefaultValueGenerator):
             default_value = attr.create_generator.default_value
             if default_value is None:
-                kwargs['server_default'] = "NULL"
+                kwargs["server_default"] = "NULL"
             elif isinstance(default_value, (str, int, float, bool)):
-                kwargs['server_default'] = str(default_value)
+                kwargs["server_default"] = str(default_value)
 
         column = Column(*args, **kwargs)
         return column

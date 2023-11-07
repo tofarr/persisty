@@ -162,11 +162,9 @@ def action_for_search(
         secured_meta = secured_store.get_meta()
         # noinspection PyArgumentList
         result_set = result_set_type(
-            results=[
-                to_result(item, secured_meta) for item in result_set.results
-            ],
+            results=[to_result(item, secured_meta) for item in result_set.results],
             next_page_key=result_set.next_page_key,
-            creatable=secured_meta.store_access.create_filter is not EXCLUDE_ALL
+            creatable=secured_meta.store_access.create_filter is not EXCLUDE_ALL,
         )
         return result_set
 

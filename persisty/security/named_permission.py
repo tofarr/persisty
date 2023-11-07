@@ -31,10 +31,18 @@ class NamedPermission:
             marshaller_context = marshy.get_default_context()
         search_filter_factory_type = store_meta.get_search_filter_factory_dataclass()
         store_access = StoreAccess(
-            create_filter=_load_filter(self.create_filter, search_filter_factory_type, marshaller_context),
-            read_filter=_load_filter(self.read_filter, search_filter_factory_type, marshaller_context),
-            update_filter=_load_filter(self.update_filter, search_filter_factory_type, marshaller_context),
-            delete_filter=_load_filter(self.delete_filter, search_filter_factory_type, marshaller_context),
+            create_filter=_load_filter(
+                self.create_filter, search_filter_factory_type, marshaller_context
+            ),
+            read_filter=_load_filter(
+                self.read_filter, search_filter_factory_type, marshaller_context
+            ),
+            update_filter=_load_filter(
+                self.update_filter, search_filter_factory_type, marshaller_context
+            ),
+            delete_filter=_load_filter(
+                self.delete_filter, search_filter_factory_type, marshaller_context
+            ),
             searchable=self.searchable,
         )
         return store_access
@@ -43,7 +51,7 @@ class NamedPermission:
 def _load_filter(
     filter_definition: Optional[str],
     search_filter_factory_type,
-    marshaller_context: MarshallerContext
+    marshaller_context: MarshallerContext,
 ) -> SearchFilterABC:
     if not filter_definition:
         return EXCLUDE_ALL
